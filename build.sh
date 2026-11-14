@@ -4,10 +4,10 @@ cd "$(dirname "$0")"
 : "${ANDROID_SDK_ROOT:?Set ANDROID_SDK_ROOT to an Android SDK with platform/build-tools 35}"
 BT="$ANDROID_SDK_ROOT/build-tools/35.0.0"
 AJ="$ANDROID_SDK_ROOT/platforms/android-35/android.jar"
-mkdir -p build/classes build/dex
+mkdir -p build/classes build/dex assets
 "$BT/aapt2" compile --dir res -o build/resources.zip
 "$BT/aapt2" link -o build/base.apk -I "$AJ" --manifest AndroidManifest.xml -A assets build/resources.zip
-java -jar "${ECJ_JAR:?Set ECJ_JAR to the Eclipse Java compiler jar}" -source 1.8 -target 1.8 -bootclasspath "$AJ:$BT/core-lambda-stubs.jar" -d build/classes src/hu/jarvis/app/*.java
+java -jar "${ECJ_JAR:?Set ECJ_JAR to the Eclipse Java compiler jar}" -source 1.8 -target 1.8 -bootclasspath "$AJ:$BT/core-lambda-stubs.jar" -d build/classes src/hu/jarvis/app/*.java src/hu/jarvis/autopilot/*.java
 find "$PWD/build/classes" -name '*.class' > build/classes.txt
 "$BT/d8" --min-api 26 --lib "$AJ" --output build/dex @build/classes.txt
 cp build/base.apk build/unsigned.apk
