@@ -17,12 +17,7 @@ jobs:
       - uses: android-actions/setup-android@v3
       - name: Install Android SDK
         run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
-      - name: Download Eclipse Java compiler
-        run: |
-          curl -fL --retry 3 -o /tmp/ecj.jar https://repo.maven.apache.org/maven2/org/eclipse/jdt/ecj/3.38.0/ecj-3.38.0.jar
       - name: Build and sign debug APK
-        env:
-          ECJ_JAR: /tmp/ecj.jar
         run: bash build.sh
       - uses: actions/upload-artifact@v4
         with:
