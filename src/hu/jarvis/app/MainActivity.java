@@ -18,6 +18,7 @@ public final class MainActivity extends Activity {
  private TextView status;
  private HungarianVoice voice;
  private OfflineSpeech speech=new OfflineSpeech();
+ private Button askButton;
  @Override public void onCreate(Bundle b){
   super.onCreate(b);
   voice=new HungarianVoice(this);
@@ -37,9 +38,9 @@ public final class MainActivity extends Activity {
   mic.setOnClickListener(v->{
    if(Build.VERSION.SDK_INT>=23&&checkSelfPermission(Manifest.permission.RECORD_AUDIO)!=PackageManager.PERMISSION_GRANTED){requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO},500);status.setText("Engedélyezd a mikrofont, majd nyomd meg újra.");return;}
    status.setText("Offline beszédfelismerés...");
-   speech.listen(this,new OfflineSpeech.Callback(){public void result(String s){question.setText(s);status.setText("Felismert parancs: "+s);}public void error(String s){status.setText(s);}});
+   speech.listen(this,new OfflineSpeech.Callback(){public void result(String s){question.setText(s);status.setText("Felismert parancs: "+s);askButton.performClick();}public void error(String s){status.setText(s);}});
   });
-  Button ask=new Button(this);ask.setText("KÉRDEZÉS HELYBEN");root.addView(ask);
+  Button ask=new Button(this);askButton=ask;ask.setText("KÉRDEZÉS HELYBEN");root.addView(ask);
   status=new TextView(this);status.setTextColor(Color.WHITE);
   status.setText("Helyi AI. Modell szükséges. A hangvezérlés még nincs kész.\nKorábbi beszélgetés:\n"+ConversationMemory.recent(this));
   root.addView(status);
