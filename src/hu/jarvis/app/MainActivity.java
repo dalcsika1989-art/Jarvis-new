@@ -40,7 +40,10 @@ public final class MainActivity extends Activity {
   root.setOrientation(1);root.setPadding(28,36,28,20);root.setBackgroundColor(Color.rgb(8,16,25));
   TextView title=new TextView(this);title.setText("JARVIS 4.0 – HELYI AI");title.setTextColor(0xff83efff);title.setTextSize(22);root.addView(title);
   TextView subtitle=new TextView(this);subtitle.setText("I\u0027M ONLINE, SIR  •  LOCAL AI");subtitle.setTextColor(0xff39c9df);subtitle.setTextSize(12);root.addView(subtitle);
-  TextView reactor=new TextView(this);reactor.setText("◎\n◉ J A R V I S ◉\n◎");reactor.setTextColor(0xff00e5ff);reactor.setTextSize(29);reactor.setGravity(android.view.Gravity.CENTER);reactor.setPadding(0,28,0,28);root.addView(reactor);
+  NeoMonitorView monitor=new NeoMonitorView(this);
+  root.addView(monitor,new LinearLayout.LayoutParams(-1,(int)(getResources().getDisplayMetrics().density*92)));
+  ReactorView reactor=new ReactorView(this);
+  root.addView(reactor,new LinearLayout.LayoutParams(-1,(int)(getResources().getDisplayMetrics().density*310)));
   TextView system=new TextView(this);system.setTextColor(0xff5ee5ef);system.setText("SYSTEM STATUS  •  OFFLINE BRAIN  •  AUTOPILOT");system.setGravity(android.view.Gravity.CENTER);root.addView(system);
   TextView homeInfo=new TextView(this);modelInfo=homeInfo;homeInfo.setTextColor(0xff83efff);root.addView(homeInfo);
   try{
@@ -79,8 +82,8 @@ public final class MainActivity extends Activity {
   Button mic=new Button(this);mic.setText("MAGYAR OFFLINE MIKROFON");root.addView(mic);
   mic.setOnClickListener(v->{
    if(Build.VERSION.SDK_INT>=23&&checkSelfPermission(Manifest.permission.RECORD_AUDIO)!=PackageManager.PERMISSION_GRANTED){requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO},500);status.setText("Engedélyezd a mikrofont, majd nyomd meg újra.");return;}
-   status.setText("Offline beszédfelismerés...");
-   speech.listen(this,new OfflineSpeech.Callback(){public void result(String s){question.setText(s);status.setText("Felismert parancs: "+s);askButton.performClick();}public void error(String s){status.setText(s);}});
+   status.setText("Offline beszédfelismerés...");reactor.setActive(true);
+   speech.listen(this,new OfflineSpeech.Callback(){public void result(String s){reactor.setActive(false);question.setText(s);status.setText("Felismert parancs: "+s);askButton.performClick();}public void error(String s){reactor.setActive(false);status.setText(s);}});
   });
   Button ask=new Button(this);askButton=ask;ask.setText("KÉRDEZÉS HELYBEN");root.addView(ask);
   status=new TextView(this);status.setTextColor(Color.WHITE);
@@ -103,8 +106,8 @@ public final class MainActivity extends Activity {
    File model=new File(new File(JarvisHome.initialize(this),"models"),"model.gguf");
    if(!model.isFile()){status.setText("Előbb telepíts egy GGUF modellt.");return;}
    if(!OfflineBrain.available()){status.setText("Offline motor nem elérhető: "+OfflineBrain.failure());return;}
-   status.setText("JARVIS helyben gondolkodik...");ask.setEnabled(false);
-   new Thread(()->{String reply=OfflineBrain.reply(model.getAbsolutePath(),ConversationMemory.recent(this)+"\nFelhasználó: "+q);ConversationMemory.append(this,q,reply);runOnUiThread(()->{status.setText(reply);ask.setEnabled(true);if(voice.isReady())voice.say(reply);});}).start();
+   status.setText("JARVIS helyben gondolkodik...");reactor.setActive(true);ask.setEnabled(false);
+   new Thread(()->{String reply=OfflineBrain.reply(model.getAbsolutePath(),ConversationMemory.recent(this)+"\nFelhasználó: "+q);ConversationMemory.append(this,q,reply);runOnUiThread(()->{reactor.setActive(false);status.setText(reply);ask.setEnabled(true);if(voice.isReady())voice.say(reply);});}).start();
   });
   ScrollView scroll=new ScrollView(this);scroll.addView(root);setContentView(scroll);
  }
