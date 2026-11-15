@@ -26,7 +26,7 @@ static jbyteArray message(JNIEnv* env, const char* text) {
 
 extern "C" JNIEXPORT jbyteArray JNICALL
 Java_hu_jarvis_local_OfflineBrain_generate(JNIEnv* env, jclass,
-    jstring modelPath, jstring promptText, jint maxTokens) {
+    jstring modelPath, jstring promptText, jint maxTokens, jobject progress) {
     if (!modelPath || !promptText) return message(env, "Hiányzó modell vagy kérdés.");
     std::lock_guard<std::mutex> lock(inference_lock);
     const char* model_chars=env->GetStringUTFChars(modelPath,nullptr);
@@ -90,13 +90,36 @@ Java_hu_jarvis_local_OfflineBrain_generate(JNIEnv* env, jclass,
     llama_sampler_chain_add(sampler,llama_sampler_init_temp(0.65f));
     llama_sampler_chain_add(sampler,llama_sampler_init_dist(42));
     std::string output;
-    int limit = maxTokens>0 && maxTokens<=256 ? maxTokens : 128;
+    jmethodID progressMethod=nullptr;
+    if(progress!=nullptr){
+        jclass cls=env->GetObjectClass(progress);
+        if(cls!=nullptr){
+            progressMethod=env->GetMethodID(cls,"onBytes","([B)V");
+            env->DeleteLocalRef(cls);
+        }
+        if(env->ExceptionCheck()){
+            env->ExceptionClear();
+            progressMethod=nullptr;
+        }
+    }
+    int limit = maxTokens>0 && maxTokens<=256 ? maxTokens : 100;
     for(int i=0;i<limit && n+i<2047;i++){
         llama_token token=llama_sampler_sample(sampler,context,-1);
         if(llama_vocab_is_eog(vocab,token)) break;
         char piece[512];
         int len=llama_token_to_piece(vocab,token,piece,sizeof(piece),0,true);
         if(len>0) output.append(piece,(size_t)len);
+        if(progressMethod!=nullptr && (i%5==4 || i==0) && !output.empty()){
+            jbyteArray partial=utf8Bytes(env,output);
+            if(partial!=nullptr){
+                env->CallVoidMethod(progress,progressMethod,partial);
+                env->DeleteLocalRef(partial);
+            }
+            if(env->ExceptionCheck()){
+                env->ExceptionClear();
+                progressMethod=nullptr;
+            }
+        }
         llama_sampler_accept(sampler,token);
         if(llama_decode(context,llama_batch_get_one(&token,1))!=0) break;
     }
