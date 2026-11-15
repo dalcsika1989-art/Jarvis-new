@@ -19,6 +19,14 @@ public final class MainActivity extends Activity {
  private HungarianVoice voice;
  private OfflineSpeech speech=new OfflineSpeech();
  private Button askButton;
+ private android.media.MediaPlayer mediaPlayer;
+ private void playSelectedAudio(android.net.Uri uri){
+  try{if(mediaPlayer!=null){mediaPlayer.release();mediaPlayer=null;}
+   mediaPlayer=new android.media.MediaPlayer();mediaPlayer.setDataSource(this,uri);mediaPlayer.setOnPreparedListener(p->{p.start();status.setText("Médialejátszás elindult. A leállításhoz nyisd meg a MEDIA menüt.");});
+   mediaPlayer.setOnCompletionListener(p->{status.setText("Médialejátszás befejeződött.");p.release();mediaPlayer=null;});mediaPlayer.prepareAsync();
+  }catch(Exception e){status.setText("Médiahiba: "+e.getMessage());}
+ }
+
  private android.view.View dashboard;
  private void showDashboard(){if(dashboard!=null)setContentView(dashboard);}
  @Override public void onCreate(Bundle b){
@@ -69,9 +77,10 @@ public final class MainActivity extends Activity {
   });
   ScrollView scroll=new ScrollView(this);scroll.addView(root);dashboard=scroll;setContentView(scroll);
  }
- @Override protected void onDestroy(){speech.close();if(voice!=null)voice.close();super.onDestroy();}
+ @Override protected void onDestroy(){if(mediaPlayer!=null){mediaPlayer.release();mediaPlayer=null;}speech.close();if(voice!=null)voice.close();super.onDestroy();}
  @Override protected void onActivityResult(int requestCode,int resultCode,Intent data){
   super.onActivityResult(requestCode,resultCode,data);
+  if(requestCode==407&&resultCode==RESULT_OK&&data!=null){playSelectedAudio(data.getData());return;}
   if(requestCode==ModelInstaller.PICK_MODEL&&resultCode==RESULT_OK&&data!=null){
    status.setText("Modell másolása a JARVIS tárhelyére...");
    ModelInstaller.install(this,data.getData(),s->status.setText(s));
