@@ -90,6 +90,17 @@ public class ControlService extends AccessibilityService {
   for(int i=0;i<node.getChildCount();i++)if(clickText(node.getChild(i),text,depth+1))return true;
   return false;
  }
+ public static boolean cancelCurrentTask(){
+  ControlService service=live;
+  if(service==null)return false;
+  service.handler.post(()->service.stopTask());
+  return true;
+ }
+ public static boolean looksLikeLocalCommand(String command){
+  if(command==null)return false;
+  String s=command.toLowerCase(Locale.forLanguageTag("hu-HU")).trim();
+  return s.startsWith("nyisd meg ")||s.startsWith("indítsd el ")||s.startsWith("kattints ")||s.startsWith("nyomd meg ")||s.equals("vissza")||s.equals("menj vissza")||s.equals("home")||s.equals("főképernyő")||s.equals("kezdőképernyő")||s.equals("értesítések")||s.startsWith("görgess ")||s.startsWith("lapozz ");
+ }
  public static boolean executeLocalCommand(String command){
   ControlService service=live;
   if(service==null||command==null)return false;
