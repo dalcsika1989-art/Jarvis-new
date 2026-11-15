@@ -107,7 +107,25 @@ public final class MainActivity extends Activity {
    if(!model.isFile()){status.setText("Előbb telepíts egy GGUF modellt.");return;}
    if(!OfflineBrain.available()){status.setText("Offline motor nem elérhető: "+OfflineBrain.failure());return;}
    status.setText("JARVIS helyben gondolkodik...");reactor.setActive(true);ask.setEnabled(false);
-   new Thread(()->{String reply=OfflineBrain.reply(model.getAbsolutePath(),ConversationMemory.recent(this)+"\nFelhasználó: "+q);ConversationMemory.append(this,q,reply);runOnUiThread(()->{reactor.setActive(false);status.setText(reply);ask.setEnabled(true);if(voice.isReady())voice.say(reply);});}).start();
+   new Thread(()->{
+    String reply;
+    try{
+     String context=ConversationMemory.recent(this)+"\\nFelhasználó: "+q;
+     reply=OfflineBrain.replyStreaming(model.getAbsolutePath(),context,partial->runOnUiThread(()->{
+      if(!isFinishing())status.setText(partial);
+     }));
+     ConversationMemory.append(this,q,reply);
+    }catch(Throwable e){
+     reply="Helyi AI-hiba: "+e.getClass().getSimpleName()+": "+e.getMessage();
+    }
+    String finalReply=reply;
+    runOnUiThread(()->{
+     reactor.setActive(false);
+     status.setText(finalReply);
+     ask.setEnabled(true);
+     if(voice.isReady()&&!finalReply.startsWith("Helyi AI-hiba"))voice.say(finalReply);
+    });
+   },"jarvis-local-inference").start();
   });
   ScrollView scroll=new ScrollView(this);scroll.addView(root);setContentView(scroll);
  }
