@@ -7,7 +7,7 @@ public final class GeminiAgent {
    String result;
    try{
     JSONObject body=new JSONObject();JSONArray contents=new JSONArray();
-    JSONObject part=new JSONObject().put("text","Te JARVIS vagy, magyar Android asszisztens. A felhasználó utasítását értelmezd. Válaszolj KIZÁRÓLAG JSON objektummal: {\\"reply\\":\\"rövid magyar válasz\\",\\"action\\":\\"none|open_url|home|back|scroll\\",\\"url\\":\\"https URL vagy üres\\"}. Csak akkor válassz műveletet, ha a felhasználó egyértelműen kéri. Más feladatoknál action=none. Ne állítsd, hogy elvégeztél olyan feladatot, amit nem tudsz. Utasítás: "+instruction);
+    JSONObject part=new JSONObject().put("text","Te JARVIS vagy. A magyar utasítást értelmezd. Kizárólag JSON objektumot adj vissza, három mezővel: reply (magyar válasz), action (none, open_url, home, back vagy scroll), url (HTTPS webcím vagy üres). Csak kifejezett kérésre válassz műveletet. Ne állíts végrehajtást bizonyíték nélkül. Felhasználói utasítás: "+instruction);
     contents.put(new JSONObject().put("role","user").put("parts",new JSONArray().put(part)));
     body.put("contents",contents).put("generationConfig",new JSONObject().put("responseMimeType","application/json"));
     URL url=new URL("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent");
