@@ -75,9 +75,9 @@ public final class MainActivity extends Activity {
   status.setText("Helyi AI. Modell szükséges. A hangvezérlés készül.\nKorábbi beszélgetés:\n"+ConversationMemory.recent(this));
   root.addView(status);
   LinearLayout nav=new LinearLayout(this);nav.setOrientation(LinearLayout.HORIZONTAL);
-  String[] tabs={"DASH","FILES","CHAT","QUICK","CONTROL","MEDIA","SETTINGS"};
-  for(String tab:tabs){Button item=new Button(this);item.setText(tab);item.setTextSize(9);item.setTextColor(0xff00e5ff);nav.addView(item,new LinearLayout.LayoutParams(0,56,1));item.setOnClickListener(v->{if(tab.equals("CHAT"))showChat(question,status,askButton);else if(tab.equals("DASH"))showDashboard();else NeoPanels.show(this,tab,()->showDashboard());});}
-  root.addView(nav);
+  String[] tabs={"DASH","CHAT","NATASHA","GLOBE","FILES","CONTROL","QUICK","MEDIA","SETTINGS"};
+  for(String tab:tabs){Button item=new Button(this);item.setText(tab);item.setTextSize(9);item.setTextColor(0xff00e5ff);nav.addView(item,new LinearLayout.LayoutParams(-2,56));item.setOnClickListener(v->{if(tab.equals("CHAT"))showChat(question,status,askButton);else if(tab.equals("DASH"))showDashboard();else NeoPanels.show(this,tab,()->showDashboard());});}
+  HorizontalScrollView navScroll=new HorizontalScrollView(this);navScroll.setHorizontalScrollBarEnabled(false);navScroll.addView(nav);root.addView(navScroll);
   Button speak=new Button(this);speak.setText("UTOLSÓ VÁLASZ FELOLVASÁSA (OFFLINE)");root.addView(speak);
   speak.setOnClickListener(v->{if(voice.isReady())voice.say(status.getText().toString());else Toast.makeText(this,voice.status(),Toast.LENGTH_LONG).show();});
   ask.setOnClickListener(v->{
