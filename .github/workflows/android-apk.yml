@@ -1,8 +1,8 @@
-name: JARVIS 2.0 Gemini Live source verification
+name: JARVIS Gemini Live safe preview verification
 on:
   workflow_dispatch:
   push:
-    branches: [jarvis2-gemini-live-source]
+    branches: [jarvis2-gemini-live-safe-preview]
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -33,6 +33,6 @@ jobs:
         run: bash build.sh
       - uses: actions/upload-artifact@v4
         with:
-          name: JARVIS-2.0-Gemini-Live-dev-only
+          name: JARVIS-2.0-Gemini-Live-safe-preview
           path: build/JARVIS-2.0-LIVE-dev.apk
           if-no-files-found: error
