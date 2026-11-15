@@ -31,11 +31,12 @@ public final class MainActivity extends Activity {
  private void showChat(EditText question,TextView status,Button ask){
   LinearLayout page=new LinearLayout(this);page.setOrientation(1);page.setPadding(16,25,16,16);page.setBackgroundColor(0xff050b17);
   TextView head=new TextView(this);head.setText("‹    AI CHAT   •   JARVIS NEO");head.setTextSize(22);head.setTextColor(0xff20d8ff);head.setPadding(10,15,10,25);page.addView(head);head.setOnClickListener(v->showDashboard());
-  TextView history=new TextView(this);history.setTextColor(0xffb5f7ff);history.setTextSize(15);history.setText("KORÁBBI BESZÉLGETÉS\\n"+ConversationMemory.recent(this));ScrollView sc=new ScrollView(this);sc.addView(history);page.addView(sc,new LinearLayout.LayoutParams(-1,0,1));
+  TextView history=new TextView(this);history.setTextColor(0xffb5f7ff);history.setTextSize(15);history.setText("KORÁBBI BESZÉLGETÉS\n"+ConversationMemory.recent(this));ScrollView sc=new ScrollView(this);sc.addView(history);page.addView(sc,new LinearLayout.LayoutParams(-1,0,1));
   EditText input=new EditText(this);input.setTextColor(-1);input.setHintTextColor(0xff48b7ca);input.setHint("ASK JARVIS...");page.addView(input);
   Button send=new Button(this);send.setText("SEND  ◈");page.addView(send);
-  TextView reply=new TextView(this);reply.setTextColor(-1);reply.setText("A válasz a főképernyőn is megjelenik.");page.addView(reply);
-  send.setOnClickListener(v->{String q=input.getText().toString().trim();if(q.isEmpty())return;question.setText(q);ask.performClick();reply.setText("Kérés továbbítva. Vissza a főképernyőre a válasz megtekintéséhez.");});
+  TextView reply=new TextView(this);reply.setTextColor(-1);reply.setText("Válaszra vár.");page.addView(reply);
+  status.addTextChangedListener(new android.text.TextWatcher(){public void beforeTextChanged(CharSequence s,int start,int count,int after){}public void onTextChanged(CharSequence s,int start,int before,int count){reply.setText(s);}public void afterTextChanged(android.text.Editable e){}});
+  send.setOnClickListener(v->{String q=input.getText().toString().trim();if(q.isEmpty())return;question.setText(q);ask.performClick();reply.setText(status.getText());});
   setContentView(page);
  }
 
