@@ -6,6 +6,7 @@ import android.graphics.Color;
 import android.widget.*;
 import hu.jarvis.local.JarvisHome;
 import hu.jarvis.local.ModelInstaller;
+import hu.jarvis.local.ModelDownloader;
 import hu.jarvis.local.OfflineBrain;
 import hu.jarvis.local.ConversationMemory;
 import hu.jarvis.local.HungarianVoice;
@@ -44,6 +45,24 @@ public final class MainActivity extends Activity {
   });
   Button install=new Button(this);install.setText("HELYI GGUF MODELL KIVÁLASZTÁSA");root.addView(install);
   install.setOnClickListener(v->ModelInstaller.pick(this));
+  Button obtainModel=new Button(this);obtainModel.setText("OFFLINE AI-MODELL LETÖLTÉSE (KB. 1 GB)");root.addView(obtainModel);
+  obtainModel.setOnClickListener(v->new android.app.AlertDialog.Builder(this)
+   .setTitle("Helyi AI telepítése")
+   .setMessage("A Qwen2.5 1,5B modell körülbelül 1 GB adatforgalmat használ. Javasolt Wi-Fi-n letölteni. Utána az AI internet nélkül válaszol. Megkezdjem?")
+   .setNegativeButton("Mégse",null)
+   .setPositiveButton("Letöltés",(dialog,which)->{
+    obtainModel.setEnabled(false);
+    status.setText("Helyi modell letöltése elindult...");
+    ModelDownloader.download(this,new ModelDownloader.Listener(){
+     public void progress(String message){status.setText(message);}
+     public void finished(String message){
+      status.setText(message);obtainModel.setEnabled(true);
+      File m=new File(new File(JarvisHome.initialize(MainActivity.this),"models"),"model.gguf");
+      modelInfo.setText("GGUF modell: "+(m.isFile()?(m.length()/1048576)+" MB":"nincs telepítve"));
+     }
+    });
+   }).show());
+
   EditText question=new EditText(this);question.setSingleLine(false);question.setHint("Írd ide a kérdésed...");question.setTextColor(Color.WHITE);question.setHintTextColor(0xffaaaaaa);root.addView(question);
   Button mic=new Button(this);mic.setText("MAGYAR OFFLINE MIKROFON");root.addView(mic);
   mic.setOnClickListener(v->{
