@@ -8,11 +8,14 @@ import hu.jarvis.local.JarvisHome;
 import hu.jarvis.local.ModelInstaller;
 import hu.jarvis.local.OfflineBrain;
 import hu.jarvis.local.ConversationMemory;
+import hu.jarvis.local.HungarianVoice;
 import java.io.File;
 public final class MainActivity extends Activity {
  private TextView status;
+ private HungarianVoice voice;
  @Override public void onCreate(Bundle b){
   super.onCreate(b);
+  voice=new HungarianVoice(this);
   LinearLayout root=new LinearLayout(this);
   root.setOrientation(1);root.setPadding(28,36,28,20);root.setBackgroundColor(Color.rgb(8,16,25));
   TextView title=new TextView(this);title.setText("JARVIS 4.0 – HELYI AI");title.setTextColor(0xff83efff);title.setTextSize(22);root.addView(title);
@@ -29,16 +32,19 @@ public final class MainActivity extends Activity {
   status=new TextView(this);status.setTextColor(Color.WHITE);
   status.setText("Helyi AI. Modell szükséges. A hangvezérlés még nincs kész.\nKorábbi beszélgetés:\n"+ConversationMemory.recent(this));
   root.addView(status);
+  Button speak=new Button(this);speak.setText("UTOLSÓ VÁLASZ FELOLVASÁSA (OFFLINE)");root.addView(speak);
+  speak.setOnClickListener(v->{if(voice.isReady())voice.say(status.getText().toString());else Toast.makeText(this,voice.status(),Toast.LENGTH_LONG).show();});
   ask.setOnClickListener(v->{
    File model=new File(new File(JarvisHome.initialize(this),"models"),"model.gguf");
    if(!model.isFile()){status.setText("Előbb telepíts egy GGUF modellt.");return;}
    if(!OfflineBrain.available()){status.setText("Offline motor nem elérhető: "+OfflineBrain.failure());return;}
    String q=question.getText().toString().trim();if(q.isEmpty())return;
    status.setText("JARVIS helyben gondolkodik...");ask.setEnabled(false);
-   new Thread(()->{String reply=OfflineBrain.reply(model.getAbsolutePath(),ConversationMemory.recent(this)+"\nFelhasználó: "+q);ConversationMemory.append(this,q,reply);runOnUiThread(()->{status.setText(reply);ask.setEnabled(true);});}).start();
+   new Thread(()->{String reply=OfflineBrain.reply(model.getAbsolutePath(),ConversationMemory.recent(this)+"\nFelhasználó: "+q);ConversationMemory.append(this,q,reply);runOnUiThread(()->{status.setText(reply);ask.setEnabled(true);if(voice.isReady())voice.say(reply);});}).start();
   });
   ScrollView scroll=new ScrollView(this);scroll.addView(root);setContentView(scroll);
  }
+ @Override protected void onDestroy(){if(voice!=null)voice.close();super.onDestroy();}
  @Override protected void onActivityResult(int requestCode,int resultCode,Intent data){
   super.onActivityResult(requestCode,resultCode,data);
   if(requestCode==ModelInstaller.PICK_MODEL&&resultCode==RESULT_OK&&data!=null){
