@@ -7,6 +7,8 @@ import android.graphics.Color;
 import android.widget.*;
 import hu.jarvis.autopilot.AutopilotEngine;
 import hu.jarvis.ai.GeminiAgent;
+import hu.jarvis.local.JarvisHome;
+import java.io.File;
 public final class MainActivity extends Activity {
   EditText task; TextView status;
   private void openSearch(String query){
@@ -21,6 +23,8 @@ public final class MainActivity extends Activity {
     LinearLayout root=new LinearLayout(this);root.setOrientation(1);root.setPadding(28,36,28,20);root.setBackgroundColor(Color.rgb(8,16,25));
     TextView title=new TextView(this);title.setText("JARVIS 3.0 – GEMINI AI");title.setTextColor(0xff83efff);title.setTextSize(22);root.addView(title);
     EditText api=new EditText(this);api.setSingleLine(true);api.setHint("Gemini API-kulcs (Google AI Studio)");api.setTextColor(Color.WHITE);api.setHintTextColor(0xffaaaaaa);api.setInputType(129);api.setText(getPreferences(0).getString("gemini_key",""));root.addView(api);
+    TextView homeInfo=new TextView(this);homeInfo.setTextColor(0xff83efff);root.addView(homeInfo);
+    try{File home=JarvisHome.initialize(this);homeInfo.setText("HELYI JARVIS-HÁZ: "+home.getAbsolutePath()+"\nSzabad tárhely: "+(JarvisHome.freeBytes(this)/(1024*1024))+" MB");}catch(Exception ex){homeInfo.setText("Tárhelyhiba: "+ex.getMessage());}
     task=new EditText(this);task.setTextColor(Color.WHITE);task.setHintTextColor(0xffaaaaaa);task.setHint("Feladat leírása");task.setMinLines(2);root.addView(task);
     Button ask=new Button(this);ask.setText("AI parancs értelmezése");root.addView(ask);
     ask.setOnClickListener(v->{String key=api.getText().toString().trim(),prompt=task.getText().toString().trim();if(key.isEmpty()){status.setText("A Gemini API-kulcs hiányzik. A NEMESIS beállítása nem kerül automatikusan átvételre.");return;}if(prompt.isEmpty()){status.setText("Írj egy utasítást.");return;}getPreferences(0).edit().putString("gemini_key",key).apply();status.setText("Gemini feldolgozás...");GeminiAgent.run(this,key,prompt,message->status.setText(message));});
