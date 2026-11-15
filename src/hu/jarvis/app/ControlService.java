@@ -15,21 +15,40 @@ public class ControlService extends AccessibilityService {
  private final Handler handler=new Handler(Looper.getMainLooper());
  private final ArrayDeque<String> pending=new ArrayDeque<>();
  private boolean processing=false;
+ private static volatile String commandStatus="Vezérlő nincs bekapcsolva.";
+ public static String currentStatus(){return commandStatus;}
+ public static boolean active(){return live!=null;}
+ private void setStatus(String message){commandStatus=message;}
+ private void stopTask(){pending.clear();processing=false;attempts=0;handler.removeCallbacks(advance);setStatus("Feladat megszakítva.");}
+
  private int attempts=0;
  private long lastStep=0;
  private final Runnable advance=new Runnable(){public void run(){step();}};
- public void onServiceConnected(){live=this;wm=(WindowManager)getSystemService(WINDOW_SERVICE);bubble=new LinearLayout(this);bubble.setOrientation(1);bubble.setPadding(5,5,5,5);bubble.setBackgroundColor(0xe6102935);pos=new WindowManager.LayoutParams(WindowManager.LayoutParams.WRAP_CONTENT,WindowManager.LayoutParams.WRAP_CONTENT,WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,PixelFormat.TRANSLUCENT);pos.gravity=Gravity.TOP|Gravity.END;pos.x=8;pos.y=180;render();try{wm.addView(bubble,pos);}catch(Exception e){bubble=null;}}
+ public void onServiceConnected(){live=this;setStatus("JARVIS vezérlő készen áll.");wm=(WindowManager)getSystemService(WINDOW_SERVICE);bubble=new LinearLayout(this);bubble.setOrientation(1);bubble.setPadding(5,5,5,5);bubble.setBackgroundColor(0xe6102935);pos=new WindowManager.LayoutParams(WindowManager.LayoutParams.WRAP_CONTENT,WindowManager.LayoutParams.WRAP_CONTENT,WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,PixelFormat.TRANSLUCENT);pos.gravity=Gravity.TOP|Gravity.END;pos.x=8;pos.y=180;render();try{wm.addView(bubble,pos);}catch(Exception e){bubble=null;}}
  void button(String text,Runnable click){Button b=new Button(this);b.setText(text);b.setTextColor(0xff83efff);b.setTextSize(12);b.setMinWidth(44);b.setMinimumWidth(44);b.setPadding(8,0,8,0);bubble.addView(b,new LinearLayout.LayoutParams(-2,44));b.setOnClickListener(v->click.run());}
- void render(){if(bubble==null)return;bubble.removeAllViews();button(expanded?"×":"J",()->{expanded=!expanded;render();});if(expanded){button("‹",()->performGlobalAction(GLOBAL_ACTION_BACK));button("⌂",()->performGlobalAction(GLOBAL_ACTION_HOME));button("↓",()->{if(!scroll(getRootInActiveWindow()))Toast.makeText(this,"Nincs görgethető tartalom",Toast.LENGTH_SHORT).show();});button("JARVIS",()->{expanded=false;render();startActivity(new Intent(this,MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_SINGLE_TOP));});}Button head=(Button)bubble.getChildAt(0);head.setOnTouchListener(new View.OnTouchListener(){float x,y;int px,py;boolean drag;public boolean onTouch(View v,MotionEvent e){if(e.getAction()==MotionEvent.ACTION_DOWN){x=e.getRawX();y=e.getRawY();px=pos.x;py=pos.y;drag=false;}if(e.getAction()==MotionEvent.ACTION_MOVE){if(Math.abs(e.getRawX()-x)+Math.abs(e.getRawY()-y)>12)drag=true;if(drag){pos.x=Math.max(0,px-(int)(e.getRawX()-x));pos.y=Math.max(0,py+(int)(e.getRawY()-y));wm.updateViewLayout(bubble,pos);return true;}}if(e.getAction()==MotionEvent.ACTION_UP&&drag)return true;return false;}});}
- public void onAccessibilityEvent(AccessibilityEvent e){if(processing && e!=null && android.os.SystemClock.uptimeMillis()-lastStep>90){handler.removeCallbacks(advance);handler.postDelayed(advance,120);}} public void onInterrupt(){} public void onDestroy(){handler.removeCallbacks(advance);pending.clear();processing=false;live=null;if(bubble!=null)try{wm.removeView(bubble);}catch(Exception e){}super.onDestroy();}
+ void render(){if(bubble==null)return;bubble.removeAllViews();button(expanded?"×":"J",()->{expanded=!expanded;render();});if(expanded){button("■ STOP",()->stopTask());button("ÁLLAPOT",()->Toast.makeText(this,currentStatus(),Toast.LENGTH_LONG).show());button("‹",()->performGlobalAction(GLOBAL_ACTION_BACK));button("⌂",()->performGlobalAction(GLOBAL_ACTION_HOME));button("↓",()->{if(!scroll(getRootInActiveWindow()))Toast.makeText(this,"Nincs görgethető tartalom",Toast.LENGTH_SHORT).show();});button("JARVIS",()->{expanded=false;render();startActivity(new Intent(this,MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_SINGLE_TOP));});}Button head=(Button)bubble.getChildAt(0);head.setOnTouchListener(new View.OnTouchListener(){float x,y;int px,py;boolean drag;public boolean onTouch(View v,MotionEvent e){if(e.getAction()==MotionEvent.ACTION_DOWN){x=e.getRawX();y=e.getRawY();px=pos.x;py=pos.y;drag=false;}if(e.getAction()==MotionEvent.ACTION_MOVE){if(Math.abs(e.getRawX()-x)+Math.abs(e.getRawY()-y)>12)drag=true;if(drag){pos.x=Math.max(0,px-(int)(e.getRawX()-x));pos.y=Math.max(0,py+(int)(e.getRawY()-y));wm.updateViewLayout(bubble,pos);return true;}}if(e.getAction()==MotionEvent.ACTION_UP&&drag)return true;return false;}});}
+ public void onAccessibilityEvent(AccessibilityEvent e){if(processing && e!=null && android.os.SystemClock.uptimeMillis()-lastStep>90){handler.removeCallbacks(advance);handler.postDelayed(advance,120);}} public void onInterrupt(){} public void onDestroy(){stopTask();live=null;setStatus("JARVIS vezérlő leállt.");if(bubble!=null)try{wm.removeView(bubble);}catch(Exception e){}super.onDestroy();}
  private void step(){
   if(!processing)return;
   String command=pending.peek();
-  if(command==null){processing=false;return;}
-  boolean done=perform(command);
-  if(done){pending.poll();attempts=0;lastStep=android.os.SystemClock.uptimeMillis();handler.postDelayed(advance,160);}
-  else if(++attempts<=4){lastStep=android.os.SystemClock.uptimeMillis();handler.postDelayed(advance,450);}
-  else{android.util.Log.w("JARVIS","Sikertelen lépés: "+command);pending.clear();processing=false;attempts=0;Toast.makeText(this,"JARVIS: nem sikerült: "+command,Toast.LENGTH_LONG).show();}
+  if(command==null){processing=false;setStatus("Minden sorba állított művelet befejeződött.");return;}
+  setStatus("Folyamatban: "+command+" ("+(attempts+1)+"/10)");
+  boolean accepted=false;
+  try{accepted=perform(command);}catch(Exception e){android.util.Log.e("JARVIS","Műveleti hiba",e);}
+  lastStep=android.os.SystemClock.uptimeMillis();
+  if(accepted){
+   pending.poll();attempts=0;
+   setStatus("Android elfogadta: "+command+"; további lépések: "+pending.size());
+   handler.postDelayed(advance,pending.isEmpty()?200:550);
+  }else if(++attempts<10){
+   setStatus("Várakozás / újrapróbálás: "+command+" ("+attempts+"/10)");
+   handler.postDelayed(advance,650);
+  }else{
+   android.util.Log.w("JARVIS","Sikertelen lépés: "+command);
+   pending.clear();processing=false;attempts=0;
+   setStatus("Sikertelen: "+command+" (10 próbálkozás után leállítva)");
+   Toast.makeText(this,currentStatus(),Toast.LENGTH_LONG).show();
+  }
  }
  private boolean perform(String command){
   String s=command.toLowerCase(Locale.forLanguageTag("hu-HU")).trim();
@@ -78,6 +97,7 @@ public class ControlService extends AccessibilityService {
   if(!(s.startsWith("nyisd meg ")||s.startsWith("indítsd el ")||s.startsWith("kattints ")||s.startsWith("nyomd meg ")||s.equals("vissza")||s.equals("menj vissza")||s.equals("home")||s.equals("főképernyő")||s.equals("kezdőképernyő")||s.equals("értesítések")||s.equals("nyisd meg az értesítéseket")||s.startsWith("görgess ")||s.startsWith("lapozz ")))return false;
   service.handler.post(()->{
    service.pending.clear();
+   service.setStatus("Parancssor fogadva. Előkészítés...");
    for(String part:command.split("[;\\n]"))if(!part.trim().isEmpty())service.pending.add(part.trim());
    service.processing=true;service.attempts=0;service.handler.removeCallbacks(service.advance);service.handler.post(service.advance);
   });
