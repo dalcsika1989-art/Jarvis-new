@@ -6,6 +6,7 @@ import android.net.Uri;
 import android.graphics.Color;
 import android.widget.*;
 import hu.jarvis.autopilot.AutopilotEngine;
+import hu.jarvis.ai.GeminiAgent;
 public final class MainActivity extends Activity {
   EditText task; TextView status;
   private void openSearch(String query){
@@ -18,11 +19,14 @@ public final class MainActivity extends Activity {
   }
   @Override public void onCreate(Bundle b){super.onCreate(b);
     LinearLayout root=new LinearLayout(this);root.setOrientation(1);root.setPadding(28,36,28,20);root.setBackgroundColor(Color.rgb(8,16,25));
-    TextView title=new TextView(this);title.setText("JARVIS 2.2 – HÁTTÉRFIGYELÉS");title.setTextColor(0xff83efff);title.setTextSize(22);root.addView(title);
+    TextView title=new TextView(this);title.setText("JARVIS 3.0 – GEMINI AI");title.setTextColor(0xff83efff);title.setTextSize(22);root.addView(title);
+    EditText api=new EditText(this);api.setSingleLine(true);api.setHint("Gemini API-kulcs (Google AI Studio)");api.setTextColor(Color.WHITE);api.setHintTextColor(0xffaaaaaa);api.setInputType(129);api.setText(getPreferences(0).getString("gemini_key",""));root.addView(api);
     task=new EditText(this);task.setTextColor(Color.WHITE);task.setHintTextColor(0xffaaaaaa);task.setHint("Feladat leírása");task.setMinLines(2);root.addView(task);
+    Button ask=new Button(this);ask.setText("AI parancs értelmezése");root.addView(ask);
+    ask.setOnClickListener(v->{String key=api.getText().toString().trim(),prompt=task.getText().toString().trim();if(key.isEmpty()){status.setText("A Gemini API-kulcs hiányzik. A NEMESIS beállítása nem kerül automatikusan átvételre.");return;}if(prompt.isEmpty()){status.setText("Írj egy utasítást.");return;}getPreferences(0).edit().putString("gemini_key",key).apply();status.setText("Gemini feldolgozás...");GeminiAgent.run(this,key,prompt,message->status.setText(message));});
     Button start=new Button(this);start.setText("Háttérfeladat állapotfigyelés");root.addView(start);
     Button stop=new Button(this);stop.setText("Leállítás");root.addView(stop);
-    status=new TextView(this);status.setTextColor(Color.WHITE);status.setText("A háttérmotor 15 percenként ellenőrzi a Kleinanzeigen találatokat. Az automatikus szívezés még nincs megvalósítva.");root.addView(status);
+    status=new TextView(this);status.setTextColor(Color.WHITE);status.setText("Az AI szabad magyar utasításokat értelmez. A tényleges telefonműveletek egyelőre korlátozottak.");root.addView(status);
     start.setOnClickListener(v->{String t=task.getText().toString().trim();if(t.isEmpty()){status.setText("Adj meg feladatot.");return;}try{AutopilotEngine.start(this,t,60);status.setText("Háttérfigyelés elindítva. A keresés hálózati eredményét az értesítés mutatja; automatikus szívezés még nincs.");}catch(Exception e){status.setText("Indítási hiba: "+e.getMessage());}});
     stop.setOnClickListener(v->{AutopilotEngine.stop(this);status.setText("Leállítás kérve.");});
     ScrollView scroll=new ScrollView(this);scroll.addView(root);setContentView(scroll);
