@@ -20,7 +20,7 @@ public final class ConversationMemory {
   String recent=recent(c);
   if(recent.length()<=1000)return recent;
   int cut=recent.length()-1000;
-  int next=recent.indexOf("\\nFelhasználó:",cut);
+  int next=recent.indexOf("\nFelhasználó:",cut);
   return next>=0?recent.substring(next):recent.substring(cut);
  }
  public static synchronized void append(Context c,String user,String assistant){
