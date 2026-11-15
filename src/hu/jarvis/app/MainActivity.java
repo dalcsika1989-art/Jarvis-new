@@ -46,10 +46,11 @@ public final class MainActivity extends Activity {
   Button speak=new Button(this);speak.setText("UTOLSÓ VÁLASZ FELOLVASÁSA (OFFLINE)");root.addView(speak);
   speak.setOnClickListener(v->{if(voice.isReady())voice.say(status.getText().toString());else Toast.makeText(this,voice.status(),Toast.LENGTH_LONG).show();});
   ask.setOnClickListener(v->{
+   String q=question.getText().toString().trim();if(q.isEmpty())return;
+   if(ControlService.executeLocalCommand(q)){status.setText("Android-parancs végrehajtva: "+q);return;}
    File model=new File(new File(JarvisHome.initialize(this),"models"),"model.gguf");
    if(!model.isFile()){status.setText("Előbb telepíts egy GGUF modellt.");return;}
    if(!OfflineBrain.available()){status.setText("Offline motor nem elérhető: "+OfflineBrain.failure());return;}
-   String q=question.getText().toString().trim();if(q.isEmpty())return;
    status.setText("JARVIS helyben gondolkodik...");ask.setEnabled(false);
    new Thread(()->{String reply=OfflineBrain.reply(model.getAbsolutePath(),ConversationMemory.recent(this)+"\nFelhasználó: "+q);ConversationMemory.append(this,q,reply);runOnUiThread(()->{status.setText(reply);ask.setEnabled(true);if(voice.isReady())voice.say(reply);});}).start();
   });
