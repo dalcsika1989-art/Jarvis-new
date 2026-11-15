@@ -1,4 +1,4 @@
-name: Build JARVIS 2.2 APK
+name: Build JARVIS 4.0 Offline Prep APK
 on:
   workflow_dispatch:
   push:
@@ -33,6 +33,6 @@ jobs:
         run: bash build.sh
       - uses: actions/upload-artifact@v4
         with:
-          name: JARVIS-2.2-debug-apk
-          path: build/JARVIS-2.1.apk
+          name: JARVIS-4.0-offline-prep-apk
+          path: build/JARVIS-4.0.apk
           if-no-files-found: error
