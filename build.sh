@@ -21,6 +21,7 @@ mapfile -t classes < <(find build/classes -type f -name '*.class' | sort)
 test -s build/dex/classes.dex || { echo "ERROR: Missing classes.dex"; exit 1; }
 cp build/base.apk build/unsigned.apk
 (cd build/dex && zip -q ../unsigned.apk classes.dex)
+if [[ ! -d native/build ]]; then echo "ERROR: Offline AI native build missing"; exit 1; fi
 if [[ -d native/build ]]; then
   mkdir -p build/apklibs/lib/arm64-v8a
   find native/build -type f -name '*.so' -exec cp -L {} build/apklibs/lib/arm64-v8a/ \;
