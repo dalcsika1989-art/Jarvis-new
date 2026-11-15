@@ -120,7 +120,7 @@
  }
  function incoming(raw){
   let d;try{d=JSON.parse(raw)}catch(e){announce('Nem érthető Gemini üzenet');return;}
-  if(d.setupComplete){connected=true;startup=false;liveState('GEMINI LIVE — CSATLAKOZVA');ui.connect.textContent='LIVE KAPCSOLAT BONTÁSA';}
+  if(d.setupComplete){connected=true;startup=false;liveState('GEMINI LIVE — CSATLAKOZVA');ui.connect.textContent='LIVE KAPCSOLAT BONTÁSA';if(ui.launch)ui.launch.textContent='● LIVE';if(ui.panel)ui.panel.style.display='none';}
   if(d.toolCall)handleToolCalls(d.toolCall);
   const content=d.serverContent;
   if(!content)return;
@@ -135,7 +135,7 @@
  function teardown(){
   stopMicrophone(false);clearPlayback();connected=false;startup=false;currentTranscription='';
   if(socket){const ws=socket;socket=null;try{ws.close(1000,'JARVIS bontás')}catch(e){}}
-  if(ui.connect)ui.connect.textContent='GEMINI LIVE INDÍTÁSA';
+  if(ui.connect)ui.connect.textContent='GEMINI LIVE INDÍTÁSA';if(ui.launch)ui.launch.textContent='◉ LIVE';
   liveState('GEMINI LIVE — LEÁLLÍTVA');
  }
  async function connect(){
@@ -176,7 +176,16 @@
   };
   box.append(row);
   const status=document.createElement('div');status.textContent='NINCS LIVE KAPCSOLAT';status.style.cssText='font:11px ui-monospace,monospace;color:#64eaff;margin-top:10px';box.append(status);ui.status=status;
-  const form=$('form');if(form?.parentNode)form.parentNode.insertBefore(box,form);else document.querySelector('main')?.append(box);
+  ui.panel=box;
+  box.style.display='none';
+  const launch=document.createElement('button');launch.textContent='◉ LIVE';launch.style.cssText='font-size:11px;padding:7px 9px;color:#7ceaff;border-color:#27586a';
+  launch.addEventListener('click',()=>{box.style.display=box.style.display==='none'?'block':'none';});ui.launch=launch;
+  const settings=$('settings');if(settings?.parentNode)settings.parentNode.insertBefore(launch,settings);
+  else document.querySelector('.top')?.append(launch);
+  const top=document.querySelector('.top');
+  if(top?.parentNode)top.parentNode.insertBefore(box,top.nextSibling);
+  else document.querySelector('main')?.append(box);
+  const form=$('form');
   form?.addEventListener('submit',e=>{if(!connected)return;e.preventDefault();e.stopImmediatePropagation();const input=$('input');const value=input?.value||'';if(input)input.value='';sendText(value);},true);
   const originalMic=$('mic');originalMic?.addEventListener('click',e=>{
    if(!connected)return;e.preventDefault();e.stopImmediatePropagation();micBtn.click();
