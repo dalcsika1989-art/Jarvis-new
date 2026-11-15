@@ -6,6 +6,7 @@ import android.graphics.Color;
 import android.widget.*;
 import hu.jarvis.local.JarvisHome;
 import hu.jarvis.local.ModelInstaller;
+import hu.jarvis.local.OfflineBrain;
 import java.io.File;
 public final class MainActivity extends Activity {
  private TextView status;
@@ -22,9 +23,19 @@ public final class MainActivity extends Activity {
   }catch(Exception e){homeInfo.setText("Tárhelyhiba: "+e.getMessage());}
   Button install=new Button(this);install.setText("HELYI GGUF MODELL KIVÁLASZTÁSA");root.addView(install);
   install.setOnClickListener(v->ModelInstaller.pick(this));
+  EditText question=new EditText(this);question.setSingleLine(false);question.setHint("Írd ide a kérdésed...");question.setTextColor(Color.WHITE);question.setHintTextColor(0xffaaaaaa);root.addView(question);
+  Button ask=new Button(this);ask.setText("KÉRDEZÉS HELYBEN");root.addView(ask);
   status=new TextView(this);status.setTextColor(Color.WHITE);
   status.setText("Offline előkészítés. A modellfuttató és a hangvezérlés még nincs csatlakoztatva. Nem használ Gemini API-t.");
   root.addView(status);
+  ask.setOnClickListener(v->{
+   File model=new File(new File(JarvisHome.initialize(this),"models"),"model.gguf");
+   if(!model.isFile()){status.setText("Előbb telepíts egy GGUF modellt.");return;}
+   if(!OfflineBrain.available()){status.setText("Offline motor nem elérhető: "+OfflineBrain.failure());return;}
+   String q=question.getText().toString().trim();if(q.isEmpty())return;
+   status.setText("JARVIS helyben gondolkodik...");ask.setEnabled(false);
+   new Thread(()->{String reply=OfflineBrain.reply(model.getAbsolutePath(),q);runOnUiThread(()->{status.setText(reply);ask.setEnabled(true);});}).start();
+  });
   ScrollView scroll=new ScrollView(this);scroll.addView(root);setContentView(scroll);
  }
  @Override protected void onActivityResult(int requestCode,int resultCode,Intent data){
