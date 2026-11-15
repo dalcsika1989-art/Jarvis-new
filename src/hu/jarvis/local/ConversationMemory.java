@@ -16,6 +16,13 @@ public final class ConversationMemory {
    return s.length()>2400?s.substring(s.length()-2400):s;
   }catch(IOException e){return "";}
  }
+ public static synchronized String recentForPrompt(Context c){
+  String recent=recent(c);
+  if(recent.length()<=1000)return recent;
+  int cut=recent.length()-1000;
+  int next=recent.indexOf("\\nFelhasználó:",cut);
+  return next>=0?recent.substring(next):recent.substring(cut);
+ }
  public static synchronized void append(Context c,String user,String assistant){
   try(FileOutputStream out=new FileOutputStream(path(c),true)){
    String entry="\nFelhasználó: "+clean(user)+"\nJARVIS: "+clean(assistant)+"\n";
