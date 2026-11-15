@@ -2,7 +2,7 @@ name: Build JARVIS 4.0 Native Offline AI APK
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, jarvis-reference-separate-app]
 jobs:
   build:
     runs-on: ubuntu-latest
