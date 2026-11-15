@@ -38,9 +38,16 @@ public final class ReactorView extends View {
   arc(canvas,r*1.04f,180+t*30,78,0xff03e4ff,7);
   arc(canvas,r*.89f,-t*43,125,0xff69f3ff,4);
   arc(canvas,r*.89f,180-t*43,125,0xff69f3ff,4);
+  // Original neon triangular reactor inspired by the supplied HUD reference.
+  for(int layer=0;layer<3;layer++){
+   float tr=r*(.56f+layer*.13f);
+   Path triangle=new Path();
+   for(int k=0;k<3;k++){double a=-Math.PI/2+k*2*Math.PI/3+t*(layer%2==0?.035:-.035);float x=(float)Math.cos(a)*tr,y=(float)Math.sin(a)*tr;if(k==0)triangle.moveTo(x,y);else triangle.lineTo(x,y);}
+   triangle.close();p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(layer==0?7:3);p.setColor(layer==0?0xffb5f9ff:0xff17cbe9);p.setShadowLayer(20,0,0,0xff05dfff);canvas.drawPath(triangle,p);p.clearShadowLayer();
+  }
   float pulse=(float)(.88+.12*Math.sin(t*3.8));
-  p.setStyle(Paint.Style.FILL);p.setColor(active?0x6634dfff:0x4436b5c6);p.setShadowLayer(30,0,0,0xff00dfff);canvas.drawCircle(0,0,r*.35f*pulse,p);p.clearShadowLayer();
-  p.setColor(0xffe3fdff);p.setTypeface(Typeface.create("sans-serif-light",Typeface.BOLD));p.setTextAlign(Paint.Align.CENTER);p.setTextSize(r*.25f);canvas.drawText("J A R V I S",0,r*.035f,p);
+  p.setStyle(Paint.Style.FILL);p.setColor(active?0x6634dfff:0x4436b5c6);p.setShadowLayer(30,0,0,0xff00dfff);canvas.drawCircle(0,0,r*.19f*pulse,p);p.clearShadowLayer();
+  p.setColor(0xffe3fdff);p.setTypeface(Typeface.create("sans-serif-light",Typeface.BOLD));p.setTextAlign(Paint.Align.CENTER);p.setTextSize(r*.15f);canvas.drawText("J A R V I S",0,r*.035f,p);
   p.setColor(0xff5df1ff);p.setTextSize(r*.105f);canvas.drawText(active?"SYSTEM ACTIVE":"STANDBY",0,r*.16f,p);
   canvas.restore();
   p.setTypeface(Typeface.MONOSPACE);p.setTextAlign(Paint.Align.LEFT);p.setTextSize(12);p.setColor(0xff5ccfe9);p.setStyle(Paint.Style.FILL);
