@@ -11,11 +11,20 @@ static std::string cached_path;
 static long long cached_length = -1;
 static long long cached_modified = -1;
 
-static jstring message(JNIEnv* env, const char* text) {
-    return env->NewStringUTF(text);
+static jbyteArray utf8Bytes(JNIEnv* env, const std::string& text) {
+    if (text.size()>2147483647u) return nullptr;
+    jbyteArray result=env->NewByteArray((jsize)text.size());
+    if (result!=nullptr && !text.empty()) {
+        env->SetByteArrayRegion(result,0,(jsize)text.size(),
+                                reinterpret_cast<const jbyte*>(text.data()));
+    }
+    return result;
+}
+static jbyteArray message(JNIEnv* env, const char* text) {
+    return utf8Bytes(env,std::string(text));
 }
 
-extern "C" JNIEXPORT jstring JNICALL
+extern "C" JNIEXPORT jbyteArray JNICALL
 Java_hu_jarvis_local_OfflineBrain_generate(JNIEnv* env, jclass,
     jstring modelPath, jstring promptText, jint maxTokens) {
     if (!modelPath || !promptText) return message(env, "Hiányzó modell vagy kérdés.");
@@ -94,5 +103,5 @@ Java_hu_jarvis_local_OfflineBrain_generate(JNIEnv* env, jclass,
     llama_sampler_free(sampler);
     llama_free(context);
     if(output.empty()) output="A modell nem adott választ.";
-    return env->NewStringUTF(output.c_str());
+    return utf8Bytes(env,output);
 }
