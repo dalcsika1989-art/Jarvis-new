@@ -21,7 +21,6 @@ public final class ModelInstaller {
    File target=new File(new File(JarvisHome.initialize(a),"models"),"model.gguf");
    File tmp=new File(target.getParentFile(),"model.gguf.part");
    try{
-    String name=a.getContentResolver().getType(uri);
     if(uri==null)throw new IOException("Nincs kiválasztott fájl.");
     try(InputStream in=a.getContentResolver().openInputStream(uri);OutputStream out=new FileOutputStream(tmp)){
      if(in==null)throw new IOException("A fájl nem olvasható.");
@@ -38,7 +37,7 @@ public final class ModelInstaller {
     }
     if(target.exists()&&!target.delete())throw new IOException("Régi modell nem cserélhető.");
     if(!tmp.renameTo(target))throw new IOException("Modell áthelyezése sikertelen.");
-    message="Helyi GGUF modell tárolva: "+(target.length()/(1024*1024))+" MB. A futtatómotor még nincs beépítve.";
+    message="Helyi GGUF modell tárolva: "+(target.length()/(1024*1024))+" MB. Natív AI-motor: "+(OfflineBrain.available()?"betöltve, a modell futtatása még tesztelendő":"nem elérhető: "+OfflineBrain.failure());
    }catch(Exception e){tmp.delete();message="Modell importálási hiba: "+e.getMessage();}
    String result=message;new Handler(Looper.getMainLooper()).post(()->listener.finished(result));
   }).start();
