@@ -28,6 +28,8 @@ public final class MainActivity extends Activity {
   root.setOrientation(1);root.setPadding(28,36,28,20);root.setBackgroundColor(Color.rgb(8,16,25));
   TextView title=new TextView(this);title.setText("JARVIS NEO  •  COMMAND CENTER");title.setTextColor(0xff83efff);title.setTextSize(22);root.addView(title);
   TextView subtitle=new TextView(this);subtitle.setText("I\u0027M ONLINE, SIR  •  LOCAL AI");subtitle.setTextColor(0xff39c9df);subtitle.setTextSize(12);root.addView(subtitle);
+  NeoMonitorView monitor=new NeoMonitorView(this);
+  root.addView(monitor,new LinearLayout.LayoutParams(-1,(int)(getResources().getDisplayMetrics().density*105)));
   ReactorView reactor=new ReactorView(this);
   root.addView(reactor,new LinearLayout.LayoutParams(-1,(int)(getResources().getDisplayMetrics().density*340)));
   TextView system=new TextView(this);system.setTextColor(0xff5ee5ef);system.setText("SYSTEM STATUS  •  OFFLINE BRAIN  •  AUTOPILOT");system.setGravity(android.view.Gravity.CENTER);root.addView(system);
@@ -51,14 +53,14 @@ public final class MainActivity extends Activity {
   status.setText("Helyi AI. Modell szükséges. A hangvezérlés még nincs kész.\nKorábbi beszélgetés:\n"+ConversationMemory.recent(this));
   root.addView(status);
   LinearLayout nav=new LinearLayout(this);nav.setOrientation(LinearLayout.HORIZONTAL);
-  String[] tabs={"DASH","FILES","CHAT","QUICK","CONTROL","SETTINGS"};
-  for(String tab:tabs){Button item=new Button(this);item.setText(tab);item.setTextSize(9);item.setTextColor(0xff00e5ff);nav.addView(item,new LinearLayout.LayoutParams(0,56,1));item.setOnClickListener(v->{if(tab.equals("CHAT"))question.requestFocus();else if(tab.equals("DASH"))showDashboard();else NeoPanels.show(this,tab,()->showDashboard());});}
+  String[] tabs={"DASH","FILES","CHAT","QUICK","CONTROL","MEDIA","SETTINGS"};
+  for(String tab:tabs){Button item=new Button(this);item.setText(tab);item.setTextSize(9);item.setTextColor(0xff00e5ff);nav.addView(item,new LinearLayout.LayoutParams(0,56,1));item.setOnClickListener(v->{if(tab.equals("CHAT")){question.requestFocus();((android.view.inputmethod.InputMethodManager)getSystemService(INPUT_METHOD_SERVICE)).showSoftInput(question,android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT);}else if(tab.equals("DASH"))showDashboard();else NeoPanels.show(this,tab,()->showDashboard());});}
   root.addView(nav);
   Button speak=new Button(this);speak.setText("UTOLSÓ VÁLASZ FELOLVASÁSA (OFFLINE)");root.addView(speak);
   speak.setOnClickListener(v->{if(voice.isReady())voice.say(status.getText().toString());else Toast.makeText(this,voice.status(),Toast.LENGTH_LONG).show();});
   ask.setOnClickListener(v->{
    String q=question.getText().toString().trim();if(q.isEmpty())return;
-   if(ControlService.executeLocalCommand(q)){status.setText("Android-parancs végrehajtva: "+q);return;}
+   if(ControlService.executeLocalCommand(q)){status.setText("Android-parancs sorba állítva: "+q+"\\nAz eredményt a vezérlőmotor ellenőrzi.");return;}
    File model=new File(new File(JarvisHome.initialize(this),"models"),"model.gguf");
    if(!model.isFile()){status.setText("Előbb telepíts egy GGUF modellt.");return;}
    if(!OfflineBrain.available()){status.setText("Offline motor nem elérhető: "+OfflineBrain.failure());return;}
