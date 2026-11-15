@@ -16,6 +16,7 @@ import android.os.Build;
 import java.io.File;
 public final class MainActivity extends Activity {
  private TextView status;
+ private TextView modelInfo;
  private HungarianVoice voice;
  private OfflineSpeech speech=new OfflineSpeech();
  private Button askButton;
@@ -28,12 +29,19 @@ public final class MainActivity extends Activity {
   TextView subtitle=new TextView(this);subtitle.setText("I\u0027M ONLINE, SIR  •  LOCAL AI");subtitle.setTextColor(0xff39c9df);subtitle.setTextSize(12);root.addView(subtitle);
   TextView reactor=new TextView(this);reactor.setText("◎\n◉ J A R V I S ◉\n◎");reactor.setTextColor(0xff00e5ff);reactor.setTextSize(29);reactor.setGravity(android.view.Gravity.CENTER);reactor.setPadding(0,28,0,28);root.addView(reactor);
   TextView system=new TextView(this);system.setTextColor(0xff5ee5ef);system.setText("SYSTEM STATUS  •  OFFLINE BRAIN  •  AUTOPILOT");system.setGravity(android.view.Gravity.CENTER);root.addView(system);
-  TextView homeInfo=new TextView(this);homeInfo.setTextColor(0xff83efff);root.addView(homeInfo);
+  TextView homeInfo=new TextView(this);modelInfo=homeInfo;homeInfo.setTextColor(0xff83efff);root.addView(homeInfo);
   try{
    File home=JarvisHome.initialize(this);
    File model=new File(new File(home,"models"),"model.gguf");
    homeInfo.setText("HELYI JARVIS-HÁZ: "+home.getAbsolutePath()+"\nSzabad tárhely: "+(JarvisHome.freeBytes(this)/(1024*1024))+" MB\nModell: "+(model.isFile()?model.length()/(1024*1024)+" MB GGUF":"nincs telepítve"));
   }catch(Exception e){homeInfo.setText("Tárhelyhiba: "+e.getMessage());}
+  Button check=new Button(this);check.setText("HELYI AI ELLENŐRZÉSE");root.addView(check);
+  check.setOnClickListener(v->{
+   File m=new File(new File(JarvisHome.initialize(this),"models"),"model.gguf");
+   status.setText("GGUF: "+(m.isFile()?(m.length()/1048576)+" MB":"HIÁNYZIK")
+      +"\nNatív motor: "+(OfflineBrain.available()?"BETÖLTHETŐ":"HIBA: "+OfflineBrain.failure())
+      +"\nMagyar offline hang: "+voice.status());
+  });
   Button install=new Button(this);install.setText("HELYI GGUF MODELL KIVÁLASZTÁSA");root.addView(install);
   install.setOnClickListener(v->ModelInstaller.pick(this));
   EditText question=new EditText(this);question.setSingleLine(false);question.setHint("Írd ide a kérdésed...");question.setTextColor(Color.WHITE);question.setHintTextColor(0xffaaaaaa);root.addView(question);
@@ -69,7 +77,11 @@ public final class MainActivity extends Activity {
   super.onActivityResult(requestCode,resultCode,data);
   if(requestCode==ModelInstaller.PICK_MODEL&&resultCode==RESULT_OK&&data!=null){
    status.setText("Modell másolása a JARVIS tárhelyére...");
-   ModelInstaller.install(this,data.getData(),s->status.setText(s));
+   ModelInstaller.install(this,data.getData(),s->{
+    status.setText(s);
+    File m=new File(new File(JarvisHome.initialize(this),"models"),"model.gguf");
+    modelInfo.setText("GGUF modell: "+(m.isFile()?(m.length()/1048576)+" MB":"nincs telepítve"));
+   });
   }
  }
 }
