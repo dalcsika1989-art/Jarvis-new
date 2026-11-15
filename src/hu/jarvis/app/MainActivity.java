@@ -22,7 +22,7 @@ public final class MainActivity extends Activity {
  private android.media.MediaPlayer mediaPlayer;
  private void playSelectedAudio(android.net.Uri uri){
   try{if(mediaPlayer!=null){mediaPlayer.release();mediaPlayer=null;}
-   mediaPlayer=new android.media.MediaPlayer();mediaPlayer.setDataSource(this,uri);mediaPlayer.setOnPreparedListener(p->{p.start();status.setText("Médialejátszás elindult. A leállításhoz nyisd meg a MEDIA menüt.");});
+   mediaPlayer=new android.media.MediaPlayer();mediaPlayer.setDataSource(this,uri);mediaPlayer.setOnPreparedListener(p->{p.start();status.setText("Médialejátszás elindult.");});
    mediaPlayer.setOnCompletionListener(p->{status.setText("Médialejátszás befejeződött.");p.release();mediaPlayer=null;});mediaPlayer.prepareAsync();
   }catch(Exception e){status.setText("Médiahiba: "+e.getMessage());}
  }
@@ -47,6 +47,8 @@ public final class MainActivity extends Activity {
    File model=new File(new File(home,"models"),"model.gguf");
    homeInfo.setText("HELYI JARVIS-HÁZ: "+home.getAbsolutePath()+"\nSzabad tárhely: "+(JarvisHome.freeBytes(this)/(1024*1024))+" MB\nModell: "+(model.isFile()?model.length()/(1024*1024)+" MB GGUF":"nincs telepítve"));
   }catch(Exception e){homeInfo.setText("Tárhelyhiba: "+e.getMessage());}
+  Button refreshModel=new Button(this);refreshModel.setText("AGY ÉS MOTOR ELLENŐRZÉSE");root.addView(refreshModel);
+  refreshModel.setOnClickListener(v->{File m=new File(new File(JarvisHome.initialize(this),"models"),"model.gguf");status.setText("GGUF: "+(m.isFile()?(m.length()/1048576)+" MB":"NINCS TELEPÍTVE")+"\nNatív motor: "+(OfflineBrain.available()?"BETÖLTVE":"HIBA: "+OfflineBrain.failure()));});
   Button install=new Button(this);install.setText("HELYI GGUF MODELL KIVÁLASZTÁSA");root.addView(install);
   install.setOnClickListener(v->ModelInstaller.pick(this));
   EditText question=new EditText(this);question.setSingleLine(false);question.setHint("Írd ide a kérdésed...");question.setTextColor(Color.WHITE);question.setHintTextColor(0xffaaaaaa);root.addView(question);
@@ -58,7 +60,7 @@ public final class MainActivity extends Activity {
   });
   Button ask=new Button(this);askButton=ask;ask.setText("KÉRDEZÉS HELYBEN");root.addView(ask);
   status=new TextView(this);status.setTextColor(Color.WHITE);
-  status.setText("Helyi AI. Modell szükséges. A hangvezérlés még nincs kész.\nKorábbi beszélgetés:\n"+ConversationMemory.recent(this));
+  status.setText("Helyi AI. Modell szükséges. A hangvezérlés készül.\nKorábbi beszélgetés:\n"+ConversationMemory.recent(this));
   root.addView(status);
   LinearLayout nav=new LinearLayout(this);nav.setOrientation(LinearLayout.HORIZONTAL);
   String[] tabs={"DASH","FILES","CHAT","QUICK","CONTROL","MEDIA","SETTINGS"};
@@ -68,7 +70,7 @@ public final class MainActivity extends Activity {
   speak.setOnClickListener(v->{if(voice.isReady())voice.say(status.getText().toString());else Toast.makeText(this,voice.status(),Toast.LENGTH_LONG).show();});
   ask.setOnClickListener(v->{
    String q=question.getText().toString().trim();if(q.isEmpty())return;
-   if(ControlService.executeLocalCommand(q)){status.setText("Android-parancs sorba állítva: "+q+"\\nAz eredményt a vezérlőmotor ellenőrzi.");return;}
+   if(ControlService.executeLocalCommand(q)){status.setText("Android-parancs továbbítva: "+q+"\nA tényleges végrehajtást az Android vezérlőszolgáltatás végzi; az eredmény még nem igazolt.");return;}
    File model=new File(new File(JarvisHome.initialize(this),"models"),"model.gguf");
    if(!model.isFile()){status.setText("Előbb telepíts egy GGUF modellt.");return;}
    if(!OfflineBrain.available()){status.setText("Offline motor nem elérhető: "+OfflineBrain.failure());return;}
