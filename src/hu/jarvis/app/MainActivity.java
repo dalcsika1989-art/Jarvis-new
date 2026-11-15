@@ -24,9 +24,10 @@ public final class MainActivity extends Activity {
   voice=new HungarianVoice(this);
   LinearLayout root=new LinearLayout(this);
   root.setOrientation(1);root.setPadding(28,36,28,20);root.setBackgroundColor(Color.rgb(8,16,25));
-  TextView title=new TextView(this);title.setText("JARVIS 4.0 – HELYI AI");title.setTextColor(0xff83efff);title.setTextSize(22);root.addView(title);
+  TextView title=new TextView(this);title.setText("JARVIS NEO  •  COMMAND CENTER");title.setTextColor(0xff83efff);title.setTextSize(22);root.addView(title);
   TextView subtitle=new TextView(this);subtitle.setText("I\u0027M ONLINE, SIR  •  LOCAL AI");subtitle.setTextColor(0xff39c9df);subtitle.setTextSize(12);root.addView(subtitle);
-  TextView reactor=new TextView(this);reactor.setText("◎\n◉ J A R V I S ◉\n◎");reactor.setTextColor(0xff00e5ff);reactor.setTextSize(29);reactor.setGravity(android.view.Gravity.CENTER);reactor.setPadding(0,28,0,28);root.addView(reactor);
+  ReactorView reactor=new ReactorView(this);
+  root.addView(reactor,new LinearLayout.LayoutParams(-1,(int)(getResources().getDisplayMetrics().density*340)));
   TextView system=new TextView(this);system.setTextColor(0xff5ee5ef);system.setText("SYSTEM STATUS  •  OFFLINE BRAIN  •  AUTOPILOT");system.setGravity(android.view.Gravity.CENTER);root.addView(system);
   TextView homeInfo=new TextView(this);homeInfo.setTextColor(0xff83efff);root.addView(homeInfo);
   try{
@@ -40,7 +41,7 @@ public final class MainActivity extends Activity {
   Button mic=new Button(this);mic.setText("MAGYAR OFFLINE MIKROFON");root.addView(mic);
   mic.setOnClickListener(v->{
    if(Build.VERSION.SDK_INT>=23&&checkSelfPermission(Manifest.permission.RECORD_AUDIO)!=PackageManager.PERMISSION_GRANTED){requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO},500);status.setText("Engedélyezd a mikrofont, majd nyomd meg újra.");return;}
-   status.setText("Offline beszédfelismerés...");
+   status.setText("Offline beszédfelismerés...");reactor.setActive(true);
    speech.listen(this,new OfflineSpeech.Callback(){public void result(String s){question.setText(s);status.setText("Felismert parancs: "+s);askButton.performClick();}public void error(String s){status.setText(s);}});
   });
   Button ask=new Button(this);askButton=ask;ask.setText("KÉRDEZÉS HELYBEN");root.addView(ask);
