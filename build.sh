@@ -7,12 +7,12 @@ BT="$SDK/build-tools/35.0.0"
 AJ="$SDK/platforms/android-35/android.jar"
 for tool in aapt2 d8 zipalign apksigner; do test -x "$BT/$tool" || { echo "ERROR: Missing $BT/$tool"; exit 1; }; done
 test -f "$AJ" || { echo "ERROR: Missing $AJ"; exit 1; }
-mkdir -p assets build/classes build/dex
+mkdir -p assets build/classes build/dex build/generated
 echo "== Compile Android resources =="
 "$BT/aapt2" compile --dir res -o build/resources.zip
-"$BT/aapt2" link -o build/base.apk -I "$AJ" --manifest AndroidManifest.xml -A assets build/resources.zip
+"$BT/aapt2" link -o build/base.apk -I "$AJ" --manifest AndroidManifest.xml -A assets --java build/generated build/resources.zip
 echo "== Compile Java =="
-mapfile -t sources < <(find src -type f -name '*.java' | sort)
+mapfile -t sources < <(find src build/generated -type f -name '*.java' | sort)
 if [[ ${#sources[@]} -eq 0 ]]; then echo "ERROR: No Java files"; exit 1; fi
 javac -source 8 -target 8 -Xlint:-options -classpath "$AJ" -d build/classes "${sources[@]}"
 echo "== Convert to DEX =="
