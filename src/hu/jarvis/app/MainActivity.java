@@ -7,6 +7,7 @@ import android.widget.*;
 import hu.jarvis.local.JarvisHome;
 import hu.jarvis.local.ModelInstaller;
 import hu.jarvis.local.OfflineBrain;
+import hu.jarvis.local.ConversationMemory;
 import java.io.File;
 public final class MainActivity extends Activity {
  private TextView status;
@@ -26,7 +27,7 @@ public final class MainActivity extends Activity {
   EditText question=new EditText(this);question.setSingleLine(false);question.setHint("Írd ide a kérdésed...");question.setTextColor(Color.WHITE);question.setHintTextColor(0xffaaaaaa);root.addView(question);
   Button ask=new Button(this);ask.setText("KÉRDEZÉS HELYBEN");root.addView(ask);
   status=new TextView(this);status.setTextColor(Color.WHITE);
-  status.setText("Offline előkészítés. A modellfuttató és a hangvezérlés még nincs csatlakoztatva. Nem használ Gemini API-t.");
+  status.setText("Helyi AI. Modell szükséges. A hangvezérlés még nincs kész.\nKorábbi beszélgetés:\n"+ConversationMemory.recent(this));
   root.addView(status);
   ask.setOnClickListener(v->{
    File model=new File(new File(JarvisHome.initialize(this),"models"),"model.gguf");
@@ -34,7 +35,7 @@ public final class MainActivity extends Activity {
    if(!OfflineBrain.available()){status.setText("Offline motor nem elérhető: "+OfflineBrain.failure());return;}
    String q=question.getText().toString().trim();if(q.isEmpty())return;
    status.setText("JARVIS helyben gondolkodik...");ask.setEnabled(false);
-   new Thread(()->{String reply=OfflineBrain.reply(model.getAbsolutePath(),q);runOnUiThread(()->{status.setText(reply);ask.setEnabled(true);});}).start();
+   new Thread(()->{String reply=OfflineBrain.reply(model.getAbsolutePath(),ConversationMemory.recent(this)+"\nFelhasználó: "+q);ConversationMemory.append(this,q,reply);runOnUiThread(()->{status.setText(reply);ask.setEnabled(true);});}).start();
   });
   ScrollView scroll=new ScrollView(this);scroll.addView(root);setContentView(scroll);
  }
