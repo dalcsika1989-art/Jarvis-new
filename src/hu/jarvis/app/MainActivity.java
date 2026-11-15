@@ -21,6 +21,18 @@ public final class MainActivity extends Activity {
  private HungarianVoice voice;
  private OfflineSpeech speech=new OfflineSpeech();
  private Button askButton;
+ private final android.os.Handler commandHandler=new android.os.Handler(android.os.Looper.getMainLooper());
+ private Runnable commandWatcher;
+ private void watchCommand(){
+  if(commandWatcher!=null)commandHandler.removeCallbacks(commandWatcher);
+  commandWatcher=new Runnable(){int iterations=0;public void run(){
+   String s=ControlService.currentStatus();
+   if(status!=null)status.setText(s);
+   if(s.startsWith("Minden ")||s.startsWith("Sikertelen:")||s.startsWith("Feladat megszakítva")||s.startsWith("JARVIS vezérlő leállt"))return;
+   if(++iterations<400)commandHandler.postDelayed(this,500);
+  }};
+  commandHandler.post(commandWatcher);
+ }
  @Override public void onCreate(Bundle b){
   super.onCreate(b);
   voice=new HungarianVoice(this);
@@ -78,11 +90,16 @@ public final class MainActivity extends Activity {
   String[] tabs={"DASH","FILES","CHAT","QUICK","CONTROL","SETTINGS"};
   for(String tab:tabs){Button item=new Button(this);item.setText(tab);item.setTextSize(9);item.setTextColor(0xff00e5ff);nav.addView(item,new LinearLayout.LayoutParams(0,56,1));item.setOnClickListener(v->{if(tab.equals("CHAT"))question.requestFocus();else if(tab.equals("FILES"))ModelInstaller.pick(this);else if(tab.equals("CONTROL"))status.setText("Android-vezérlés: engedélyezd a JARVIS kisegítő lehetőséget a Beállításokban.");else if(tab.equals("QUICK"))status.setText("Gyorsparancs: nyisd meg [alkalmazás]; kattints [felirat]; görgess le");else status.setText("JARVIS "+tab+" – helyi rendszer");});}
   root.addView(nav);
+  Button cancel=new Button(this);cancel.setText("ANDROID FELADAT LEÁLLÍTÁSA");root.addView(cancel);
+  cancel.setOnClickListener(v->{if(ControlService.cancelCurrentTask())status.setText("Leállítás kérve...");else status.setText("A JARVIS hozzáférési szolgáltatás nincs bekapcsolva.");});
   Button speak=new Button(this);speak.setText("UTOLSÓ VÁLASZ FELOLVASÁSA (OFFLINE)");root.addView(speak);
   speak.setOnClickListener(v->{if(voice.isReady())voice.say(status.getText().toString());else Toast.makeText(this,voice.status(),Toast.LENGTH_LONG).show();});
   ask.setOnClickListener(v->{
    String q=question.getText().toString().trim();if(q.isEmpty())return;
-   if(ControlService.executeLocalCommand(q)){status.setText("Android-parancs sorba állítva: "+q+"\nA végrehajtás állapota a JARVIS vezérlőben követhető.");return;}
+   if(ControlService.executeLocalCommand(q)){watchCommand();return;}
+   if(ControlService.looksLikeLocalCommand(q)&&!ControlService.active()){
+    status.setText("A telefonvezérléshez engedélyezze a JARVIS hozzáférési szolgáltatást az Android Kisegítő lehetőségek menüjében.");return;
+   }
    File model=new File(new File(JarvisHome.initialize(this),"models"),"model.gguf");
    if(!model.isFile()){status.setText("Előbb telepíts egy GGUF modellt.");return;}
    if(!OfflineBrain.available()){status.setText("Offline motor nem elérhető: "+OfflineBrain.failure());return;}
@@ -91,7 +108,7 @@ public final class MainActivity extends Activity {
   });
   ScrollView scroll=new ScrollView(this);scroll.addView(root);setContentView(scroll);
  }
- @Override protected void onDestroy(){speech.close();if(voice!=null)voice.close();super.onDestroy();}
+ @Override protected void onDestroy(){if(commandWatcher!=null)commandHandler.removeCallbacks(commandWatcher);speech.close();if(voice!=null)voice.close();super.onDestroy();}
  @Override protected void onActivityResult(int requestCode,int resultCode,Intent data){
   super.onActivityResult(requestCode,resultCode,data);
   if(requestCode==ModelInstaller.PICK_MODEL&&resultCode==RESULT_OK&&data!=null){
