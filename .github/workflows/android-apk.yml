@@ -1,4 +1,4 @@
-name: Build JARVIS 2.1 APK
+name: Build JARVIS 2.2 APK
 on:
   workflow_dispatch:
   push:
@@ -24,10 +24,15 @@ jobs:
           for tool in aapt2 d8 zipalign apksigner; do
             test -x "$SDK/build-tools/35.0.0/$tool" || { echo "Missing $tool in build-tools 35.0.0"; exit 1; }
           done
+      - name: Restore persistent JARVIS debug signing key
+        uses: actions/cache@v4
+        with:
+          path: signing.keystore
+          key: jarvis-v22-debug-signing-key-1
       - name: Build and sign debug APK
         run: bash build.sh
       - uses: actions/upload-artifact@v4
         with:
-          name: JARVIS-2.1-debug-apk
+          name: JARVIS-2.2-debug-apk
           path: build/JARVIS-2.1.apk
           if-no-files-found: error
