@@ -54,7 +54,17 @@ Java_hu_jarvis_local_OfflineBrain_generate(JNIEnv* env, jclass,
     llama_context* context=llama_init_from_model(cached_model,context_params);
     if (!context) return message(env,"Nincs elég RAM a helyi beszélgetéshez.");
     const llama_vocab* vocab=llama_model_get_vocab(cached_model);
-    std::string input="Te JARVIS vagy, magyarul válaszoló helyi asszisztens. Válaszolj röviden és pontosan.\nFelhasználó: "+prompt+"\nJARVIS:";
+    std::string system_prompt="Te JARVIS vagy, magyarul válaszoló helyi asszisztens. Válaszolj röviden és pontosan.";
+    llama_chat_message messages[2]={{"system",system_prompt.c_str()},{"user",prompt.c_str()}};
+    const char* tmpl=llama_model_chat_template(cached_model,nullptr);
+    int formatted=llama_chat_apply_template(tmpl,messages,2,true,nullptr,0);
+    std::string input;
+    if(formatted>0&&formatted<30000){
+        std::vector<char> buf((size_t)formatted+1,0);
+        int nWritten=llama_chat_apply_template(tmpl,messages,2,true,buf.data(),(int)buf.size());
+        if(nWritten>0)input.assign(buf.data(),(size_t)nWritten);
+    }
+    if(input.empty())input=system_prompt+"\\nFelhasználó: "+prompt+"\\nJARVIS:";
     int n=llama_tokenize(vocab,input.c_str(),(int)input.size(),nullptr,0,true,true);
     if (n>=0) {llama_free(context);return message(env,"Érvénytelen modell-tokenizálás.");}
     n=-n;
