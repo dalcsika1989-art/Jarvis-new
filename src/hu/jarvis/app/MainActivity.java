@@ -110,7 +110,7 @@ public final class MainActivity extends Activity {
    new Thread(()->{
     String reply;
     try{
-     String context=ConversationMemory.recent(this)+"\nFelhasználó: "+q;
+     String context=ConversationMemory.recentForPrompt(this)+"\nFelhasználó: "+q;
      reply=OfflineBrain.replyStreaming(model.getAbsolutePath(),context,partial->runOnUiThread(()->{
       if(!isFinishing())status.setText(partial);
      }));
