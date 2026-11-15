@@ -54,7 +54,7 @@ Java_hu_jarvis_local_OfflineBrain_generate(JNIEnv* env, jclass,
     llama_context* context=llama_init_from_model(cached_model,context_params);
     if (!context) return message(env,"Nincs elég RAM a helyi beszélgetéshez.");
     const llama_vocab* vocab=llama_model_get_vocab(cached_model);
-    std::string input="Te JARVIS vagy, magyarul válaszoló helyi asszisztens. Válaszolj röviden és pontosan.\\nFelhasználó: "+prompt+"\\nJARVIS:";
+    std::string input="Te JARVIS vagy, magyarul válaszoló helyi asszisztens. Válaszolj röviden és pontosan.\nFelhasználó: "+prompt+"\nJARVIS:";
     int n=llama_tokenize(vocab,input.c_str(),(int)input.size(),nullptr,0,true,true);
     if (n>=0) {llama_free(context);return message(env,"Érvénytelen modell-tokenizálás.");}
     n=-n;
