@@ -7,7 +7,7 @@ import java.net.*;
 import java.nio.file.*;
 import java.security.MessageDigest;
 public final class ModelDownloader {
- private static final String URL="https://huggingface.co/bartowski/Qwen2.5-1.5B-Instruct-GGUF/resolve/main/Qwen2.5-1.5B-Instruct-Q4_K_M.gguf";
+ private static final String URL="https://huggingface.co/bartowski/Qwen2.5-1.5B-Instruct-GGUF/resolve/ba3979d6e9ad24cfa15136fef1f59c9b3bcab8b9/Qwen2.5-1.5B-Instruct-Q4_K_M.gguf";
  private static final String SHA256="1adf0b11065d8ad2e8123ea110d1ec956dab4ab038eab665614adba04b6c3370";
  private static final long MAX_BYTES=2L*1024*1024*1024;
  private static final Handler UI=new Handler(Looper.getMainLooper());
