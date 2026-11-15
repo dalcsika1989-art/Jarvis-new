@@ -1,8 +1,8 @@
-name: Build JARVIS 2.2 APK
+name: JARVIS 2.0 Gemini Live source verification
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [jarvis2-gemini-live-source]
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -28,11 +28,11 @@ jobs:
         uses: actions/cache@v4
         with:
           path: signing.keystore
-          key: jarvis-v22-debug-signing-key-1
+          key: jarvis-live-dev-signing-key-1
       - name: Build and sign debug APK
         run: bash build.sh
       - uses: actions/upload-artifact@v4
         with:
-          name: JARVIS-2.2-debug-apk
-          path: build/JARVIS-2.1.apk
+          name: JARVIS-2.0-Gemini-Live-dev-only
+          path: build/JARVIS-2.0-LIVE-dev.apk
           if-no-files-found: error
