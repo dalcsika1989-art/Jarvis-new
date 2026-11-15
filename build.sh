@@ -21,6 +21,12 @@ mapfile -t classes < <(find build/classes -type f -name '*.class' | sort)
 test -s build/dex/classes.dex || { echo "ERROR: Missing classes.dex"; exit 1; }
 cp build/base.apk build/unsigned.apk
 (cd build/dex && zip -q ../unsigned.apk classes.dex)
+if [[ -d native/build ]]; then
+  mkdir -p build/apklibs/lib/arm64-v8a
+  find native/build -type f -name '*.so' -exec cp -L {} build/apklibs/lib/arm64-v8a/ \;
+  test -s build/apklibs/lib/arm64-v8a/libjarvis_llm.so || { echo "Missing native inference library"; exit 1; }
+  (cd build/apklibs && zip -q -0 -r ../unsigned.apk lib)
+fi
 "$BT/zipalign" -f -p 4 build/unsigned.apk build/aligned.apk
 if [[ ! -f signing.keystore ]]; then
  keytool -genkeypair -keystore signing.keystore -storepass android -keypass android -alias jarvis -dname 'CN=JARVIS Personal Build' -keyalg RSA -keysize 2048 -validity 10000 -noprompt
