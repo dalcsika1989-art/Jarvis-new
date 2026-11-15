@@ -24,8 +24,8 @@ Java_hu_jarvis_local_OfflineBrain_generate(JNIEnv* env,jclass,jstring modelPath,
  const llama_vocab* vocab=llama_model_get_vocab(model);
  std::string input="Te JARVIS vagy, magyarul válaszoló helyi asszisztens. Válaszolj röviden és pontosan.\nFelhasználó: "+prompt+"\nJARVIS:";
  int n=llama_tokenize(vocab,input.c_str(),(int)input.size(),nullptr,0,true,true);
- std::vector<llama_token> tokens(n>0?n:1);
- if(n<0)n=llama_tokenize(vocab,input.c_str(),(int)input.size(),tokens.data(),(int)tokens.size(),true,true);
+ std::vector<llama_token> tokens(n<0?-n:(n>0?n:1));
+ n=llama_tokenize(vocab,input.c_str(),(int)input.size(),tokens.data(),(int)tokens.size(),true,true);
  if(n<=0||n>1700){llama_free(ctx);llama_model_free(model);return env->NewStringUTF("A kérés túl hosszú.");}
  llama_batch batch=llama_batch_get_one(tokens.data(),n);
  if(llama_decode(ctx,batch)!=0){llama_free(ctx);llama_model_free(model);return env->NewStringUTF("A modell feldolgozása sikertelen.");}
