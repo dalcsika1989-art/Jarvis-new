@@ -35,4 +35,14 @@ fi
 "$BT/apksigner" sign --ks signing.keystore --ks-pass pass:android --out build/JARVIS-4.0.apk build/aligned.apk
 "$BT/apksigner" verify --verbose build/JARVIS-4.0.apk
 test -s build/JARVIS-4.0.apk
+echo "== Verify essential offline Android native libraries =="
+for library in libjarvis_llm.so libllama.so libggml.so libggml-base.so libggml-cpu.so; do
+  unzip -Z -1 build/JARVIS-4.0.apk | grep -Fx "lib/arm64-v8a/$library" >/dev/null || {
+    echo "ERROR: Missing $library in final APK"; exit 1;
+  }
+done
+"$BT/aapt2" dump badging build/JARVIS-4.0.apk | grep -q "package: name='hu.jarvis.monitor.v22'" || {
+  echo "ERROR: APK package mismatch"; exit 1;
+}
+sha256sum build/JARVIS-4.0.apk
 echo "APK BUILT: build/JARVIS-4.0.apk"
