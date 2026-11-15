@@ -14,9 +14,16 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - uses: android-actions/setup-android@v3
-      - name: Install Android SDK
-        run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+      - name: Check preinstalled Android SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDK="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
+          echo "ANDROID_SDK_ROOT=$SDK" >> "$GITHUB_ENV"
+          test -f "$SDK/platforms/android-35/android.jar" || { echo 'Missing android-35 platform'; exit 1; }
+          for tool in aapt2 d8 zipalign apksigner; do
+            test -x "$SDK/build-tools/35.0.0/$tool" || { echo "Missing $tool in build-tools 35.0.0"; exit 1; }
+          done
       - name: Build and sign debug APK
         run: bash build.sh
       - uses: actions/upload-artifact@v4
