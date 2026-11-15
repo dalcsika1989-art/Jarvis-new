@@ -22,6 +22,14 @@ public final class NeoPanels {
   TextView title=label(a,"‹  "+name.toUpperCase(Locale.ROOT),23);root.addView(title);title.setOnClickListener(v->home.run());
   ScrollView scroll=new ScrollView(a);LinearLayout body=column(a);scroll.addView(body);root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
   switch(name){
+   case "GLOBE":
+    body.addView(new NeoGlobeView(a),new LinearLayout.LayoutParams(-1,(int)(a.getResources().getDisplayMetrics().density*330)));
+    body.addView(label(a,"Animált földgömb: vizualizáció, nem élő műholdas adat.",14));
+    break;
+   case "NATASHA":
+    body.addView(new NatashaView(a),new LinearLayout.LayoutParams(-1,(int)(a.getResources().getDisplayMetrics().density*430)));
+    body.addView(label(a,"Holografikus megjelenítés. A beszélgetéshez válaszd az AI CHAT menüt.",14));
+    break;
    case "FILES":
     File f=Environment.getExternalStorageDirectory();
     item(body,"PHONE STORAGE  •  "+(f.getUsableSpace()/1048576)+" MB FREE",()->launch(a,Settings.ACTION_INTERNAL_STORAGE_SETTINGS));
