@@ -19,6 +19,8 @@ public final class MainActivity extends Activity {
  private HungarianVoice voice;
  private OfflineSpeech speech=new OfflineSpeech();
  private Button askButton;
+ private android.view.View dashboard;
+ private void showDashboard(){if(dashboard!=null)setContentView(dashboard);}
  @Override public void onCreate(Bundle b){
   super.onCreate(b);
   voice=new HungarianVoice(this);
@@ -50,7 +52,7 @@ public final class MainActivity extends Activity {
   root.addView(status);
   LinearLayout nav=new LinearLayout(this);nav.setOrientation(LinearLayout.HORIZONTAL);
   String[] tabs={"DASH","FILES","CHAT","QUICK","CONTROL","SETTINGS"};
-  for(String tab:tabs){Button item=new Button(this);item.setText(tab);item.setTextSize(9);item.setTextColor(0xff00e5ff);nav.addView(item,new LinearLayout.LayoutParams(0,56,1));item.setOnClickListener(v->{if(tab.equals("CHAT"))question.requestFocus();else if(tab.equals("FILES"))ModelInstaller.pick(this);else if(tab.equals("CONTROL"))status.setText("Android-vezérlés: engedélyezd a JARVIS kisegítő lehetőséget a Beállításokban.");else if(tab.equals("QUICK"))status.setText("Gyorsparancs: nyisd meg [alkalmazás]; kattints [felirat]; görgess le");else status.setText("JARVIS "+tab+" – helyi rendszer");});}
+  for(String tab:tabs){Button item=new Button(this);item.setText(tab);item.setTextSize(9);item.setTextColor(0xff00e5ff);nav.addView(item,new LinearLayout.LayoutParams(0,56,1));item.setOnClickListener(v->{if(tab.equals("CHAT"))question.requestFocus();else if(tab.equals("DASH"))showDashboard();else NeoPanels.show(this,tab,()->showDashboard());});}
   root.addView(nav);
   Button speak=new Button(this);speak.setText("UTOLSÓ VÁLASZ FELOLVASÁSA (OFFLINE)");root.addView(speak);
   speak.setOnClickListener(v->{if(voice.isReady())voice.say(status.getText().toString());else Toast.makeText(this,voice.status(),Toast.LENGTH_LONG).show();});
@@ -63,7 +65,7 @@ public final class MainActivity extends Activity {
    status.setText("JARVIS helyben gondolkodik...");ask.setEnabled(false);
    new Thread(()->{String reply=OfflineBrain.reply(model.getAbsolutePath(),ConversationMemory.recent(this)+"\nFelhasználó: "+q);ConversationMemory.append(this,q,reply);runOnUiThread(()->{status.setText(reply);ask.setEnabled(true);if(voice.isReady())voice.say(reply);});}).start();
   });
-  ScrollView scroll=new ScrollView(this);scroll.addView(root);setContentView(scroll);
+  ScrollView scroll=new ScrollView(this);scroll.addView(root);dashboard=scroll;setContentView(scroll);
  }
  @Override protected void onDestroy(){speech.close();if(voice!=null)voice.close();super.onDestroy();}
  @Override protected void onActivityResult(int requestCode,int resultCode,Intent data){
