@@ -177,6 +177,7 @@
  async function connect(mode='voice'){
   if(socket){if(mode==='voice')teardown();return;}
   if(startup)return;
+  if(mode==='voice'&&pendingText)mode='text';
   requestedMode=mode;
   let key=ui.key.value.trim()||userKey;
   if(!key){
@@ -196,17 +197,27 @@
   const url=WS_ROOT+'?key='+encodeURIComponent(key);
   liveState('GEMINI LIVE — KAPCSOLÓDÁS...');
   try{
-   socket=new WebSocket(url);
-   socket.onopen=()=>{
+   const ws=new WebSocket(url);
+   socket=ws;
+   ws.onopen=()=>{
+    if(socket!==ws)return;
     const setup={model:MODEL,responseModalities:['AUDIO'],
      systemInstruction:{parts:[{text:'JARVIS vagy, gyors magyar nyelvű hangasszisztens. Válaszolj magyarul, világosan és röviden. Egyetlen telefonműveletet se állíts végrehajtottnak megerősítés nélkül. '+safety}]},
      outputAudioTranscription:{},inputAudioTranscription:{},
      tools:[{functionDeclarations:[{name:'phone_action',description:'Telefonművelet kérése a helyi Android JARVIS-vezérlőtől. A kérés nem bizonyítja a tényleges végrehajtást.',parameters:{type:'OBJECT',properties:{action:{type:'STRING',enum:SAFE_ACTIONS},target:{type:'STRING',description:'Alkalmazásnév, képernyőfelirat vagy görgetési irány'}},required:['action']}}]}]};
     jsonSend({setup});
    };
-   socket.onmessage=e=>incoming(e.data);
-   socket.onerror=()=>liveState('GEMINI LIVE — HÁLÓZATI / KULCS HIBA');
-   socket.onclose=e=>{if(socket){socket=null;stopMicrophone(false);connected=false;startup=false;ui.connect.textContent='GEMINI LIVE INDÍTÁSA';liveState('Live kapcsolat lezárult (kód: '+e.code+'). Ellenőrizd a kulcsot és az API-jogosultságot.');}};
+   ws.onmessage=e=>{if(socket===ws)incoming(e.data);};
+   ws.onerror=()=>{if(socket===ws)liveState('GEMINI LIVE — HÁLÓZATI / KULCS HIBA');};
+   ws.onclose=e=>{
+    if(socket!==ws)return;
+    clearSessionTimers();
+    socket=null;stopMicrophone(false);connected=false;startup=false;
+    pendingText='';requestedMode='';
+    if(ui.connect)ui.connect.textContent='EGY KÉRÉS INDÍTÁSA';
+    if(ui.launch)ui.launch.textContent='◉ LIVE';
+    liveState('Live kapcsolat lezárult (kód: '+e.code+'). Nincs aktív session.');
+   };
   }catch(e){teardown();liveState('Live indítás sikertelen: '+String(e.message||e));}
  }
  function install(){
@@ -227,7 +238,7 @@
     responseTimeout=setTimeout(()=>{if(socket){teardown();liveState('Válaszidő lejárt — Gemini session bontva.');}},MAX_RESPONSE_WAIT_MS);
     return;
    }
-   try{await startMicrophone();}catch(e){stopMicrophone(false);liveState('Mikrofon nem indítható: '+String(e.message||e));}
+   try{await startMicrophone();}catch(e){stopMicrophone(false);teardown();liveState('Mikrofon nem indítható: '+String(e.message||e));}
   };
   box.append(row);
   const status=document.createElement('div');status.textContent='NINCS LIVE KAPCSOLAT';status.style.cssText='font:11px ui-monospace,monospace;color:#64eaff;margin-top:10px';box.append(status);ui.status=status;
