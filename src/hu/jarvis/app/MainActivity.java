@@ -182,7 +182,17 @@ public final class MainActivity extends Activity {
  private void stopRecognizer(){
   if(recognizer!=null){recognizer.destroy();recognizer=null;}
  }
+ @Override protected void onPause(){
+  // A háttérbe helyezés nem tarthat fenn díjköteles Gemini Live sessiont.
+  if(web!=null)web.evaluateJavascript("window.JARVISGeminiLive&&window.JARVISGeminiLive.stop()",null);
+  super.onPause();
+ }
+ @Override protected void onStop(){
+  if(web!=null)web.evaluateJavascript("window.JARVISGeminiLive&&window.JARVISGeminiLive.stop()",null);
+  super.onStop();
+ }
  @Override public void onDestroy(){
+  if(web!=null)web.evaluateJavascript("window.JARVISGeminiLive&&window.JARVISGeminiLive.stop()",null);
   stopRecognizer();
   if(waitingAudio!=null){waitingAudio.deny();waitingAudio=null;}
   if(web!=null){web.removeJavascriptInterface("Native");web.destroy();web=null;}
