@@ -79,6 +79,10 @@
   if(!window.isSecureContext||!navigator.mediaDevices?.getUserMedia)throw Error('A mikrofonhoz biztonságos WebView eredet és Android mikrofonengedély szükséges.');
   await audioContext().resume();
   inputStream=await navigator.mediaDevices.getUserMedia({audio:{channelCount:1,echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
+  if(!connected||!socket||socket.readyState!==WebSocket.OPEN){
+   inputStream.getTracks().forEach(t=>t.stop());inputStream=null;
+   throw Error('A Gemini kapcsolat megszakadt a mikrofonengedélyezés során. Indítsd újra egy új kéréssel.');
+  }
   micCtx=new (window.AudioContext||window.webkitAudioContext)({sampleRate:16000});
   await micCtx.resume();
   micSource=micCtx.createMediaStreamSource(inputStream);
@@ -208,7 +212,7 @@
     jsonSend({setup});
    };
    ws.onmessage=e=>{if(socket===ws)incoming(e.data);};
-   ws.onerror=()=>{if(socket===ws)liveState('GEMINI LIVE — HÁLÓZATI / KULCS HIBA');};
+   ws.onerror=()=>{if(socket===ws){teardown();liveState('GEMINI LIVE — HÁLÓZATI / KULCS HIBA. SESSION BONTÁSRA KERÜLT.');}};
    ws.onclose=e=>{
     if(socket!==ws)return;
     clearSessionTimers();
