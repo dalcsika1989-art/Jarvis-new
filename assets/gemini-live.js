@@ -212,13 +212,21 @@
  function install(){
   const box=document.createElement('section');box.className='panel';box.style.cssText='margin:8px auto 18px;max-width:850px;padding:14px;border:1px solid #2a6474;background:#081d29';
   const heading=document.createElement('div');heading.className='label';heading.textContent='GEMINI LIVE — ONLINE HANGMOTOR';box.append(heading);
-  const tip=document.createElement('p');tip.style.cssText='font-size:11px;color:#91bbc8;line-height:1.5';tip.textContent='Az élő hangkapcsolathoz internet és külön Gemini API-kulcs szükséges. A kulcsot nem mentjük az alkalmazás tárhelyére. A régi JARVIS telefonvezérlője változatlan marad.';box.append(tip);
+  const tip=document.createElement('p');tip.style.cssText='font-size:11px;color:#91bbc8;line-height:1.5';
+  tip.textContent='KÖLTSÉGKÍMÉLŐ: nincs állandó Gemini-kapcsolat. Csak indítógombra vagy kérdésküldésre csatlakozik; az első válasz végén bont. Háttérbe lépéskor azonnal bont, maximum 90 másodperc után automatikusan leáll. A Gemini API használata ettől még lehet díjköteles.';
+  box.append(tip);
   const row=document.createElement('div');row.style.cssText='display:flex;gap:8px;flex-wrap:wrap';
   const key=document.createElement('input');key.type='password';key.autocomplete='off';key.placeholder='Gemini API-kulcs (AI Studio)';key.style.cssText='min-width:180px;flex:1;background:#061017;color:#d5f7ff;border:1px solid #46879b;padding:10px';row.append(key);ui.key=key;
-  const connectBtn=document.createElement('button');connectBtn.textContent='GEMINI LIVE INDÍTÁSA';row.append(connectBtn);ui.connect=connectBtn;connectBtn.addEventListener('click',connect);
+  const connectBtn=document.createElement('button');connectBtn.textContent='EGY KÉRÉS INDÍTÁSA';row.append(connectBtn);ui.connect=connectBtn;connectBtn.addEventListener('click',()=>{if(socket)teardown();else connect('voice');});
   const micBtn=document.createElement('button');micBtn.textContent='ÉLŐ MIKROFON';row.append(micBtn);ui.mic=micBtn;micBtn.onclick=async()=>{
-   if(!connected){liveState('Előbb kapcsolódj Gemini Live-hoz.');return;}
-   if(micEnabled){stopMicrophone(true);announce('GEMINI LIVE — MIKROFON LEÁLLÍTVA');return;}
+   if(!connected){connect('voice');return;}
+   if(micEnabled){
+    stopMicrophone(true);
+    announce('Beszéd vége, várakozás egyetlen Gemini válaszra...');
+    if(responseTimeout!==null)clearTimeout(responseTimeout);
+    responseTimeout=setTimeout(()=>{if(socket){teardown();liveState('Válaszidő lejárt — Gemini session bontva.');}},MAX_RESPONSE_WAIT_MS);
+    return;
+   }
    try{await startMicrophone();}catch(e){stopMicrophone(false);liveState('Mikrofon nem indítható: '+String(e.message||e));}
   };
   box.append(row);
@@ -233,12 +241,21 @@
   if(top?.parentNode)top.parentNode.insertBefore(box,top.nextSibling);
   else document.querySelector('main')?.append(box);
   const form=$('form');
-  form?.addEventListener('submit',e=>{if(!connected)return;e.preventDefault();e.stopImmediatePropagation();const input=$('input');const value=input?.value||'';if(input)input.value='';sendText(value);},true);
+  form?.addEventListener('submit',e=>{
+   e.preventDefault();e.stopImmediatePropagation();
+   const input=$('input');const value=(input?.value||'').trim();
+   if(!value)return;
+   if(input)input.value='';
+   sendText(value);
+  },true);
   const originalMic=$('mic');originalMic?.addEventListener('click',e=>{
-   if(!connected)return;e.preventDefault();e.stopImmediatePropagation();micBtn.click();
+   e.preventDefault();e.stopImmediatePropagation();micBtn.click();
   },true);
   window.addEventListener('beforeunload',teardown);
-  document.addEventListener('visibilitychange',()=>{if(document.hidden&&micEnabled)stopMicrophone(true);});
+  document.addEventListener('visibilitychange',()=>{
+   if(document.hidden&&(socket||startup))teardown();
+  });
+  window.addEventListener('pagehide',teardown);
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
  window.JARVISGeminiLive={sendText,start:connect,stop:teardown,get connected(){return connected}};
