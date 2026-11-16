@@ -12,6 +12,25 @@
  let outputCtx=null, scheduled=[], nextAudioTime=0, currentTranscription='';
  let userKey='';
  let connected=false, micEnabled=false, startup=false;
+ let pendingText='',requestedMode='',sessionTimeout=null,setupTimeout=null,responseTimeout=null;
+ const MAX_SESSION_MS=90000, MAX_CONNECT_MS=18000, MAX_RESPONSE_WAIT_MS=30000;
+ function clearSessionTimers(){
+  if(sessionTimeout!==null){clearTimeout(sessionTimeout);sessionTimeout=null;}
+  if(setupTimeout!==null){clearTimeout(setupTimeout);setupTimeout=null;}
+  if(responseTimeout!==null){clearTimeout(responseTimeout);responseTimeout=null;}
+ }
+ function closeAfterAnswer(){
+  clearSessionTimers();
+  stopMicrophone(false);
+  connected=false;startup=false;pendingText='';requestedMode='';
+  const old=socket;socket=null;
+  if(old){try{old.close(1000,'JARVIS egy kérés elkészült')}catch(e){}}
+  if(ui.connect)ui.connect.textContent='EGY KÉRÉS INDÍTÁSA';
+  if(ui.launch)ui.launch.textContent='◉ LIVE';
+  liveState('VÁLASZ KÉSZ — GEMINI SESSION LEZÁRVA');
+  // The already buffered audio can finish playing without an open connection.
+ }
+
  const SAFE_ACTIONS=['open_app','home','back','scroll','click_text','notifications'];
  const safety='Ha egy feladat üzenetküldést, vásárlást, fizetést, törlést, jelszót, jogosultságváltoztatást vagy más jelentős műveletet érint, először kérj egyértelmű jóváhagyást. Ne állítsd, hogy egy Android-művelet kész, amíg erre megerősítés nincs.';
  function liveState(s){
@@ -85,7 +104,7 @@
  }
  function sendText(text){
   text=String(text||'').trim();if(!text)return;
-  if(!connected){liveState('Előbb csatlakoztasd a Gemini Live-ot.');return;}
+  if(!connected){pendingText=text;requestedMode='text';connect('text');return;}
   showResult('user',text);
   jsonSend({clientContent:{turns:[{role:'user',parts:[{text}]}],turnComplete:true}});
  }
@@ -120,7 +139,22 @@
  }
  function incoming(raw){
   let d;try{d=JSON.parse(raw)}catch(e){announce('Nem érthető Gemini üzenet');return;}
-  if(d.setupComplete){connected=true;startup=false;liveState('GEMINI LIVE — CSATLAKOZVA');ui.connect.textContent='LIVE KAPCSOLAT BONTÁSA';if(ui.launch)ui.launch.textContent='● LIVE';if(ui.panel)ui.panel.style.display='none';}
+  if(d.setupComplete){
+   connected=true;startup=false;
+   if(setupTimeout!==null){clearTimeout(setupTimeout);setupTimeout=null;}
+   liveState('GEMINI LIVE — EGY KÉRÉS AKTÍV');
+   ui.connect.textContent='AZONNALI BONTÁS';
+   if(ui.launch)ui.launch.textContent='● LIVE';
+   if(requestedMode==='text'&&pendingText){
+    const text=pendingText;pendingText='';
+    sendText(text);
+   }else if(requestedMode==='voice'){
+    startMicrophone().catch(err=>{
+     liveState('Mikrofonhiba: '+String(err.message||err));
+     teardown();
+    });
+   }
+  }
   if(d.toolCall)handleToolCalls(d.toolCall);
   const content=d.serverContent;
   if(!content)return;
@@ -128,23 +162,36 @@
   if(content.inputTranscription?.text){if($('hint'))$('hint').textContent='Ön: '+content.inputTranscription.text;}
   if(content.outputTranscription?.text){currentTranscription+=content.outputTranscription.text;if($('state'))$('state').textContent='JARVIS BESZÉL';}
   for(const part of content.modelTurn?.parts||[]){if(part.inlineData?.data)playPcm(part.inlineData.data);}
-  if(content.turnComplete && currentTranscription.trim()){
-   showResult('reply',currentTranscription.trim());currentTranscription='';
+  if(content.turnComplete){
+   if(currentTranscription.trim())showResult('reply',currentTranscription.trim());
+   currentTranscription='';
+   closeAfterAnswer();
   }
  }
  function teardown(){
-  stopMicrophone(false);clearPlayback();connected=false;startup=false;currentTranscription='';
+  clearSessionTimers();stopMicrophone(false);clearPlayback();connected=false;startup=false;currentTranscription='';pendingText='';requestedMode='';
   if(socket){const ws=socket;socket=null;try{ws.close(1000,'JARVIS bontás')}catch(e){}}
-  if(ui.connect)ui.connect.textContent='GEMINI LIVE INDÍTÁSA';if(ui.launch)ui.launch.textContent='◉ LIVE';
+  if(ui.connect)ui.connect.textContent='EGY KÉRÉS INDÍTÁSA';if(ui.launch)ui.launch.textContent='◉ LIVE';
   liveState('GEMINI LIVE — LEÁLLÍTVA');
  }
- async function connect(){
-  if(socket){teardown();return;}
+ async function connect(mode='voice'){
+  if(socket){if(mode==='voice')teardown();return;}
   if(startup)return;
+  requestedMode=mode;
   let key=ui.key.value.trim()||userKey;
-  if(!key){liveState('Írd be a saját Gemini API-kulcsodat.');ui.key.focus();return;}
+  if(!key){
+   liveState('A Gemini csak külön kérésre indul; előbb add meg az API-kulcsot.');
+   if(ui.panel)ui.panel.style.display='block';
+   ui.key.focus();return;
+  }
   if(!/^[A-Za-z0-9_-]{12,180}$/.test(key)){liveState('A Gemini API-kulcs formátuma érvénytelen.');return;}
   userKey=key;ui.key.value='';startup=true;
+  clearSessionTimers();
+  setupTimeout=setTimeout(()=>{if(!connected){teardown();liveState('Kapcsolódási időkorlát: nincs nyitott session.');}},MAX_CONNECT_MS);
+  sessionTimeout=setTimeout(()=>{if(socket){teardown();liveState('90 másodperces biztonsági időkorlát — bontva.');}},MAX_SESSION_MS);
+  if(mode==='text'){
+   responseTimeout=setTimeout(()=>{if(socket){teardown();liveState('Nem érkezett válasz 30 másodpercen belül — bontva.');}},MAX_RESPONSE_WAIT_MS);
+  }
   try{await audioContext().resume();}catch(e){}
   const url=WS_ROOT+'?key='+encodeURIComponent(key);
   liveState('GEMINI LIVE — KAPCSOLÓDÁS...');
