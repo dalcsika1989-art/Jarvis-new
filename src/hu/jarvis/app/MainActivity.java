@@ -129,7 +129,7 @@ public final class MainActivity extends Activity {
   @JavascriptInterface public void send(String text){ui.post(()->local(text));}
   @JavascriptInterface public void setMode(boolean enabled){userMode=enabled;event("mode",String.valueOf(enabled));}
   @JavascriptInterface public void mute(boolean enabled){muted=enabled;event("muted",String.valueOf(enabled));}
-  @JavascriptInterface public void stop(){ControlService.cancelCurrentTask();stopRecognizer();event("state","Leállítva");}
+  @JavascriptInterface public void stop(){ui.post(()->{ControlService.cancelCurrentTask();stopRecognizer();if(web!=null)web.evaluateJavascript("window.JARVISGeminiLive&&window.JARVISGeminiLive.stop()",null);event("state","Leállítva — Gemini kapcsolat bontva");});}
   @JavascriptInterface public void control(){
    ui.post(()->{try{startActivity(new Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS));}
     catch(Exception e){event("error",e.getMessage());}});
