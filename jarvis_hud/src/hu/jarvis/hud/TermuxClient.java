@@ -73,6 +73,25 @@ public final class TermuxClient {
           enqueue("remember",payload,"remember");
         } catch(Exception e) {error("remember",e);}
     }
+
+    /** Repeated public HTTPS monitoring; minimum interval five minutes (server enforced). */
+    @JavascriptInterface public void watchPage(final String url,final int repeatSeconds){
+        try{
+            String value=url==null?"":url.trim();
+            java.net.URI uri=new java.net.URI(value);
+            if(!"https".equalsIgnoreCase(uri.getScheme()) || uri.getHost()==null ||
+               uri.getUserInfo()!=null || value.length()>2048 ||
+               (repeatSeconds!=0 && (repeatSeconds<300 || repeatSeconds>86400))){
+                emit("watch",false,errorObject("HTTPS webcím és 0 vagy 300–86400 másodperces ütemezés kell."));
+                return;
+            }
+            JSONObject job=new JSONObject().put("type","fetch_page")
+              .put("payload",new JSONObject().put("url",value))
+              .put("repeat_seconds",repeatSeconds);
+            submit("watch","/api/tasks",job);
+        }catch(Exception e){error("watch",e);}
+    }
+
     @JavascriptInterface public void androidAction(final String command,final String argsJson){
         if(!("home".equals(command)||"back".equals(command)||"recents".equals(command)
            ||"notifications".equals(command)||"launch".equals(command)
