@@ -12,6 +12,15 @@ import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.Toast;
+import android.os.Handler;
+import android.os.Looper;
+import org.json.JSONObject;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 
 public class FloatingService extends Service {
     private WindowManager manager;
@@ -20,8 +29,8 @@ public class FloatingService extends Service {
     private float touchX,touchY;
     private int oldX,oldY;
     private boolean dragging;
-    private static final String[] LABELS={"TERMUX","ALKALM.","TUDÁS","MINI CHAT","BEÁLL.","FŐOLDAL","FÁJLOK","CHAT"};
-    private static final String[] PAGES={"termux","apps","knowledge","mini","settings","home","files","chat"};
+    private static final String[] LABELS={"TERMUX","ALKALM.","TUDÁS","MINI CHAT","BEÁLL.","FŐOLDAL","FÁJLOK","CHAT","GÖRG. FEL","GÖRG. LE"};
+    private static final String[] PAGES={"termux","apps","knowledge","mini","settings","home","files","chat","scroll_up","scroll_down"};
 
     @Override public IBinder onBind(Intent i){return null;}
     private int dp(float d){return (int)(d*getResources().getDisplayMetrics().density+.5f);}
@@ -86,15 +95,51 @@ public class FloatingService extends Service {
             if(dist>dp(163)){hideMenu();return true;}
             double angle=Math.atan2(y,x)+Math.PI/2;
             if(angle<0)angle+=Math.PI*2;
-            int i=((int)Math.round(angle/(Math.PI/4)))%8;
+            int i=((int)Math.round(angle/(2*Math.PI/LABELS.length)))%LABELS.length;
             String page=PAGES[i];
             hideMenu();
-            open(page);
+            if("scroll_up".equals(page)||"scroll_down".equals(page)) queueScroll(page);
+            else open(page);
             return true;
           }
        });
        try{manager.addView(menu,menuParams);}catch(Exception e){menu=null;}
     }
+
+    private void queueScroll(final String command){
+      final String token=getSharedPreferences("jarvis_termux",MODE_PRIVATE).getString("token","");
+      if(token.length()<24){
+        Toast.makeText(this,"Párosítsd a Termux-motort a JARVIS alkalmazásban.",Toast.LENGTH_LONG).show();
+        return;
+      }
+      new Thread(new Runnable(){@Override public void run(){
+        String result="JARVIS: a görgetést nem sikerült sorba állítani.";
+        HttpURLConnection connection=null;
+        try{
+          connection=(HttpURLConnection)new URL("http://127.0.0.1:8765/api/tasks").openConnection();
+          connection.setRequestMethod("POST");
+          connection.setConnectTimeout(2000);connection.setReadTimeout(3500);
+          connection.setRequestProperty("Authorization","Bearer "+token);
+          connection.setRequestProperty("Content-Type","application/json; charset=utf-8");
+          connection.setDoOutput(true);
+          JSONObject body=new JSONObject().put("type","android")
+            .put("payload",new JSONObject().put("command",command).put("args",new JSONObject()));
+          try(OutputStream output=connection.getOutputStream()){
+            output.write(body.toString().getBytes(StandardCharsets.UTF_8));
+          }
+          if(connection.getResponseCode()==200||connection.getResponseCode()==201||connection.getResponseCode()==202){
+            result="JARVIS: "+("scroll_up".equals(command)?"görgetés fel":"görgetés le")+" sorba állítva.";
+          }
+        }catch(Exception error){
+          result="Termux-szerver nem elérhető.";
+        }finally{if(connection!=null)connection.disconnect();}
+        final String text=result;
+        new Handler(Looper.getMainLooper()).post(new Runnable(){@Override public void run(){
+          Toast.makeText(FloatingService.this,text,Toast.LENGTH_SHORT).show();
+        }});
+      }},"JarvisOverlayScroll").start();
+    }
+
     private void open(String page){
        Intent intent=new Intent(this,MainActivity.class);
        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_SINGLE_TOP|Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
@@ -149,8 +194,8 @@ public class FloatingService extends Service {
          p.setShadowLayer(dp(9),0,0,0xff00cfff);c.drawCircle(cx,cy,dp(147),p);
          p.setStrokeWidth(dp(1));p.setColor(0xff146f9e);c.drawCircle(cx,cy,dp(89),p);
          p.setShadowLayer(0,0,0,0);
-         for(int i=0;i<8;i++){
-           double a=-Math.PI/2+i*Math.PI/4;
+         for(int i=0;i<LABELS.length;i++){
+           double a=-Math.PI/2+i*2*Math.PI/LABELS.length;
            float px=cx+(float)Math.cos(a)*orbit,py=cy+(float)Math.sin(a)*orbit;
            p.setStrokeWidth(dp(2));p.setColor(i==6?0xffff3560:0xff1ecaff);
            p.setShadowLayer(dp(6),0,0,i==6?0xffff2455:0xff12beff);p.setStyle(Paint.Style.STROKE);
