@@ -17,6 +17,10 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+      - name: Verify HUD scripts
+        run: |
+          node --check jarvis_hud/assets/premium.js
+          node --check jarvis_hud/assets/termux.js
       - name: Verify Android SDK
         run: |
           SDK="$ANDROID_SDK_ROOT"
