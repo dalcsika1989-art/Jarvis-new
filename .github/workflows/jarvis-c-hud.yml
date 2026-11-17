@@ -1,0 +1,37 @@
+name: JARVIS C Strategic HUD APK
+on:
+  push:
+    branches: [jarvis-c-strategiai-hud]
+    paths:
+      - 'jarvis_hud/**'
+      - '.github/workflows/jarvis-c-hud.yml'
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Verify Android SDK
+        run: |
+          SDK="$ANDROID_SDK_ROOT"
+          test -f "$SDK/platforms/android-35/android.jar"
+          test -x "$SDK/build-tools/35.0.0/aapt2"
+      - name: Restore stable prototype signing key
+        uses: actions/cache@v4
+        with:
+          path: jarvis_hud/signing.keystore
+          key: jarvis-c-hud-prototype-debug-key-v1
+      - name: Build signed JARVIS C APK
+        run: bash jarvis_hud/build.sh
+      - name: Upload installable APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: JARVIS-C-HUD-APK
+          path: jarvis_hud/build/output/JARVIS-C-HUD.apk
+          if-no-files-found: error
