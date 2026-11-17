@@ -26,11 +26,12 @@ public class FloatingService extends Service {
     private WindowManager manager;
     private WindowManager.LayoutParams bubbleParams,menuParams;
     private View bubble,menu;
+    private OverlayWriter writer;
     private float touchX,touchY;
     private int oldX,oldY;
     private boolean dragging;
-    private static final String[] LABELS={"TERMUX","ALKALM.","TUDÁS","MINI CHAT","BEÁLL.","FŐOLDAL","HANG","CHAT","GÖRG. FEL","GÖRG. LE"};
-    private static final String[] PAGES={"termux","apps","knowledge","mini","settings","home","voice","chat","scroll_up","scroll_down"};
+    private static final String[] LABELS={"TERMUX","ALKALM.","TUDÁS","MINI CHAT","BEÁLL.","FŐOLDAL","ÍRÁS","CHAT","GÖRG. FEL","GÖRG. LE"};
+    private static final String[] PAGES={"termux","apps","knowledge","mini","settings","home","write","chat","scroll_up","scroll_down"};
 
     @Override public IBinder onBind(Intent i){return null;}
     private int dp(float d){return (int)(d*getResources().getDisplayMetrics().density+.5f);}
@@ -99,6 +100,7 @@ public class FloatingService extends Service {
             String page=PAGES[i];
             hideMenu();
             if("scroll_up".equals(page)||"scroll_down".equals(page)) queueScroll(page);
+            else if("write".equals(page)) openWriter();
             else open(page);
             return true;
           }
@@ -106,6 +108,10 @@ public class FloatingService extends Service {
        try{manager.addView(menu,menuParams);}catch(Exception e){menu=null;}
     }
 
+    private void openWriter(){
+      if(writer==null)writer=new OverlayWriter(this);
+      writer.show();
+    }
     private void queueScroll(final String command){
       final String token=getSharedPreferences("jarvis_termux",MODE_PRIVATE).getString("token","");
       if(token.length()<24){
@@ -151,6 +157,7 @@ public class FloatingService extends Service {
        menu=null;
     }
     @Override public void onDestroy(){
+      if(writer!=null){writer.destroy();writer=null;}
       hideMenu();
       if(manager!=null&&bubble!=null)try{manager.removeView(bubble);}catch(Exception ignored){}
       bubble=null;
