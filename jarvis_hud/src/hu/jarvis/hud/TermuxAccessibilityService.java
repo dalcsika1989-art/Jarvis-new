@@ -26,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 
 /** Only runs after the user manually enables Accessibility in Android Settings. */
 public class TermuxAccessibilityService extends AccessibilityService {
+  private static volatile TermuxAccessibilityService active;
   private volatile boolean alive;
   private Thread worker;
   private final Handler main=new Handler(Looper.getMainLooper());
@@ -34,6 +35,7 @@ public class TermuxAccessibilityService extends AccessibilityService {
   @Override public void onServiceConnected(){
     super.onServiceConnected();
     alive=true;
+    active=this;
     AccessibilityServiceInfo info=getServiceInfo();
     if(info!=null){
       info.flags|=AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS;
@@ -46,7 +48,19 @@ public class TermuxAccessibilityService extends AccessibilityService {
   }
   @Override public void onAccessibilityEvent(AccessibilityEvent e){}
   @Override public void onInterrupt(){}
-  @Override public void onDestroy(){alive=false;if(worker!=null)worker.interrupt();super.onDestroy();}
+  @Override public void onDestroy(){if(active==this)active=null;alive=false;if(worker!=null)worker.interrupt();super.onDestroy();}
+
+  /** Foreground application as exposed by an explicitly enabled Accessibility service. */
+  public static String foregroundPackage(){
+    TermuxAccessibilityService service=active;
+    if(service==null)return "";
+    AccessibilityNodeInfo root=service.getRootInActiveWindow();
+    if(root==null)return "";
+    try {
+      CharSequence pkg=root.getPackageName();
+      return pkg==null?"":pkg.toString();
+    }finally{root.recycle();}
+  }
 
   private void pollLoop(){
     while(alive && !Thread.currentThread().isInterrupted()){
@@ -123,7 +137,7 @@ public class TermuxAccessibilityService extends AccessibilityService {
       case "scroll_down":message[0]="Görgetés aszinkron végrehajtása szükséges.";return false;
       case "scroll_up":message[0]="Görgetés aszinkron végrehajtása szükséges.";return false;
       case "tap_text":ok=tapText(args.optString("text"));break;
-      case "type_text":ok=typeText(args.optString("text"));break;
+      case "type_text":ok=typeText(args.optString("text"),args.optString("package",""));break;
       default:message[0]="Ismeretlen művelet";return false;
     }
     message[0]=(ok?"OK: ":"Nem sikerült: ")+command;
@@ -205,15 +219,18 @@ public class TermuxAccessibilityService extends AccessibilityService {
       return false;
     }finally{root.recycle();}
   }
-  private boolean typeText(String text){
+  private boolean typeText(String text,String expectedPackage){
     if(text==null||text.length()<1||text.length()>200)return false;
     AccessibilityNodeInfo root=getRootInActiveWindow();if(root==null)return false;
     try{
+      CharSequence pkg=root.getPackageName();
+      if(pkg==null||getPackageName().contentEquals(pkg))return false;
+      if(expectedPackage!=null&&!expectedPackage.isEmpty()&&!expectedPackage.contentEquals(pkg))return false;
       ArrayDeque<AccessibilityNodeInfo> queue=new ArrayDeque<>();
       queue.add(root);
       for(int visited=0;!queue.isEmpty()&&visited<350;visited++){
         AccessibilityNodeInfo node=queue.removeFirst();
-        if(node.isEditable()&&node.isFocused()){
+        if(node.isEditable()&&node.isFocused()&&!node.isPassword()){
           Bundle data=new Bundle();
           data.putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE,text);
           if(node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT,data))return true;
