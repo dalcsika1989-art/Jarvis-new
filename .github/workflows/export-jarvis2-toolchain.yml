@@ -1,0 +1,29 @@
+name: Export Android 35 toolchain for JARVIS 2.0
+on:
+  push:
+    branches: [toolchain-jarvis2]
+  workflow_dispatch:
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Prepare Android platform, build tools and ECJ compiler
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDK="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
+          test -f "$SDK/platforms/android-35/android.jar"
+          for x in aapt2 d8 zipalign apksigner; do test -x "$SDK/build-tools/35.0.0/$x"; done
+          curl -fsSL --retry 3 -o "$RUNNER_TEMP/ecj.jar" https://repo.maven.apache.org/maven2/org/eclipse/jdt/ecj/3.40.0/ecj-3.40.0.jar
+          mkdir -p export
+          cp "$RUNNER_TEMP/ecj.jar" export/ecj.jar
+          tar -czf export/android35-toolchain.tgz -C "$SDK" platforms/android-35 build-tools/35.0.0
+          ls -lh export
+      - name: Export reusable Android tooling
+        uses: actions/upload-artifact@v4
+        with:
+          name: JARVIS-2.0-android-sdk-tools
+          path: export/
+          if-no-files-found: error
