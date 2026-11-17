@@ -22,6 +22,7 @@ jobs:
           node --check jarvis_hud/assets/premium.js
           node --check jarvis_hud/assets/termux.js
           node --check jarvis_hud/assets/voice.js
+          node --check jarvis_hud/assets/write.js
       - name: Verify Android SDK
         run: |
           SDK="$ANDROID_SDK_ROOT"
