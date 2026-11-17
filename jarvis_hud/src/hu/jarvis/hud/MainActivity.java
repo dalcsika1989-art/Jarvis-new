@@ -31,6 +31,7 @@ import java.util.List;
 
 public class MainActivity extends Activity {
     private WebView web;
+    private VoiceBridge voice;
     private boolean waitingForOverlay;
     private String pendingPage = "home";
     @Override public void onCreate(Bundle savedInstanceState) {
@@ -57,6 +58,8 @@ public class MainActivity extends Activity {
         });
         web.addJavascriptInterface(new Bridge(),"JarvisNative");
         web.addJavascriptInterface(new TermuxClient(this,web),"JarvisTermux");
+        voice=new VoiceBridge(this,web);
+        web.addJavascriptInterface(voice,"JarvisVoiceNative");
         setContentView(web);
         web.loadUrl("file:///android_asset/index.html");
     }
@@ -164,7 +167,12 @@ public class MainActivity extends Activity {
             startOverlay();
         }
     }
+    @Override protected void onActivityResult(int req,int result,Intent data){
+        super.onActivityResult(req,result,data);
+        if(voice!=null)voice.onResult(req,result,data);
+    }
     @Override protected void onDestroy(){
+        if(voice!=null){voice.stop();voice=null;}
         if(web!=null){web.removeJavascriptInterface("JarvisNative");web.destroy();web=null;}
         super.onDestroy();
     }
