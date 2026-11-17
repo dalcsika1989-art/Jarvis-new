@@ -67,7 +67,7 @@ public class MainActivity extends Activity {
        if(web==null)return;
        final String page=pendingPage==null?"home":pendingPage;
        pendingPage=null;
-       if(page.matches("home|chat|knowledge|apps|mini|settings|overlay|status|files|termux"))
+       if(page.matches("home|chat|knowledge|apps|mini|settings|overlay|status|files|termux|voice"))
          web.evaluateJavascript("if(window.jarvisOpenPage)window.jarvisOpenPage('"+page+"');",null);
     }
     @Override protected void onNewIntent(Intent intent){
