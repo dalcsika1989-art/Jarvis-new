@@ -81,7 +81,7 @@ function interpreted(raw){
  feedback("Ezt a parancsot még nem támogatja a JARVIS: "+phrase+".",true);
 }
 window.JarvisVoice={
- open:openVoice,listen:listen,receive:function(json){
+ open:openVoice,listen:listen,executeText:interpreted,receive:function(json){
   var e;try{e=JSON.parse(json);}catch(err){return;}
   if(e.type==="recognized"){by("jarvis-voice-last").textContent="Felismerve: "+e.text;interpreted(e.text);}
   else if(e.type==="error"||e.type==="tts_unavailable")feedback(e.text,false);
