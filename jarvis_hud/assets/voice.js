@@ -78,6 +78,7 @@ function interpreted(raw){
   }else feedback(matched.length?"Több alkalmazás található ezen a néven.":"Nem találtam az alkalmazást.",true);
   return;
  }
+ if(window.JarvisAIUI && window.JarvisAIUI.ask){window.JarvisAIUI.ask(phrase);return;}
  feedback("Ezt a parancsot még nem támogatja a JARVIS: "+phrase+".",true);
 }
 window.JarvisVoice={
