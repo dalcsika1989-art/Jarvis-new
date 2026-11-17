@@ -1,0 +1,138 @@
+
+/* JARVIS C v2.0 - metallic cybernetic visual system */
+:root{--cyan:#12d4ff;--red:#f52651;--green:#1dff79;--gold:#ffca32;--steel:#5d9dbe;--edge:#03bfff;color:#e8faff;font-family:Roboto,"Arial Narrow",Arial,sans-serif}
+*{-webkit-tap-highlight-color:transparent}
+body{background:#00050c}
+.app{background:
+radial-gradient(circle at 50% 40%,#0b2847 0%,#020d1b 52%,#00030b 97%),
+repeating-linear-gradient(0deg,transparent 0 43px,#0ccfff06 44px 45px),
+repeating-linear-gradient(90deg,transparent 0 43px,#0ccfff06 44px 45px);
+border:2px solid #33637d;box-shadow:inset 0 0 24px #18ceff35,0 0 20px #05b6ff40;
+padding:0 6px 8px;isolation:isolate}
+.app:before{inset:4px;pointer-events:none;border:1px solid #2881ad99;box-shadow:inset 0 0 28px #0084cb35;
+background:linear-gradient(145deg,#42e5ff31,transparent 12%,transparent 78%,#ff325223);z-index:-1}
+.app:after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
+background:linear-gradient(90deg,transparent 0 3%,#12bbff17 3.1%,transparent 3.4%,transparent 96%,#ff325215 96.5%,transparent 97%),repeating-linear-gradient(0deg,transparent 0 37px,#1ed1ff07 38px 39px)}
+.head{position:relative;min-height:104px;padding:18px 10px 8px 13px;z-index:2;margin-top:4px;
+background:linear-gradient(156deg,#071727 0%,#041325d8 52%,#040d17 100%);
+border:1px solid #3b8ba7;box-shadow:inset 0 1px 0 #a9f3ff75,inset 0 -4px 10px #00141e,0 5px 10px #0009;
+clip-path:polygon(0 0,94% 0,100% 25%,100% 100%,0 100%);}
+.head:before{content:"";position:absolute;left:4%;right:2%;top:1px;height:3px;background:linear-gradient(90deg,#00bbff,#deffff,transparent 47%,#ff164f 72%,#89eaff);box-shadow:0 0 11px #04d9ff;pointer-events:none}
+.wordmark{font-size:clamp(33px,10vw,46px);line-height:1.02;font-weight:900;letter-spacing:6px;text-shadow:0 1px #fff,0 3px #079ddb,0 0 9px #0fb7f7,0 0 21px #045abf;color:#e8faff}
+.wordmark:after{content:" C";color:#ccefff;font-size:.72em;text-shadow:0 0 9px #ff3661,0 2px #f2365c}
+.subtitle{color:#8bccf0;font-size:10px;letter-spacing:2.8px;font-weight:700;padding-top:7px}
+.stats{font-size:10px;min-width:79px;line-height:1.8;text-align:right;color:#b9deeb}
+.stats #time{color:#fff;font-weight:900;font-size:23px;text-shadow:0 0 9px #37d3ff}
+.stats b{color:#48ff76;text-shadow:0 0 7px #29ff6e}
+.bar{height:5px;gap:7px;margin:10px 13px 1px;filter:drop-shadow(0 0 5px #0cd1ff)}
+.bar i{clip-path:polygon(0 12%,88% 12%,100% 60%,100% 100%,0 100%);box-shadow:inset 0 1px #fff;background:linear-gradient(#d3faff,#04d4ff 40%,#024f8b)}
+.bar i:nth-child(3n){background:linear-gradient(#fff1f5,#fc1d54 44%,#820c26);filter:drop-shadow(0 0 6px #ed265b)}
+.center{flex:1;min-height:220px;position:relative;overflow:hidden;isolation:isolate;margin:0 -3px}
+.center:before{content:"";position:absolute;inset:0;background:
+repeating-linear-gradient(0deg,transparent 0 31px,#37d9ff0b 32px 33px),
+repeating-linear-gradient(90deg,transparent 0 31px,#37d9ff0b 32px 33px),
+radial-gradient(ellipse at center,#0075d818,transparent 69%);z-index:-1}
+.center:after{content:"";position:absolute;width:90vw;height:90vw;max-width:440px;max-height:440px;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none;border:1px dashed #1e96db44;border-radius:50%;box-shadow:0 0 22px #0b9bfb12,inset 0 0 39px #06baff12}
+.reactor{width:min(69vw,34vh,360px);height:min(69vw,34vh,360px);min-width:158px;min-height:158px;filter:drop-shadow(0 0 17px #008dec90);background:
+radial-gradient(circle at 50% 50%,#09ecff29 0 7%,transparent 8%),
+repeating-conic-gradient(from 0deg,#05d9ff 0 3deg,transparent 4deg 7deg,#ff254d 8deg 9deg,transparent 10deg 17deg);
+border:7px solid #09263b;box-shadow:0 0 4px #dcfaff,0 0 23px #0facff,inset 0 0 3px #baffff,inset 0 0 35px #042640;
+animation:breathe 3.6s ease-in-out infinite}
+.reactor:before{content:"";position:absolute;inset:4%;border-radius:50%;
+background:repeating-conic-gradient(from 4deg,transparent 0 4deg,#edfcff 5deg 6deg,#01d3ff 6deg 9deg,transparent 10deg 16deg,#ff1a55 17deg 19deg,transparent 20deg 26deg);
+-webkit-mask:radial-gradient(transparent 66%,#000 68% 77%,transparent 80%);
+mask:radial-gradient(transparent 66%,#000 68% 77%,transparent 80%);
+animation:rotateRev 13s linear infinite;filter:drop-shadow(0 0 10px #d5faff)}
+.reactor:after{content:"";position:absolute;inset:11%;border-radius:50%;border:2px solid #7de7ff;box-shadow:0 0 9px #08baff,inset 0 0 14px #08baff;pointer-events:none;
+background:repeating-conic-gradient(from 11deg,transparent 0 11deg,#0fd2ffb7 12deg 14deg,transparent 15deg 26deg,#ff1f4db7 27deg 29deg,transparent 30deg 37deg);
+-webkit-mask:radial-gradient(transparent 70%,#000 73% 94%,transparent 97%);
+mask:radial-gradient(transparent 70%,#000 73% 94%,transparent 97%);animation:rotate 19s linear infinite}
+.reactor .outer{background:repeating-conic-gradient(from 15deg,#78f3ff 0deg 4deg,#0064b3 4deg 7deg,transparent 7deg 11deg,#ff3558 12deg 14deg,transparent 14deg 18deg);
+-webkit-mask:radial-gradient(transparent 69%,black 71% 84%,transparent 86%);mask:radial-gradient(transparent 69%,black 71% 84%,transparent 86%);filter:drop-shadow(0 0 9px #b9edff);animation:rotate 23s linear infinite}
+.reactor .middle{inset:13%;border:3px solid #39bfff;background:repeating-conic-gradient(from 0deg,#0d2438 0 7deg,#13d7ff96 8deg 10deg,transparent 12deg 16deg);box-shadow:0 0 12px #08d9ff,inset 0 0 19px #18dfff;
+outline:1px solid #97e4ff;outline-offset:-8px;animation:rotateRev 18s linear infinite}
+.reactor .inner{inset:24%;border:3px solid #63dfff;background:radial-gradient(circle,#1387cc 0%,#002f57 29%,#001224 62%);box-shadow:0 0 21px #05ceff,inset 0 0 27px #0780d5}
+.reactor .disk{inset:30%;background:radial-gradient(circle,#16caf7 3%,#0966af 21%,#041b4c 63%);box-shadow:0 0 24px #0af0ff,inset 0 0 11px #84f4ff;border:3px solid #56eaff}
+.reactor .triangle{width:35%;height:35%;background:linear-gradient(155deg,#ecffff,#11dfff 38%,#0551c5 68%,#d4ffff);filter:drop-shadow(0 0 14px #1aefff)}
+.reactor .triangle:before{background:linear-gradient(#02112d,#074579);inset:16%}
+.reactor .triangle:after{background:linear-gradient(#dcffff,#18ebff);box-shadow:0 0 12px #64f5ff;inset:30%}
+.reactor-label{bottom:-28px;font-size:12px;letter-spacing:2px;background:linear-gradient(90deg,transparent,#02192bc9,transparent);padding:3px 8px;white-space:nowrap;text-shadow:0 0 11px #12edff}
+.side{z-index:3;top:30%;padding:10px 5px 10px;font-size:8px;line-height:1.9;letter-spacing:.1px;color:#c4e2ee;background:linear-gradient(155deg,#133551e8,#031323ee 65%,#03182b);border:1px solid #2a94bb;box-shadow:inset 0 1px 2px #b8fcff6b,inset 0 -8px 13px #02101c,0 0 9px #04c8ff6b;min-width:69px;max-width:92px;transform:none}
+.side strong{color:#eaffff;font-size:13px;text-shadow:0 0 6px #44eaff}
+.side.left{left:1px;clip-path:polygon(8% 0,100% 0,100% 90%,92% 100%,0 100%,0 12%)}
+.side.right{right:1px;clip-path:polygon(0 0,92% 0,100% 12%,100% 100%,8% 100%,0 88%)}
+.side .line{font-size:9px;white-space:nowrap}
+.side .small{font-size:9px;color:#6edaf9}
+.side .metric{font-size:17px;font-weight:900;color:white;display:block;line-height:1.3}
+.side .mgreen{color:#30ff63;text-shadow:0 0 6px #1fed45}
+.side .meter{height:7px;border:1px solid #26aeda;background:#000e17;border-radius:2px;display:flex;gap:1px;padding:1px;margin:6px 0}
+.side .meter i{flex:1;background:linear-gradient(#b9ffaa,#17ed52 54%,#028f36);box-shadow:0 0 4px #14ff41}
+.side .meter i.off{background:#0c3446;box-shadow:none}
+.side.secondary{top:auto;bottom:14%;font-size:9px}
+.side.secondary strong{font-size:11px}
+.side.secondary .symbol{color:#50eaff;font-size:15px;letter-spacing:3px}
+.side .label{font-size:9px;color:#a0c8db}
+.waveform{height:24px;margin:1px 12px 5px;display:flex;align-items:center;justify-content:center;gap:3px;background:
+linear-gradient(90deg,transparent,#092e4d7a,transparent);border-top:1px solid #1ca2d53a;border-bottom:1px solid #1ca2d53a;position:relative}
+.waveform .w{display:block;width:2px;height:var(--h);border-radius:50px;background:#41e3ff;box-shadow:0 0 7px #37eaff;animation:wave 1.15s ease-in-out infinite;animation-delay:var(--d)}
+@keyframes wave{0%,100%{transform:scaleY(.35)}50%{transform:scaleY(1.3)}}
+.home-alerts{margin:0 11px 7px;border:1px solid #216c93;background:linear-gradient(150deg,#09253a,#020e1c);box-shadow:inset 0 1px 2px #9bfaff60,inset 0 -12px 14px #010c1c,0 0 10px #08a2de32;padding:5px 8px 6px;position:relative}
+.home-alerts:before{content:"ÉRTESÍTÉSEK · 4 ÁLLAPOT";display:block;text-align:center;letter-spacing:1.1px;font-size:10px;font-weight:bold;margin-bottom:5px;color:#ecfbff;text-shadow:0 0 5px #11bbff}
+.home-alerts .alerts{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+.alerts button{height:28px;min-width:0;overflow:hidden;display:flex;justify-content:space-between;align-items:center;gap:4px;padding:3px 6px;color:#fff;text-align:left;border:1px solid #1bafff;border-radius:3px;background:linear-gradient(95deg,#063a60,#0b1527);box-shadow:inset 0 0 9px #047dcb,0 0 3px #04bfff;text-shadow:0 0 5px #1bcaff;font-size:9px;font-weight:bold}
+.alerts button span{font-size:11px}
+.alerts button:nth-child(2){border-color:#ffcf35;background:linear-gradient(95deg,#57400b,#15121a);box-shadow:inset 0 0 7px #e6a11f,0 0 3px #ffbd26}
+.alerts button:nth-child(3){border-color:#24fc6f;background:linear-gradient(95deg,#095026,#071c1e);box-shadow:inset 0 0 7px #21bc4f,0 0 3px #17ff53}
+.alerts button:nth-child(4){border-color:#f93256;background:linear-gradient(95deg,#5e1028,#150f1f);box-shadow:inset 0 0 7px #e42b51,0 0 3px #ff2b51}
+.bottom{grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;position:relative;margin:1px 9px 11px}
+.tile{min-height:56px;max-width:none;border-radius:5px;border:1px solid #258cb6;clip-path:polygon(8% 0,92% 0,100% 17%,100% 83%,92% 100%,8% 100%,0 83%,0 17%);
+background:linear-gradient(152deg,#163950 0%,#0a2b48 37%,#031323 67%,#06233a);box-shadow:inset 0 2px 2px #c4feff7a,inset 0 -4px 12px #017fb370,0 0 6px #07aeff77;gap:4px}
+.tile .ic{font-size:21px;color:#86f5ff;text-shadow:0 0 5px #02e0ff,0 0 12px #008dff;line-height:1}
+.tile .tx{font-size:9px;font-weight:700;color:#f3ffff;text-shadow:0 0 4px #61dfff}
+.tile:nth-child(1),.tile:nth-child(5){box-shadow:inset 0 2px 2px #a7faff7a,inset 0 -4px 12px #017fb370,0 0 6px #07aeff77}
+.chip{font-size:8px;bottom:2px;right:13px;color:#4998bd}
+.screen{background:radial-gradient(circle at 50% 35%,#0b314f,#041224 60%,#01050c 94%);border:2px solid #2a6481;box-shadow:inset 0 0 30px #068fe660}
+.screen:before{position:absolute;inset:5px;content:"";pointer-events:none;border:1px solid #1ca4da3c;z-index:0}
+.screenhead{flex-shrink:0;height:70px;background:linear-gradient(145deg,#122c45,#04101f);border-bottom:2px solid #1a89b8;box-shadow:0 4px 11px #000b,inset 0 1px 3px #adfbff76;color:#ecffff;text-shadow:0 0 7px #25ceff}
+.screenhead button,.sm{background:linear-gradient(#174e74,#061627);border:1px solid #34b7e4;box-shadow:inset 0 1px #c2f5ff80,0 0 6px #0bbcff}
+.float{width:43px;height:43px;top:45%;left:2px;border:2px solid #21d4ff;box-shadow:0 0 9px #04caff,inset 0 0 11px #06cfff;background:radial-gradient(circle,#36d8ff 2%,#083e73 30%,#010917 71%);z-index:12}
+.float:before{font-size:31px;text-shadow:0 0 13px white}
+.radialback{background:#010510b8}
+.radial{width:min(350px,91vw);height:min(350px,91vw)}
+.radial:before{inset:8%;background:repeating-conic-gradient(from 5deg,transparent 0deg 10deg,#19dbff34 12deg,#ff315134 13deg,transparent 15deg 23deg);
+mask:radial-gradient(transparent 57%,black 58% 74%,transparent 76%);border:2px solid #44dfff;box-shadow:0 0 20px #12dfff}
+.radial button{width:70px;height:70px;background:linear-gradient(150deg,#20526d,#05283f 55%,#03121e);clip-path:polygon(25% 0,75% 0,100% 24%,100% 75%,75% 100%,25% 100%,0 75%,0 24%);border:1px solid #25cfff;border-radius:0;box-shadow:inset 0 0 11px #28e8ff82,0 0 12px #13cfff76;font-weight:bold}
+.radial button .i{font-size:24px;text-shadow:0 0 8px #1befff}
+.radial .core{width:113px;height:113px;border-radius:50%;clip-path:none;border:3px solid #7ce8ff;background:repeating-conic-gradient(#0fc4ff 0 7deg,#02182f 7deg 12deg,#ff2c54 12deg 14deg,#072c44 14deg 20deg);box-shadow:0 0 22px #12d7ff,inset 0 0 25px #0e84ec}
+.radial .core .i{font-size:48px;text-shadow:0 0 15px #88faff}
+.graph{background-image:radial-gradient(circle at 45% 50%,#007cd42a,transparent 61%),repeating-linear-gradient(#00d9ff06 0 1px,transparent 1px 29px),repeating-linear-gradient(90deg,#00d9ff06 0 1px,transparent 1px 29px)}
+.graphinfo{background:linear-gradient(#0d3854,#041526);border:1px solid #1eafd9;border-radius:3px;box-shadow:inset 0 1px #a2faff75,0 0 14px #008efb3d;color:#c9faff;padding:9px}
+.tools button{background:linear-gradient(#155c82,#031b31);border:1px solid #1dbfff;box-shadow:inset 0 1px #9bedff,0 0 9px #1dcfff;color:#ecffff}
+.learn{background:linear-gradient(#102b45,#020b17);border-top:1px solid #4adfff;box-shadow:0 -4px 14px #057fad45}
+.learn input,.chatinput input{background:#03192e;border:1px solid #1bcaff;box-shadow:inset 0 0 7px #16c9ff36}
+.learn button,.chatinput button{background:linear-gradient(#096c9b,#022844);border:1px solid #26dfff;box-shadow:0 0 9px #02aaff75}
+.chatbox{background:radial-gradient(circle at 50% 0%,#014b7a21,transparent 60%);padding-bottom:18px}
+.chatbox .msg{border:1px solid #2187b8;background:linear-gradient(140deg,#0e3d60,#041729);box-shadow:inset 0 1px #6ce8ff38,0 0 9px #0a7aca1f}
+.chatbox .msg.mine{background:linear-gradient(140deg,#0b648d,#082a4a)}
+.chat-visual{display:flex;flex-direction:column;align-items:center;gap:10px;padding:19px 0 15px;flex-shrink:0}
+.chat-reactor{position:relative;width:145px;height:145px;display:grid;place-items:center;border-radius:50%;border:2px solid #4fdcff;box-shadow:0 0 18px #0adeff,inset 0 0 15px #07cfff;background:repeating-conic-gradient(#00bfff 0deg 7deg,#031d30 8deg 14deg,#ff274e 15deg 17deg,#04243b 18deg 22deg);animation:rotate 25s linear infinite}
+.chat-reactor:after{content:"▽";display:grid;place-items:center;width:80px;height:80px;border-radius:50%;font-size:75px;font-weight:900;color:#adfaff;background:radial-gradient(circle,#036cae,#031a40);box-shadow:inset 0 0 12px #0cf4ff,0 0 17px #00caff;animation:rotateRev 25s linear infinite;text-shadow:0 0 15px #7cffff}
+.chat-pedestal{width:220px;height:24px;border:2px solid #2bdcff;border-radius:50%;box-shadow:0 0 20px #00bfff,inset 0 0 17px #03c7ff;background:radial-gradient(ellipse,#01bfff5b,transparent 80%);margin-top:-13px}
+.chat-caption{color:#9cdefb;text-align:center;font-size:10px;letter-spacing:2px;text-shadow:0 0 8px #12dfff}
+.chatmini{background:linear-gradient(150deg,#12334eee,#031020f2);border:2px solid #36caff;box-shadow:0 0 16px #0bbcff,inset 0 0 20px #1179c74d;backdrop-filter:blur(6px)}
+.chatmini .minihead{background:linear-gradient(#155273,#071c30);color:#f7ffff;text-shadow:0 0 7px #1bcfff}
+.toast{border:1px solid #12d4ff;border-left:4px solid #12d4ff;background:linear-gradient(150deg,#114061,#041627);box-shadow:0 0 10px #000b,inset 0 0 13px #0287cb42;color:white}
+.toast.good{border-color:#24ff8c;border-left:4px solid #24ff8c}.toast.bad{border-color:#ff3157;border-left:4px solid #ff3157}.toast.warn{border-color:#ffd038;border-left:4px solid #ffd038}
+.launcher{position:fixed;inset:0;z-index:20;display:none;background:radial-gradient(circle at center,#0b3556,#010817 85%);overflow:hidden}
+.launcher.show{display:flex;flex-direction:column}
+.launchbar{display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #1bcaff;background:linear-gradient(#133854,#051323);padding:18px 14px;flex-shrink:0;font-weight:900;letter-spacing:1px}
+.launchbar button{padding:9px;border:1px solid #2ed9ff;background:#134569;color:#fff;border-radius:6px}
+.launchhint{font-size:10px;color:#8bc9e3;padding:7px 16px}
+.launchlist{min-height:0;overflow-y:auto;padding:9px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-content:start;gap:9px}
+.launcher button.appitem{border:1px solid #238cb4;border-radius:7px;min-height:99px;color:#fff;background:linear-gradient(145deg,#17415c,#041829);box-shadow:inset 0 1px #a4eeff79,inset 0 -4px 12px #093452,0 0 7px #09adff43;font-size:10px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:7px;padding:7px;text-overflow:ellipsis;overflow:hidden}
+.launcher .appitem img{width:48px;height:48px;object-fit:contain;border-radius:10px;filter:drop-shadow(0 0 4px #09bfff)}
+.launcher .appitem .fallback{width:44px;height:44px;display:grid;place-items:center;border-radius:12px;border:1px solid #59deff;font-size:27px}
+.launcher .appitem span:last-child{width:100%;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}
+@media(min-height:790px){.head{min-height:112px}.center{min-height:290px}.reactor{width:min(72vw,34vh);height:min(72vw,34vh)}.bottom .tile{min-height:65px}.home-alerts{padding:7px 9px}.alerts button{height:31px}}
+@media(max-height:680px){.head{min-height:82px;padding-top:10px}.center{min-height:160px}.reactor{width:min(55vw,27vh);height:min(55vw,27vh);min-width:120px;min-height:120px}.side{top:20%;padding:4px}.side.secondary{bottom:2%}.home-alerts .alerts{display:none}.home-alerts{padding:3px}.home-alerts:before{margin:0}.bottom{margin:0 8px 8px}.tile{min-height:42px}.wordmark{font-size:27px}.subtitle{font-size:8px}.stats #time{font-size:16px}.waveform{height:13px}}
+@media(prefers-reduced-motion:reduce){.reactor,.reactor:before,.reactor:after,.reactor .outer,.reactor .middle,.chat-reactor,.chat-reactor:after,.waveform .w{animation-duration:25s!important}}
