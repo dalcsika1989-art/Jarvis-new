@@ -12,7 +12,7 @@ function say(text,kind){
  var element=create("div","toast "+(kind||""),text);
  holder.appendChild(element);setTimeout(function(){element.remove();},4500);
 }
-var css=String.raw\`
+var css=String.raw`
 #termux-status{position:relative;margin:4px 12px 5px;width:calc(100% - 24px);height:29px;background:linear-gradient(105deg,#0a2e44,#041221);border:1px solid #239ac6;color:#d6f5ff;box-shadow:inset 0 0 10px #15bfff33,0 0 6px #02bfff40;font-size:10px;letter-spacing:.7px;z-index:3;border-radius:3px;text-align:center;font-weight:bold}
 #termux-status.online{border-color:#3dff8e;color:#b2ffd0;box-shadow:0 0 9px #1aff7055}
 #termux-panel{position:fixed;inset:0;background:radial-gradient(circle at 50% 23%,#103953,#030c18 72%);z-index:38;display:none;flex-direction:column;padding:9px 10px 18px;color:#d4f7ff}
@@ -43,7 +43,7 @@ var css=String.raw\`
 #termux-panel .task .ok{color:#40ff8a}
 #termux-panel .task .err{color:#ff5b7d}
 #termux-panel .task .pending{color:#fdd452}
-\`;
+`;
 var style=document.createElement("style");style.textContent=css;document.head.appendChild(style);
 var banner=create("button");banner.id="termux-status";banner.textContent="◈ TERMUX MOTOR · "+(paired?"KAPCSOLÓDÁS":"PÁROSÍTÁS");
 var wave=document.querySelector(".waveform");container.insertBefore(banner,wave||container.querySelector(".bottom"));
