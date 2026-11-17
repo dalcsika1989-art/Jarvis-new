@@ -1,0 +1,21 @@
+
+/* JARVIS C 2.4 voice UI, follows existing blue/red HUD */
+.jarvis-voice-trigger{position:relative;z-index:3;display:flex;align-items:center;justify-content:center;gap:10px;margin:3px 12px 7px;width:calc(100% - 24px);padding:9px;border:1px solid #2ddaff;border-radius:7px;color:#ecffff;background:linear-gradient(130deg,#125477,#06192b);font-weight:800;letter-spacing:1px;box-shadow:inset 0 1px #a9ffff88,0 0 10px #009eff85}
+.jarvis-voice-trigger:active{filter:brightness(1.35)}
+.jarvis-voice-status{position:relative;z-index:3;max-height:35px;overflow:hidden;font-size:10px;text-align:center;color:#9ee3fa;padding:2px 10px 5px}
+.jarvis-mic-inline{border-radius:5px!important;border:1px solid #1bc8ee!important;background:#0d4568!important;color:#edffff;min-width:36px}
+.jarvis-voice-layer{display:none;position:fixed;inset:0;z-index:42;padding:8px 12px 20px;overflow:auto;background:radial-gradient(circle at 50% 25%,#0d3851,#010916 78%);color:#e5faff}
+.jarvis-voice-layer.open{display:block}
+.jarvis-voice-layer .heading{display:flex;justify-content:space-between;align-items:center;padding:14px 5px;border-bottom:2px solid #05c8ff;box-shadow:0 4px 8px #0089d366}
+.jarvis-voice-layer h2{margin:0;font-size:16px;letter-spacing:2px}
+.jarvis-voice-layer h3{font-size:12px;margin:0 0 8px;color:#76e5ff}
+.jarvis-voice-layer p,.jarvis-voice-layer label{font-size:12px;line-height:1.5;color:#b5ddeb}
+.jarvis-voice-layer .card{margin:12px 0;border:1px solid #237aab;border-radius:7px;padding:14px;background:linear-gradient(#0e3048,#051422);box-shadow:inset 0 2px #b0fcff55,0 0 9px #00adfb33}
+.jarvis-voice-layer button{border:1px solid #27b7e7;background:linear-gradient(#125a83,#06253e);padding:10px;color:#e9f9ff;border-radius:5px}
+.jarvis-voice-layer button.big{font-size:16px;font-weight:bold;width:100%;padding:16px}
+.jarvis-voice-layer .recognized{margin-top:9px;padding:9px;border-left:3px solid #40cfff;background:#071b2a;font-size:12px;line-height:1.5}
+.jarvis-voice-layer .samples{font-size:11px;line-height:2;color:#9bdfff}
+#termux-monitor .row{display:flex;gap:6px;flex-wrap:wrap}
+#termux-monitor input,#termux-monitor select{flex:1 1 110px;min-width:0;border:1px solid #228dbb;background:#061f34;color:#ecffff;padding:10px;border-radius:4px}
+#termux-monitor .list-item{font-size:10px;line-height:1.5;padding:7px 0;border-bottom:1px solid #1c506d;overflow-wrap:anywhere}
+#termux-monitor .list-item strong{color:#7fe7ff}
