@@ -56,6 +56,7 @@ public class MainActivity extends Activity {
           @Override public void onPageFinished(WebView v,String url) {openPendingPage();}
         });
         web.addJavascriptInterface(new Bridge(),"JarvisNative");
+        web.addJavascriptInterface(new TermuxClient(this,web),"JarvisTermux");
         setContentView(web);
         web.loadUrl("file:///android_asset/index.html");
     }
