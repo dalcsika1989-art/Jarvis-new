@@ -3,6 +3,9 @@ package hu.jarvis.hud;
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.os.Bundle;
+import android.accessibilityservice.GestureDescription;
+import android.graphics.Path;
+import android.util.DisplayMetrics;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.accessibility.AccessibilityEvent;
@@ -59,9 +62,25 @@ public class TermuxAccessibilityService extends AccessibilityService {
         final boolean[] success={false};
         final CountDownLatch latch=new CountDownLatch(1);
         main.post(new Runnable(){@Override public void run(){
-           try{success[0]=execute(payload,message);}
-           catch(Exception ex){message[0]="Végrehajtási hiba: "+ex.getClass().getSimpleName();}
-           finally{latch.countDown();}
+           try{
+             String command=payload.optString("command","");
+             if("scroll_down".equals(command)||"scroll_up".equals(command)){
+               boolean down="scroll_down".equals(command);
+               if(scrollNode(down)){
+                 success[0]=true;message[0]="OK: "+command+" (Accessibility elem)";
+                 latch.countDown();
+               } else {
+                 // dispatchGesture is asynchronous. Acknowledge only from its callback.
+                 gestureScroll(down,success,message,latch);
+               }
+             }else{
+               success[0]=execute(payload,message);
+               latch.countDown();
+             }
+           }catch(Exception ex){
+             message[0]="Végrehajtási hiba: "+ex.getClass().getSimpleName();
+             latch.countDown();
+           }
         }});
         boolean returned=latch.await(12,TimeUnit.SECONDS);
         JSONObject ack=new JSONObject().put("id",id).put("ok",returned&&success[0]).put("message",returned?message[0]:"Időtúllépés");
@@ -101,8 +120,8 @@ public class TermuxAccessibilityService extends AccessibilityService {
         Intent app=getPackageManager().getLaunchIntentForPackage(args.optString("package"));
         if(app!=null){app.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);startActivity(app);ok=true;}
         break;
-      case "scroll_down":ok=scroll(true);break;
-      case "scroll_up":ok=scroll(false);break;
+      case "scroll_down":message[0]="Görgetés aszinkron végrehajtása szükséges.";return false;
+      case "scroll_up":message[0]="Görgetés aszinkron végrehajtása szükséges.";return false;
       case "tap_text":ok=tapText(args.optString("text"));break;
       case "type_text":ok=typeText(args.optString("text"));break;
       default:message[0]="Ismeretlen művelet";return false;
@@ -111,7 +130,7 @@ public class TermuxAccessibilityService extends AccessibilityService {
     return ok;
   }
 
-  private boolean scroll(boolean down){
+  private boolean scrollNode(boolean down){
     AccessibilityNodeInfo root=getRootInActiveWindow();
     if(root==null)return false;
     try{
@@ -127,6 +146,46 @@ public class TermuxAccessibilityService extends AccessibilityService {
       return false;
     }finally{root.recycle();}
   }
+
+  /**
+   * Fallback for custom drawing surfaces, WebView and terminal apps that expose
+   * no scrollable AccessibilityNodeInfo. Called only on the main thread.
+   * Completion confirms the gesture was delivered, not that content moved.
+   */
+  private void gestureScroll(boolean down,final boolean[] success,final String[] message,final CountDownLatch latch){
+    DisplayMetrics metrics=getResources().getDisplayMetrics();
+    int w=metrics.widthPixels,h=metrics.heightPixels;
+    if(w<=0||h<=0){
+      message[0]="Nem sikerült meghatározni a képernyő méretét.";
+      latch.countDown();return;
+    }
+    float x=w*.50f;
+    float from=down?h*.72f:h*.34f;
+    float to=down?h*.34f:h*.72f;
+    Path swipe=new Path();
+    swipe.moveTo(x,from);
+    swipe.lineTo(x,to);
+    GestureDescription gesture=new GestureDescription.Builder()
+       .addStroke(new GestureDescription.StrokeDescription(swipe,0,430)).build();
+    boolean accepted=dispatchGesture(gesture,new GestureResultCallback(){
+      @Override public void onCompleted(GestureDescription description){
+        success[0]=true;
+        message[0]="OK: érintésmozdulat végrehajtva; a tartalom elmozdulása nem ellenőrzött.";
+        latch.countDown();
+      }
+      @Override public void onCancelled(GestureDescription description){
+        success[0]=false;
+        message[0]="Android megszakította a görgetőmozdulatot.";
+        latch.countDown();
+      }
+    },main);
+    if(!accepted){
+      success[0]=false;
+      message[0]="Az Android nem fogadta el a görgetőmozdulatot (Accessibility engedély?).";
+      latch.countDown();
+    }
+  }
+
   private boolean tapText(String text){
     if(text==null||text.length()<1||text.length()>200)return false;
     if(text.matches("(?i)^(send|küldés|buy|pay|purchase|vásárlás|bezahlen|kaufen|delete|törlés)$"))return false;
