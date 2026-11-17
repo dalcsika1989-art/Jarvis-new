@@ -1,0 +1,27 @@
+name: JARVIS female Hungarian offline voice asset
+on:
+  push:
+    branches: [assets-hu-female-anna-20261117]
+  workflow_dispatch:
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Download published Piper Anna voice
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p voice-asset
+          curl -fL --retry 4 --retry-delay 3 -o voice-asset/hu_HU-anna-medium.onnx "https://huggingface.co/rhasspy/piper-voices/resolve/main/hu/hu_HU/anna/medium/hu_HU-anna-medium.onnx?download=true"
+          curl -fL --retry 4 --retry-delay 3 -o voice-asset/hu_HU-anna-medium.onnx.json "https://huggingface.co/rhasspy/piper-voices/resolve/main/hu/hu_HU/anna/medium/hu_HU-anna-medium.onnx.json"
+          curl -fL --retry 4 --retry-delay 3 -o voice-asset/MODEL_CARD "https://huggingface.co/rhasspy/piper-voices/resolve/main/hu/hu_HU/anna/medium/MODEL_CARD"
+          test "$(wc -c < voice-asset/hu_HU-anna-medium.onnx)" -gt 50000000
+          sha256sum voice-asset/hu_HU-anna-medium.onnx
+          file voice-asset/hu_HU-anna-medium.onnx
+      - uses: actions/upload-artifact@v4
+        with:
+          name: JARVIS-HU-Anna-offline-voice
+          path: voice-asset/
+          if-no-files-found: error
