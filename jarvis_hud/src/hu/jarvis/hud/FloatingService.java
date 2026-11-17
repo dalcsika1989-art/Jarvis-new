@@ -29,8 +29,8 @@ public class FloatingService extends Service {
     private float touchX,touchY;
     private int oldX,oldY;
     private boolean dragging;
-    private static final String[] LABELS={"TERMUX","ALKALM.","TUDÁS","MINI CHAT","BEÁLL.","FŐOLDAL","FÁJLOK","CHAT","GÖRG. FEL","GÖRG. LE"};
-    private static final String[] PAGES={"termux","apps","knowledge","mini","settings","home","files","chat","scroll_up","scroll_down"};
+    private static final String[] LABELS={"TERMUX","ALKALM.","TUDÁS","MINI CHAT","BEÁLL.","FŐOLDAL","HANG","CHAT","GÖRG. FEL","GÖRG. LE"};
+    private static final String[] PAGES={"termux","apps","knowledge","mini","settings","home","voice","chat","scroll_up","scroll_down"};
 
     @Override public IBinder onBind(Intent i){return null;}
     private int dp(float d){return (int)(d*getResources().getDisplayMetrics().density+.5f);}
