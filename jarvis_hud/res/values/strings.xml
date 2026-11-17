@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+<string name="jarvis_accessibility_description">JARVIS helyi, engedélyezett Android műveletek. A Termux szerver feladatait végrehajtja; az engedély bármikor kikapcsolható.</string>
+</resources>
