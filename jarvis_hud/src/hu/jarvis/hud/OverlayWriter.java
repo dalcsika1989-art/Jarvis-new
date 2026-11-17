@@ -111,6 +111,11 @@ public final class OverlayWriter {
         }},250);
     }
     void hide(){
+        if(field!=null){
+            try{InputMethodManager imm=(InputMethodManager)service.getSystemService(Context.INPUT_METHOD_SERVICE);
+                if(imm!=null)imm.hideSoftInputFromWindow(field.getWindowToken(),0);
+            }catch(Exception ignored){}
+        }
         if(composer!=null&&manager!=null){
             try{manager.removeView(composer);}catch(Exception ignored){}
         }
