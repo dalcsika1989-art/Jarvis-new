@@ -19,7 +19,7 @@ var $=function(id){return document.getElementById(id);};
 var screen=null,radialOn=false,noticeNumber=0,panX=0,panY=0,zoom=1, pointers={},moved=false,lastPinch=0;
 function notice(text,typ){var el=document.createElement("div");el.className="toast "+(typ||"");el.textContent=text;$("toasts").appendChild(el);setTimeout(function(){el.remove();},4800);noticeNumber++;}
 function tick(){var d=new Date();$("time").textContent=d.toLocaleTimeString("hu-HU",{hour:"2-digit",minute:"2-digit"});try{if(window.JarvisNative)$("battery").textContent=window.JarvisNative.battery()+"%";}catch(e){}}tick();setInterval(tick,20000);
-var actions=[["⌂","FŐOLDAL","home"],["🎙","MIKROFON","mic"],["➤","NAVIGÁCIÓ","navigation"],["◈","CHAT","chat"],["▤","FELADATOK","tasks"],["▣","TUDÁS","knowledge"],["⚙","BEÁLLÍTÁS","settings"],["✖","STOP","stop"]];
+var actions=[["⌂","FŐOLDAL","home"],["◈","TERMUX","mic"],["➤","NAVIGÁCIÓ","navigation"],["◈","CHAT","chat"],["▤","FELADATOK","tasks"],["▣","TUDÁS","knowledge"],["⚙","BEÁLLÍTÁS","settings"],["✖","STOP","stop"]];
 actions.forEach(function(a,i){var angle=i*Math.PI/4-Math.PI/2,b=document.createElement("button");b.style.left=(50+38*Math.cos(angle))+"%";b.style.top=(50+38*Math.sin(angle))+"%";b.innerHTML='<span class="i">'+a[0]+'</span>'+a[1];b.onclick=function(){navigate(a[2]);};$("radial").appendChild(b);});
 var core=document.createElement("button");core.className="core";core.innerHTML='<span class="i">▽</span>JARVIS';core.onclick=closeRadial;$("radial").appendChild(core);
 function closeRadial(){radialOn=false;$("radial").classList.remove("on");$("backdrop").classList.remove("on");}
@@ -28,7 +28,7 @@ $("reactor").addEventListener("click",toggleRadial);$("backdrop").addEventListen
 function closeScreen(){["chatScreen","knowledgeScreen","otherScreen"].forEach(function(id){$(id).classList.remove("show");});screen=null;}
 function openScreen(name){closeRadial();closeScreen();$("mini").classList.remove("show");screen=name;$(name+"Screen").classList.add("show");if(name==="knowledge")setTimeout(drawGraph,60);}
 function other(title,body){$("otherTitle").textContent=title;$("otherContent").innerHTML=body;openScreen("other");}
-function navigate(action){closeRadial();if(action==="menu"){toggleRadial();return;}if(action==="chat"||action==="knowledge"){openScreen(action);return;}if(action==="mini"){closeScreen();$("mini").classList.toggle("show");return;}if(action==="home"){closeScreen();$("mini").classList.remove("show");return;}if(action==="overlay"){try{if(window.JarvisNative){window.JarvisNative.overlay();notice("Lebegő ikon: Android engedély ellenőrzése","warn");}else notice("Külső lebegő ikon csak az APK-ban működik.","warn");}catch(e){notice("Engedély szükséges.","warn");}return;}
+function navigate(action){closeRadial();if(action==="mic" && window.JarvisTermuxUI){window.JarvisTermuxUI.open();return;}if(action==="menu"){toggleRadial();return;}if(action==="chat"||action==="knowledge"){openScreen(action);return;}if(action==="mini"){closeScreen();$("mini").classList.toggle("show");return;}if(action==="home"){closeScreen();$("mini").classList.remove("show");return;}if(action==="overlay"){try{if(window.JarvisNative){window.JarvisNative.overlay();notice("Lebegő ikon: Android engedély ellenőrzése","warn");}else notice("Külső lebegő ikon csak az APK-ban működik.","warn");}catch(e){notice("Engedély szükséges.","warn");}return;}
 var data={status:["DASHBOARD",'<h3>JARVIS STRATÉGIAI HUD</h3><p>ARC-reaktor aktív, gyorsmenü, teljes és mini chat, négyféle értesítés és helyi tudásháló.</p><button data-note="0">Kék · Folyamatban</button><button data-note="1">Sárga · Jóváhagyásra vár</button><button data-note="2">Zöld · Kész</button><button data-note="3">Piros · Hiba</button>'],settings:["BEÁLLÍTÁSOK",'<h3>KÉPERNYŐ / TELEFON</h3><p>Kék–piros stratégiai HUD; képernyőn belüli gyorsgomb, teljes vagy mini chat.</p><button data-overlay="yes">Lebegő ikon engedélyezése</button><p>Az Android engedélyezése után a JARVIS ikon más alkalmazások fölött is megjelenhet. Koppintással visszatérhetsz JARVIS-hoz.</p><button data-overlay="off">Lebegő ikon kikapcsolása</button>'],tasks:["FELADATOK",'<h3>FELADATOK ÉS ÉRTESÍTÉSEK</h3><p>Az állapotok: folyamatban, jóváhagyásra vár, kész és hiba. Valódi telefonműveletek még nem futnak ebben a változatban.</p>'],files:["FÁJLOK",'<h3>FÁJLOK</h3><p>A fájlkezelő jelenleg bemutatópanel. Android-fájlhozzáférés még nincs bekapcsolva.</p>'],mic:["MIKROFON",'<h3>BESZÉDVEZÉRLÉS</h3><p>A mikrofonparancsok motorját később integráljuk. A vázlat nem rögzít hangot.</p>'],navigation:["NAVIGÁCIÓ",'<h3>ANDROID GYORSMENÜ</h3><p>Az új JARVIS saját gyorsparancsai. Külső alkalmazások automatikus vezérlése még nem aktív.</p>'],stop:["STOP",'<h3>LEÁLLÍTVA</h3><p>Nincs futó telefon-automatizálás; a HUD animáció megmarad.</p>']};var d=data[action]||data.status;other(d[0],d[1]);if(action==="stop")notice("Demó feladat leállítva","bad");}
 document.querySelectorAll("[data-go]").forEach(function(el){el.onclick=function(){navigate(this.getAttribute("data-go"));};});
 document.querySelectorAll("[data-close]").forEach(function(el){el.onclick=closeScreen;});
@@ -41,6 +41,20 @@ $("makeMini").onclick=function(){closeScreen();$("mini").classList.add("show");}
 var initial=[["JARVIS CORE",0,0,"core"],["EMLÉKEZET",-105,-114,"system"],["TELEFON",120,-96,"system"],["FELADATOK",142,62,"system"],["AUTOMATIZÁLÁS",55,158,"system"],["TANULÁS",-128,85,"system"]];
 var learned=[];try{learned=JSON.parse(localStorage.getItem("jarvis-c-learned")||"[]");if(!Array.isArray(learned))learned=[];}catch(_e){learned=[];}
 learned=learned.filter(function(e){return e&&typeof e.title==="string";}).slice(0,120);
+
+window.jarvisKnowledgeImport=function(entries){
+ if(!Array.isArray(entries))return;
+ var added=0;
+ entries.forEach(function(item){
+  var title=(typeof item==="string"?item:item&&item.text||"").trim().slice(0,56);
+  if(!title||learned.length>=120)return;
+  if(learned.some(function(x){return x.title.toLowerCase()===title.toLowerCase();}))return;
+  learned.push({title:title,date:Date.now(),source:"termux"});
+  added++;
+ });
+ if(added){try{localStorage.setItem("jarvis-c-learned",JSON.stringify(learned));}catch(e){}drawGraph();}
+};
+
 function nodes(){return initial.concat(learned.map(function(item,i){var a=i*2.39996,r=142+(i%6)*13;return[item.title,Math.cos(a)*r,Math.sin(a)*r,"new"];}));}
 function addLearn(text){text=String(text||"").trim().slice(0,56);if(!text)return;if(learned.length>=120){notice("120 tudásatom a bemutató felső határa","warn");return;}if(learned.some(function(x){return x.title.toLowerCase()===text.toLowerCase();})){notice("Ez a tudáselem már szerepel a hálóban","warn");return;}learned.push({title:text,date:Date.now()});try{localStorage.setItem("jarvis-c-learned",JSON.stringify(learned));}catch(_e){}notice("ÚJ TANULT ATOM · "+text,"good");drawGraph();}
 var c=$("graph"),ctx=c.getContext("2d"),cw=0,ch=0;function drawGraph(){var bounds=c.getBoundingClientRect();if(!bounds.width||!bounds.height)return;var dpr=Math.min(devicePixelRatio||1,2);cw=bounds.width;ch=bounds.height;c.width=Math.round(cw*dpr);c.height=Math.round(ch*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,cw,ch);ctx.save();ctx.translate(cw/2+panX,ch/2+panY);ctx.scale(zoom,zoom);var ns=nodes();$("nodeCount").textContent=ns.length;
@@ -64,4 +78,4 @@ $("chatForm").onsubmit=function(e){e.preventDefault();var s=$("chatText").value.
 window.addEventListener("resize",drawGraph);window.addEventListener("keydown",function(e){if(e.key==="Escape"){closeRadial();closeScreen();$("mini").classList.remove("show");}});
 notice("JARVIS C stratégiai HUD indítva","good");
 })();
-</script><script src="premium.js"></script></body></html>
+</script><script src="premium.js"></script><script src="termux.js"></script></body></html>
