@@ -58,6 +58,7 @@ public class MainActivity extends Activity {
         });
         web.addJavascriptInterface(new Bridge(),"JarvisNative");
         web.addJavascriptInterface(new TermuxClient(this,web),"JarvisTermux");
+        web.addJavascriptInterface(new AIClient(this,web),"JarvisAIEngine");
         voice=new VoiceBridge(this,web);
         web.addJavascriptInterface(voice,"JarvisVoiceNative");
         setContentView(web);
@@ -67,7 +68,7 @@ public class MainActivity extends Activity {
        if(web==null)return;
        final String page=pendingPage==null?"home":pendingPage;
        pendingPage=null;
-       if(page.matches("home|chat|knowledge|apps|mini|settings|overlay|status|files|termux|voice"))
+       if(page.matches("home|chat|knowledge|apps|mini|settings|overlay|status|files|termux|voice|ai"))
          web.evaluateJavascript("if(window.jarvisOpenPage)window.jarvisOpenPage('"+page+"');",null);
     }
     @Override protected void onNewIntent(Intent intent){
