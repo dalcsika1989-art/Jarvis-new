@@ -1,0 +1,29 @@
+/* JARVIS C 2.6: metallic Gemini AI panel */
+.jarvis-ai-button{position:relative;z-index:3;display:block;width:calc(100% - 24px);margin:2px 12px 6px;padding:8px 7px;border:1px solid #21c9fa;border-radius:7px;color:#d2faff;font-size:11px;font-weight:800;letter-spacing:1.2px;background:linear-gradient(110deg,#071c31,#0b496e,#081e35);box-shadow:0 0 9px #06ccfa54,inset 0 1px #b7ffff8a}
+.jarvis-ai-button.online{color:#b6ffdf;border-color:#31f49d;box-shadow:0 0 13px #11ff8a56,inset 0 1px #bffffb8a}
+.jarvis-ai-modal{position:fixed;inset:0;z-index:49;display:none;flex-direction:column;padding:9px 11px 14px;background:radial-gradient(circle at 45% 24%,#0d3854,#030b18 76%);color:#e6faff}
+.jarvis-ai-modal.open{display:flex}
+.jarvis-ai-header{display:flex;align-items:center;justify-content:space-between;border:1px solid #2b95ba;border-radius:6px;padding:10px 10px 7px;background:linear-gradient(130deg,#10415e,#041626);box-shadow:inset 0 1px #b9fbff6b,0 0 11px #0cb9f950}
+.jarvis-ai-header strong{font-size:14px;letter-spacing:1.4px;text-shadow:0 0 8px #17deff}
+.jarvis-ai-header p{font-size:10px;color:#84ddf2;line-height:1.4;margin:6px 0 3px;max-width:265px}
+.jarvis-ai-header p.good{color:#62ffad}
+.jarvis-ai-header p.bad{color:#ff798c}
+.jarvis-ai-header p.wait{color:#ffd570}
+.jarvis-ai-modal button{color:#e4faff;border:1px solid #24b8e5;background:linear-gradient(#125e86,#052039);border-radius:5px;padding:10px;font-weight:700}
+.jarvis-ai-modal button:disabled{opacity:.5}
+.jarvis-ai-scroll{overflow:auto;min-height:0;flex:1}
+.jarvis-ai-card{margin:10px 1px;padding:12px;border:1px solid #23799e;border-radius:7px;background:linear-gradient(#0c3049df,#051423e9);box-shadow:inset 0 1px #89dffe75,inset 0 0 19px #08a7ff18}
+.jarvis-ai-card h3{font-size:12px;color:#8be9ff;letter-spacing:1px;margin:0 0 10px}
+.jarvis-ai-card p{font-size:11px;line-height:1.7;color:#b0d9e9}
+.jarvis-ai-card code{font-size:10px;background:#061725;border:1px solid #297aa3;padding:3px;overflow-wrap:anywhere;color:#c8eeff}
+.jarvis-ai-card button{margin:5px 5px 2px 0;font-size:11px}
+.jarvis-ai-messages{height:210px;overflow:auto;border:1px solid #1a567d;background:#041423;padding:7px;margin-bottom:10px;border-radius:7px;display:flex;flex-direction:column;gap:8px}
+.jarvis-ai-msg{padding:9px 11px;font-size:12px;line-height:1.6;border:1px solid #1c6887;background:#0b3049;border-radius:8px;max-width:91%;white-space:pre-wrap;overflow-wrap:anywhere}
+.jarvis-ai-msg.user{align-self:flex-end;border-color:#318ec8;background:#114164}
+.jarvis-ai-msg.model{align-self:flex-start;border-color:#238d80;background:#0b2b39}
+.jarvis-ai-msg strong{display:block;font-size:10px;color:#76e8fc;margin-bottom:5px;letter-spacing:.5px}
+.jarvis-ai-msg span{white-space:pre-wrap}
+#jarvis-ai-form textarea{width:100%;box-sizing:border-box;background:#061a2a;border:1px solid #38b3e2;border-radius:7px;padding:11px;color:#efffff;font-size:14px;min-height:83px;resize:vertical;outline:0}
+#jarvis-ai-form button{display:block;width:100%;font-size:12px;margin:7px 0 0}
+.jarvis-ai-privacy{border-left:2px solid #0d83af;background:#061d30;padding:7px}
+@media(max-height:740px){.jarvis-ai-button{padding:5px;margin-top:0}.jarvis-ai-messages{height:160px}}
