@@ -103,7 +103,7 @@ window.jarvisOpenPage=function(name){
  if(name==="settings"){q('[data-go="settings"]').click();}
 };
 var t=q(".chat-visual");if(t){
- var note=el("div","chat-caption","AI-beszélgetés még nincs bekötve. A tudáshálóban a mentett elemek helyben tárolódnak.");
+ var note=el("div","chat-caption","AI-csatlakozás: Termux 1.2 + Gemini. A kulcsot a Termuxban állítsd be.");
  t.after(note);
 }
 })();
