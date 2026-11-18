@@ -14,6 +14,9 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+      - name: Validate ChatGPT connection UI
+        run: |
+          node --check assets/chatgpt-bridge.js
       - name: Check preinstalled Android SDK
         shell: bash
         run: |
