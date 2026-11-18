@@ -65,7 +65,8 @@ public final class MainActivity extends Activity {
     if(!"https".equals(uri.getScheme())||!"jarvis.local".equals(uri.getHost()))return null;
     String path=uri.getPath();
     String asset="/".equals(path)||"/index.html".equals(path)?"index.html":
-                 "/gemini-live.js".equals(path)?"gemini-live.js":null;
+                 "/gemini-live.js".equals(path)?"gemini-live.js":
+                 "/chatgpt-bridge.js".equals(path)?"chatgpt-bridge.js":null;
     if(asset==null)return new WebResourceResponse("text/plain","UTF-8",403,"Forbidden",
             java.util.Collections.emptyMap(),new ByteArrayInputStream(new byte[0]));
     try{
