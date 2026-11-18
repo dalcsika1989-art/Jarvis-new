@@ -9,9 +9,10 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: android-actions/setup-android@v3
       - name: Install SDK
-        run: sdkmanager --install "platforms;android-35" "build-tools;35.0.0"
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          "$ANDROID_HOME/cmdline-tools/16.0/bin/sdkmanager" --install "platforms;android-35" "build-tools;35.0.0" || sdkmanager --install "platforms;android-35" "build-tools;35.0.0"
       - name: Download ECJ
         run: curl -fsSL --retry 4 -o "$RUNNER_TEMP/ecj.jar" https://repo.maven.apache.org/maven2/org/eclipse/jdt/ecj/3.40.0/ecj-3.40.0.jar
       - name: Pack portable toolchain
