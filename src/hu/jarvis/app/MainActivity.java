@@ -3,6 +3,14 @@ package hu.jarvis.app;
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.pm.ResolveInfo;
+import android.widget.Toast;
+import org.json.JSONObject;
+import org.json.JSONArray;
+import java.util.List;
+import java.util.ArrayList;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -144,7 +152,86 @@ public final class MainActivity extends Activity {
   @JavascriptInterface public void taskLog(){event("agent",ControlService.currentStatus());}
   @JavascriptInterface public void testVoice(){event("agent","Gemini Live hangot használj. Az eredeti offline hangmotor nem része a forrásvázlatnak.");}
   @JavascriptInterface public void notificationTest(){event("agent","Óraértesítés ehhez a kiadáshoz még nincs kész.");}
-  @JavascriptInterface public void chatBridge(){event("agent","ChatGPT telefonkapcsolat ehhez a fejlesztési ághoz nincs hozzáadva.");}
+  @JavascriptInterface public void chatBridge(){
+   ui.post(()->{
+    if(web!=null)web.evaluateJavascript("window.jarvisChatGPTUI&&window.jarvisChatGPTUI.open()",null);
+   });
+  }
+  /** App presence is not the same as pairing. We deliberately never report ChatGPT bridge online here. */
+  @JavascriptInterface public String chatBridgeStatus(){
+   try{
+    JSONObject data=new JSONObject();
+    data.put("chatgptInstalled",getPackageManager().getLaunchIntentForPackage("com.openai.chatgpt")!=null);
+    data.put("localAccessibility",ControlService.active());
+    data.put("pluginOnline","unknown");
+    JSONArray candidates=new JSONArray();
+    Intent query=new Intent(Intent.ACTION_MAIN);
+    query.addCategory(Intent.CATEGORY_LAUNCHER);
+    List<ResolveInfo> apps=getPackageManager().queryIntentActivities(query,0);
+    for(ResolveInfo info:apps){
+      if(info.activityInfo==null)continue;
+      String pkg=info.activityInfo.packageName;
+      if(pkg.equals(getPackageName())||pkg.equals("com.openai.chatgpt"))continue;
+      String label=String.valueOf(info.loadLabel(getPackageManager()));
+      String normalized=label.toLowerCase(java.util.Locale.ROOT);
+      if(normalized.contains("jarvis")||normalized.contains("telefonkapcsolat")){
+        JSONObject entry=new JSONObject();
+        entry.put("name",label);entry.put("package",pkg);candidates.put(entry);
+      }
+    }
+    data.put("companionApps",candidates);
+    return data.toString();
+   }catch(Exception ex){return "{}";}
+  }
+  @JavascriptInterface public void launchChatGPT(){
+   ui.post(()->{
+    try{
+      Intent app=getPackageManager().getLaunchIntentForPackage("com.openai.chatgpt");
+      if(app!=null){startActivity(app);}
+      else startActivity(new Intent(Intent.ACTION_VIEW,Uri.parse("https://chatgpt.com/")));
+    }catch(Exception ex){event("error","ChatGPT nem indítható: "+ex.getClass().getSimpleName());}
+   });
+  }
+  @JavascriptInterface public void launchPhoneBridge(){
+   ui.post(()->{
+     Intent query=new Intent(Intent.ACTION_MAIN);
+     query.addCategory(Intent.CATEGORY_LAUNCHER);
+     List<ResolveInfo> apps=getPackageManager().queryIntentActivities(query,0);
+     ArrayList<ResolveInfo> candidates=new ArrayList<>();
+     for(ResolveInfo info:apps){
+       if(info.activityInfo==null)continue;
+       String pkg=info.activityInfo.packageName;
+       if(pkg.equals(getPackageName())||pkg.equals("com.openai.chatgpt"))continue;
+       String label=String.valueOf(info.loadLabel(getPackageManager())).toLowerCase(java.util.Locale.ROOT);
+       if(label.contains("jarvis")||label.contains("telefonkapcsolat"))candidates.add(info);
+     }
+     if(candidates.isEmpty()){
+       event("error","Nem található külön JARVIS Telefonkapcsolat alkalmazás. A ChatGPT-ben ellenőrizd a bővítmény csatlakoztatását.");
+       return;
+     }
+     String[] names=new String[candidates.size()];
+     for(int i=0;i<candidates.size();i++)names[i]=String.valueOf(candidates.get(i).loadLabel(getPackageManager()));
+     new AlertDialog.Builder(MainActivity.this)
+       .setTitle("JARVIS Telefonkapcsolat alkalmazás")
+       .setItems(names,(dialog,index)->{
+         try{
+           Intent app=getPackageManager().getLaunchIntentForPackage(candidates.get(index).activityInfo.packageName);
+           if(app!=null)startActivity(app);
+           else event("error","A kiválasztott alkalmazás nem indítható.");
+         }catch(Exception ex){event("error","Az alkalmazás nem indítható.");}
+       }).setNegativeButton("Mégse",null).show();
+   });
+  }
+  @JavascriptInterface public void copyConnectionCheck(){
+   ui.post(()->{
+     String prompt="Ellenőrizd a JARVIS Telefonkapcsolat bővítményen keresztül, hogy a párosított telefonom online-e. Ha offline, mondd el a szükséges párosítási lépéseket.";
+     ClipboardManager clipboard=(ClipboardManager)getSystemService(Context.CLIPBOARD_SERVICE);
+     if(clipboard!=null){
+       clipboard.setPrimaryClip(ClipData.newPlainText("JARVIS kapcsolat ellenőrzése",prompt));
+       Toast.makeText(MainActivity.this,"ChatGPT-ellenőrző szöveg másolva.",Toast.LENGTH_SHORT).show();
+     }
+   });
+  }
  }
  private void startRecognizer(){
   if(!SpeechRecognizer.isRecognitionAvailable(this)){
