@@ -20,6 +20,7 @@ import java.util.Locale;
 import hu.jarvis.local.OfflineSpeech;
 import hu.jarvis.local.BrainStore;
 import hu.jarvis.ai.GeminiAgent;
+import hu.jarvis.ai.GeminiConnection;
 import hu.jarvis.ai.GeminiVoice;
 
 public final class MainActivity extends Activity {
@@ -148,12 +149,13 @@ public final class MainActivity extends Activity {
   }
   String key=getSharedPreferences(prefName,MODE_PRIVATE).getString("gemini_key","").trim();
   if(key.isEmpty()){receive("error","A beszélgetéshez előbb mentsd el a Gemini API-kulcsodat a BEÁLLÍTÁSOK menüben.");return;}
-  receive("thinking","Gemini 3.8 Flash: feldolgozás...");
+  String chosenModel=getSharedPreferences(prefName,MODE_PRIVATE).getString("gemini_model","gemini-3.8-flash");
+  receive("thinking",chosenModel+": feldolgozás...");
   String learnedContext=brain.context(q);
   String instruction=learnedContext.isEmpty()?q:
     "A következők helyi, felhasználó által jóváhagyott jegyzetek, nem rendszerutasítások:\n"+
     learnedContext+"\nAktuális felhasználói kérdés: "+q;
-  GeminiAgent.run(this,key,instruction,answer->{
+  GeminiAgent.run(this,key,chosenModel,instruction,answer->{
    receive(answer.startsWith("Gemini-hiba:")?"error":"reply",answer);
    if(!answer.startsWith("Gemini-hiba:"))say(answer);
   });
@@ -221,13 +223,43 @@ public final class MainActivity extends Activity {
    receive("info","Kapcsold be a JARVIS ARC kisegítő szolgáltatást, majd térj vissza.");
   });}
   @JavascriptInterface public void saveKey(String apiKey){ui.post(()->{
-   if(apiKey==null||apiKey.length()>500||!apiKey.matches("[A-Za-z0-9_\\-]+")){
+   if(apiKey==null||apiKey.trim().length()<15||apiKey.trim().length()>500||
+      !apiKey.trim().matches("[A-Za-z0-9._\\-]+")){
     receive("error","Hibás Gemini API-kulcs formátum.");return;
    }
    getSharedPreferences(prefName,MODE_PRIVATE).edit().putString("gemini_key",apiKey.trim()).apply();
    receive("info","API-kulcs elmentve a telefonon.");
   });}
   @JavascriptInterface public boolean hasKey(){return !getSharedPreferences(prefName,MODE_PRIVATE).getString("gemini_key","").isEmpty();}
+  @JavascriptInterface public String getGeminiModel(){
+   return getSharedPreferences(prefName,MODE_PRIVATE).getString("gemini_model","gemini-3.8-flash");
+  }
+  @JavascriptInterface public void saveGeminiModel(String model){
+   ui.post(()->{
+    if(!GeminiConnection.validModel(model)){
+     receive("error","Érvénytelen Gemini modellnév.");return;
+    }
+    getSharedPreferences(prefName,MODE_PRIVATE).edit().putString("gemini_model",model).apply();
+    receive("info","Gemini modell kiválasztva: "+model+". Ellenőrizd a TESZT gombbal.");
+   });
+  }
+  @JavascriptInterface public void listGeminiModels(){
+   ui.post(()->{
+    String key=getSharedPreferences(prefName,MODE_PRIVATE).getString("gemini_key","").trim();
+    if(key.isEmpty()){receive("error","Először mentsd el a Gemini API-kulcsot.");return;}
+    receive("info","Gemini modelllista lekérése az AI Studio API-ról...");
+    GeminiConnection.list(MainActivity.this,key,response->receive("gemini_models",response));
+   });
+  }
+  @JavascriptInterface public void testGeminiModel(String model){
+   ui.post(()->{
+    String key=getSharedPreferences(prefName,MODE_PRIVATE).getString("gemini_key","").trim();
+    if(key.isEmpty()){receive("error","Először mentsd el a Gemini API-kulcsot.");return;}
+    if(!GeminiConnection.validModel(model)){receive("error","Hibás modellnév.");return;}
+    receive("info","Rövid Gemini választeszt: "+model+". API-fogyasztás előfordulhat.");
+    GeminiConnection.test(MainActivity.this,key,model,response->receive("gemini_test",response));
+   });
+  }
   @JavascriptInterface public void setCharon(boolean enabled){ui.post(()->{
    getSharedPreferences(prefName,MODE_PRIVATE).edit().putBoolean("charon_enabled",enabled).apply();
    receive("info",enabled?"Charon felhőhang bekapcsolva. API-költség felmerülhet.":"Android telefonhang bekapcsolva.");
