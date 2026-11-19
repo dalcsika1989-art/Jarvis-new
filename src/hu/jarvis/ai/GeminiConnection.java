@@ -77,8 +77,24 @@ public final class GeminiConnection {
      JSONObject returned=request(key,"POST",
        "https://generativelanguage.googleapis.com/v1beta/models/"+model+":generateContent",p);
      if(!returned.has("candidates"))result=returned;
-     else result=new JSONObject().put("ok",true).put("model",model)
-       .put("message","Sikeres Gemini generateContent teszt (HTTP 200). A modell válaszolt.");
+     else{
+      JSONArray cs=returned.optJSONArray("candidates");
+      String responseText="";
+      if(cs!=null&&cs.length()>0){
+       JSONObject candidate=cs.optJSONObject(0);
+       JSONObject content=candidate==null?null:candidate.optJSONObject("content");
+       JSONArray parts=content==null?null:content.optJSONArray("parts");
+       if(parts!=null)for(int i=0;i<parts.length();i++){
+        JSONObject fragment=parts.optJSONObject(i);
+        if(fragment!=null&&!fragment.optBoolean("thought",false))
+         responseText+=fragment.optString("text","");
+       }
+      }
+      result=new JSONObject().put("ok",!responseText.trim().isEmpty()).put("model",model)
+       .put("message",responseText.trim().isEmpty()?
+         "Az API HTTP 200 választ adott, de nem jött megjeleníthető szöveg. Próbálj másik szöveges modellt.":
+         "Sikeres választeszt: "+responseText.trim().substring(0,Math.min(160,responseText.trim().length())));
+     }
     }else{
      JSONArray found=new JSONArray();LinkedHashSet<String> unique=new LinkedHashSet<>();
      String page="";
