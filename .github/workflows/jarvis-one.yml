@@ -1,0 +1,23 @@
+name: JARVIS ONE Native APK Build
+on:
+  push:
+    branches: [jarvis-one]
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Build signed and verified Android APK
+        run: bash build.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: JARVIS-ONE-APK
+          path: build/JARVIS-ONE.apk
+          if-no-files-found: error
