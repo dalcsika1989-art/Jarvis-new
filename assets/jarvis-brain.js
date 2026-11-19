@@ -14,6 +14,17 @@ host.innerHTML='<header class="bar"><strong>◈ JARVIS / TUDÁSHÁLÓ</strong><b
 document.body.appendChild(host);
 var $=function(id){return document.getElementById(id)};
 var categories=['Tudás','Memória','Feladatok','Tapasztalat','Képességek','Ismeretlen'];
+var builtins=[
+ {category:'Tudás',title:'Gemini válaszok',detail:'Gemini API-kulccsal online beszélgetés. Az információk a modellből származnak; nem helyben tárolt tények.'},
+ {category:'Memória',title:'Helyi jegyzetek',detail:'A jóváhagyott tudástételek az alkalmazás tárhelyén maradnak. A tudásmemória kapacitása 300 tétel.'},
+ {category:'Memória',title:'Felidézés',detail:'A mentett jegyzetek közül JARVIS relevánsakat hozzáfűzhet a Gemini-kérdéshez.'},
+ {category:'Feladatok',title:'Alkalmazásnyitás',detail:'Kisegítő engedéllyel támogatott Android alkalmazásnyitás, visszalépés, kezdőképernyő.'},
+ {category:'Feladatok',title:'Kattintás és görgetés',detail:'A látható, hozzáférhető képernyőelemeken végrehajtott műveletek. Nem minden alkalmazás támogatja.'},
+ {category:'Tapasztalat',title:'Javítások mentése',detail:'A „javítás:” paranccsal és a tudásszerkesztővel jóváhagyott tapasztalatok tárolhatók.'},
+ {category:'Képességek',title:'Magyar mikrofon',detail:'Egy koppintás indítja, a következő leállítja a magyar beszédfelismerést.'},
+ {category:'Képességek',title:'Magyar felolvasás',detail:'A telefon beszédmotorja; választható a Charon API-hang, külön kulccsal és költséggel.'},
+ {category:'Ismeretlen',title:'Ellenőrzés szükséges',detail:'Az ismeretlen vagy vitatott információt ellenőrizni kell; a helyi memória nem igazolja a tartalmát.'}
+];
 var colors=['#26edff','#79c8ff','#fdc76b','#ff7a94','#ae93ff','#48e4af'];
 var data={count:0,capacity:300,groups:[],notes:[]};
 var selected={type:'core',id:''},nodes=[],visible=false,scale=1,panX=0,panY=0;
@@ -31,7 +42,7 @@ function refresh(){
  data=load();
  if(!Array.isArray(data.notes))data.notes=[];
  data.count=data.notes.length;
- $('brainCount').textContent=data.count+' / '+(data.capacity||300)+' jóváhagyott tétel · 6 tudásterület';
+ $('brainCount').textContent=builtins.length+' rendszerképesség · '+data.count+' / '+(data.capacity||300)+' mentett tétel';
  drawDetails();
  draw();
 }
@@ -44,7 +55,11 @@ function drawDetails(){
  list.replaceChildren();
  var filtered=data.notes;
  if(selected.type==='category'){filtered=data.notes.filter(function(n){return n.category===selected.id});label.textContent=selected.id;detail.textContent=filtered.length+' mentett tétel ebben a csoportban.'}
- else if(selected.type==='note'){
+ else if(selected.type==='skill'){
+  var skill=builtins.find(function(i){return i.title===selected.id});
+  if(skill){label.textContent=skill.title;detail.textContent='BEÉPÍTETT KÉPESSÉG • '+skill.category+'\n'+skill.detail;filtered=[]}
+  else{label.textContent='JARVIS CORE';detail.textContent='Ismeretlen képesség.';filtered=[]}
+ }else if(selected.type==='note'){
   var n=data.notes.find(function(i){return noteId(i)===selected.id});
   if(n){label.textContent=n.title;detail.textContent=(n.category||'Tudás')+' · '+(n.source||'felhasználó')+'\n'+n.detail;filtered=[n]}
   else{label.textContent='JARVIS CORE';detail.textContent='Tétel nem található.';filtered=[]}
@@ -64,6 +79,11 @@ function buildNodes(){
  categories.forEach(function(name,i){
   var a=-Math.PI/2+i*2*Math.PI/6;
   out.push({type:'category',id:name,x:Math.cos(a)*160,y:Math.sin(a)*151,r:20,color:colors[i],title:name});
+ });
+ builtins.forEach(function(skill,i){
+  var catIndex=categories.indexOf(skill.category),j=builtins.slice(0,i).filter(function(x){return x.category===skill.category}).length;
+  var a=-Math.PI/2+catIndex*2*Math.PI/6,offset=j===0?-.47:.47;
+  out.push({type:'skill',id:skill.title,x:Math.cos(a)*122+Math.cos(a+offset)*17,y:Math.sin(a)*116+Math.sin(a+offset)*17,r:7,color:colors[catIndex],title:skill.title,parent:skill.category});
  });
  var groups={};categories.forEach(function(c){groups[c]=[]});
  data.notes.forEach(function(n){if(groups[n.category])groups[n.category].push(n)});
@@ -104,6 +124,7 @@ function draw(){
  if(!nodes.length)nodes=buildNodes();
  nodes.forEach(function(n){
   if(n.type==='category')line(0,0,n.x,n.y,n.color,.48);
+  else if(n.type==='skill'){var p=nodes.find(function(q){return q.type==='category'&&q.id===n.parent});if(p)line(p.x,p.y,n.x,n.y,n.color,.37)}
   else if(n.type==='note'){
    var parent=nodes.find(function(p){return p.type==='category'&&p.id===n.parent});
    if(parent)line(parent.x,parent.y,n.x,n.y,n.color,.32);
@@ -119,7 +140,7 @@ function draw(){
   ctx.fillStyle=chosen?'#e9ffff':n.type==='note'?'#3fc9ee':n.type==='core'?'#ccffff':'#092a3e';
   ctx.beginPath();ctx.arc(x,y,r*.65,0,Math.PI*2);ctx.fill();
   if(n.type==='core'){ctx.strokeStyle='#b1faff';ctx.beginPath();ctx.moveTo(x,y-r*.65);ctx.lineTo(x-r*.60,y+r*.48);ctx.lineTo(x+r*.60,y+r*.48);ctx.closePath();ctx.stroke()}
-  if(n.type!=='note'||scale>1.8){
+  if((n.type!=='note'&&n.type!=='skill')||scale>1.8){
    ctx.fillStyle=n.color;ctx.font=(n.type==='core'?'bold 12px':'10px')+' monospace';ctx.textAlign='center';
    var title=n.title;if(title.length>19)title=title.substring(0,17)+'…';
    ctx.fillText(title,x,y+r+14);
