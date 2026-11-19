@@ -14,7 +14,7 @@ function visible(on){pane.classList.toggle('on',on);mini.style.display=on?'none'
 mini.onclick=function(){visible(true)};
 var originalVoice=document.getElementById('voice');
 if(originalVoice)originalVoice.addEventListener('click',function(event){
- event.preventDefault();event.stopImmediatePropagation();visible(true);call('listen');
+ event.preventDefault();event.stopImmediatePropagation();call('listen');
 },true);
 var originalApps=document.getElementById('apps');
 if(originalApps)originalApps.addEventListener('click',function(event){
@@ -35,4 +35,5 @@ $('jtestvoice').onclick=function(){call('speak','JARVIS online. A rendszerek mű
 $('jsend').onclick=function(){var v=$('jprompt').value.trim();if(v){log('› '+v);call('sendCommand',v);$('jprompt').value=''}};
 window.jarvisReceive=function(k,m){log('['+k+'] '+m)};
 window.jarvisClosePanel=function(){visible(false)};
+var brainScript=document.createElement('script');brainScript.src='jarvis-brain.js';document.body.appendChild(brainScript);
 })();
