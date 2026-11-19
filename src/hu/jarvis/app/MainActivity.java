@@ -119,10 +119,11 @@ public final class MainActivity extends Activity {
   q=q.replaceFirst("(?iu)^jarvis[\\s,.:;!?-]+","").trim();
   if(q.isEmpty())return;
   String lower=q.toLowerCase(new Locale("hu","HU"));
-  if(lower.startsWith("tanuld meg:")||lower.startsWith("jegyezd meg:")||
-     lower.startsWith("javítás:")||lower.startsWith("javitas:")){
-   int colon=q.indexOf(':');
-   String detail=q.substring(colon+1).trim();
+  if(lower.startsWith("tanuld meg:")||lower.startsWith("tanuld meg ")||
+     lower.startsWith("jegyezd meg:")||lower.startsWith("jegyezd meg ")||
+     lower.startsWith("javítás:")||lower.startsWith("javítás ")||
+     lower.startsWith("javitas:")||lower.startsWith("javitas ")){
+   String detail=q.replaceFirst("(?iu)^(tanuld\\s+meg|jegyezd\\s+meg|jav[ií]t[aá]s)\\s*[:,-]?\\s*","").trim();
    if(detail.length()<3){receive("error","Add meg, mit jegyezzek meg.");return;}
    String name=detail.length()>60?detail.substring(0,60):detail;
    String category=lower.startsWith("jav")?"Tapasztalat":"Tudás";
