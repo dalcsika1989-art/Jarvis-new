@@ -4,6 +4,7 @@ import android.view.accessibility.*;
 import android.view.*;
 import android.widget.*;
 import android.graphics.PixelFormat;
+import android.graphics.*;
 import android.content.Intent;
 import android.content.pm.ResolveInfo;
 import android.content.pm.PackageManager;
@@ -37,7 +38,31 @@ public class ControlService extends AccessibilityService {
  }
  public void onServiceConnected(){live=this;setStatus("JARVIS vezérlő készen áll.");wm=(WindowManager)getSystemService(WINDOW_SERVICE);bubble=new LinearLayout(this);bubble.setOrientation(1);bubble.setPadding(5,5,5,5);bubble.setBackgroundColor(0xe6102935);pos=new WindowManager.LayoutParams(WindowManager.LayoutParams.WRAP_CONTENT,WindowManager.LayoutParams.WRAP_CONTENT,WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,PixelFormat.TRANSLUCENT);pos.gravity=Gravity.TOP|Gravity.END;pos.x=8;pos.y=180;render();try{wm.addView(bubble,pos);}catch(Exception e){bubble=null;}}
  void button(String text,Runnable click){Button b=new Button(this);b.setText(text);b.setTextColor(0xff83efff);b.setTextSize(12);b.setMinWidth(44);b.setMinimumWidth(44);b.setPadding(8,0,8,0);bubble.addView(b,new LinearLayout.LayoutParams(-2,44));b.setOnClickListener(v->click.run());}
- void render(){if(bubble==null)return;bubble.removeAllViews();button(expanded?"×":"J",()->{expanded=!expanded;render();});if(expanded){button("■ STOP",()->stopTask());button("ÁLLAPOT",()->Toast.makeText(this,currentStatus(),Toast.LENGTH_LONG).show());button("‹",()->performGlobalAction(GLOBAL_ACTION_BACK));button("⌂",()->performGlobalAction(GLOBAL_ACTION_HOME));button("↓",()->{if(!scroll(getRootInActiveWindow()))Toast.makeText(this,"Nincs görgethető tartalom",Toast.LENGTH_SHORT).show();});button("JARVIS",()->{expanded=false;render();startActivity(new Intent(this,MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_SINGLE_TOP));});}Button head=(Button)bubble.getChildAt(0);head.setOnTouchListener(new View.OnTouchListener(){float x,y;int px,py;boolean drag;public boolean onTouch(View v,MotionEvent e){if(e.getAction()==MotionEvent.ACTION_DOWN){x=e.getRawX();y=e.getRawY();px=pos.x;py=pos.y;drag=false;}if(e.getAction()==MotionEvent.ACTION_MOVE){if(Math.abs(e.getRawX()-x)+Math.abs(e.getRawY()-y)>12)drag=true;if(drag){pos.x=Math.max(0,px-(int)(e.getRawX()-x));pos.y=Math.max(0,py+(int)(e.getRawY()-y));wm.updateViewLayout(bubble,pos);return true;}}if(e.getAction()==MotionEvent.ACTION_UP&&drag)return true;return false;}});}
+
+ static final class ArcHead extends View {
+  final Paint paint=new Paint(3);
+  ArcHead(android.content.Context c){super(c);setClickable(true);}
+  @Override protected void onDraw(Canvas c){super.onDraw(c);
+   float x=getWidth()/2f,y=getHeight()/2f,r=Math.min(getWidth(),getHeight())*.43f;
+   paint.setShader(new RadialGradient(x,y,r,new int[]{0xffc2fdff,0xff138bb2,0xff04131e},null,Shader.TileMode.CLAMP));
+   paint.setStyle(Paint.Style.FILL);c.drawCircle(x,y,r,paint);paint.setShader(null);
+   paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(3);paint.setColor(0xff50eaff);c.drawCircle(x,y,r*.90f,paint);
+   paint.setStrokeWidth(2);paint.setColor(0xff03beef);c.drawCircle(x,y,r*.62f,paint);
+   paint.setStrokeWidth(3);paint.setColor(0xffc5faff);
+   Path t=new Path();t.moveTo(x,y-r*.52f);t.lineTo(x-r*.48f,y+r*.33f);t.lineTo(x+r*.48f,y+r*.33f);t.close();c.drawPath(t,paint);
+   paint.setColor(0xff33dfff);paint.setStrokeWidth(4);
+   float angle=(android.os.SystemClock.uptimeMillis()/18L)%360;
+   c.drawArc(x-r,y-r,x+r,y+r,angle,82,false,paint);
+   if(isAttachedToWindow())postInvalidateDelayed(120);
+  }
+ }
+ private void addReactorHead(){
+  int size=(int)(54*getResources().getDisplayMetrics().density+.5f);
+  ArcHead head=new ArcHead(this);bubble.addView(head,new LinearLayout.LayoutParams(size,size));
+  head.setOnClickListener(v->{expanded=!expanded;render();});
+ }
+
+ void render(){if(bubble==null)return;bubble.removeAllViews();addReactorHead();if(expanded){button("■ STOP",()->stopTask());button("ÁLLAPOT",()->Toast.makeText(this,currentStatus(),Toast.LENGTH_LONG).show());button("‹",()->performGlobalAction(GLOBAL_ACTION_BACK));button("⌂",()->performGlobalAction(GLOBAL_ACTION_HOME));button("↓",()->{if(!scroll(getRootInActiveWindow()))Toast.makeText(this,"Nincs görgethető tartalom",Toast.LENGTH_SHORT).show();});button("JARVIS",()->{expanded=false;render();startActivity(new Intent(this,MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_SINGLE_TOP));});}View head=bubble.getChildAt(0);head.setOnTouchListener(new View.OnTouchListener(){float x,y;int px,py;boolean drag;public boolean onTouch(View v,MotionEvent e){if(e.getAction()==MotionEvent.ACTION_DOWN){x=e.getRawX();y=e.getRawY();px=pos.x;py=pos.y;drag=false;}if(e.getAction()==MotionEvent.ACTION_MOVE){if(Math.abs(e.getRawX()-x)+Math.abs(e.getRawY()-y)>12)drag=true;if(drag){pos.x=Math.max(0,px-(int)(e.getRawX()-x));pos.y=Math.max(0,py+(int)(e.getRawY()-y));wm.updateViewLayout(bubble,pos);return true;}}if(e.getAction()==MotionEvent.ACTION_UP&&drag)return true;return false;}});}
  public void onAccessibilityEvent(AccessibilityEvent e){
   if(!processing||pending.isEmpty()||e==null)return;
   int type=e.getEventType();
@@ -47,7 +72,7 @@ public class ControlService extends AccessibilityService {
  private void step(){
   if(!processing)return;
   String command=pending.peek();
-  if(command==null){processing=false;setStatus("Minden sorba állított művelet befejeződött.");return;}
+  if(command==null){processing=false;setStatus("Minden parancs átadva az Androidnak (ellenőrizendő).");return;}
   setStatus("Folyamatban: "+command+" ("+(attempts+1)+"/10)");
   boolean accepted=false;
   try{accepted=perform(command);}catch(Exception e){android.util.Log.e("JARVIS","Műveleti hiba",e);}
@@ -85,6 +110,10 @@ public class ControlService extends AccessibilityService {
   }
   if(s.startsWith("nyisd meg ")||s.startsWith("indítsd el ")){
    String app=s.startsWith("nyisd meg ")?s.substring(10):s.substring(11);
+   app=app.replaceFirst("^(a |az )","").replaceAll("[.!?]+$","").trim();
+   if(app.endsWith("-ot")||app.endsWith("-et"))app=app.substring(0,app.length()-3);
+   else if((app.endsWith("ot")||app.endsWith("et"))&&app.length()>5)app=app.substring(0,app.length()-2);
+   else if(app.endsWith("t")&&app.length()>5)app=app.substring(0,app.length()-1);
    return launchApp(app);
   }
   return false;
