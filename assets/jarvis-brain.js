@@ -20,7 +20,8 @@ var selected={type:'core',id:''},nodes=[],visible=false,scale=1,panX=0,panY=0;
 var canvas=$('brainCanvas'),ctx=canvas.getContext('2d'),width=300,height=300,dpr=1,animation=0,frames=0;
 var activePointers=new Map(),pinchDist=0,clickStart=null;
 function isNative(){return !!window.JarvisNative&&typeof window.JarvisNative.getBrain==='function'}
-function demoRead(){try{return JSON.parse(localStorage.getItem('jarvis_brain_preview')||'null')}catch(e){return null}}
+var previewCache=null;
+function demoRead(){if(previewCache)return previewCache;try{return JSON.parse(localStorage.getItem('jarvis_brain_preview')||'null')}catch(e){return null}}
 function load(){
  if(isNative())try{var nativeData=window.JarvisNative.getBrain();return JSON.parse(nativeData)}catch(e){status('Memóriahiba: '+e.message)}
  return demoRead()||{count:0,capacity:300,groups:categories.map(function(n){return {name:n,count:0}}),notes:[]};
@@ -34,7 +35,7 @@ function refresh(){
  drawDetails();
  draw();
 }
-function demoSave(){localStorage.setItem('jarvis_brain_preview',JSON.stringify(data))}
+function demoSave(){previewCache=JSON.parse(JSON.stringify(data));try{localStorage.setItem('jarvis_brain_preview',JSON.stringify(data))}catch(e){status('Böngészős előnézet: az adatok csak ideiglenesen tárolhatók.')}}
 function noteId(n){return String(n.id||'')}
 function selectItem(type,id){selected={type:type,id:id||''};drawDetails();draw()}
 function drawDetails(){
