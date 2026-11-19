@@ -19,6 +19,7 @@ import android.net.Uri;
 import java.util.Locale;
 import hu.jarvis.local.OfflineSpeech;
 import hu.jarvis.ai.GeminiAgent;
+import hu.jarvis.ai.GeminiVoice;
 
 public final class MainActivity extends Activity {
  private WebView web;
@@ -79,10 +80,21 @@ public final class MainActivity extends Activity {
    if(web!=null)web.evaluateJavascript("window.jarvisReceive&&window.jarvisReceive("+safeKind+","+safeMessage+");",null);
   });
  }
- private void say(String text){
+ private void sayLocal(String text){
   if(voiceReady&&tts!=null&&text!=null&&!text.isEmpty()){
    tts.speak(text,TextToSpeech.QUEUE_FLUSH,null,"jarvis-hud-answer");
   }
+ }
+ private void say(String text){
+  String key=getSharedPreferences(prefName,MODE_PRIVATE).getString("gemini_key","");
+  if(!getSharedPreferences(prefName,MODE_PRIVATE).getBoolean("charon_enabled",false)||key.isEmpty()){
+   sayLocal(text);return;
+  }
+  receive("info","Charon felhőhang generálása...");
+  GeminiVoice.speak(this,key,text,(success,detail)->{
+   if(success)receive("info",detail);
+   else{receive("error","Charon nem elérhető: "+detail+". Android-hang használata.");sayLocal(text);}
+  });
  }
  private void pollStatus(){
   if(statusWatcher!=null)ui.removeCallbacks(statusWatcher);
@@ -155,6 +167,13 @@ public final class MainActivity extends Activity {
    receive("info","API-kulcs elmentve a telefonon.");
   });}
   @JavascriptInterface public boolean hasKey(){return !getSharedPreferences(prefName,MODE_PRIVATE).getString("gemini_key","").isEmpty();}
+  @JavascriptInterface public void setCharon(boolean enabled){ui.post(()->{
+   getSharedPreferences(prefName,MODE_PRIVATE).edit().putBoolean("charon_enabled",enabled).apply();
+   receive("info",enabled?"Charon felhőhang bekapcsolva. API-költség felmerülhet.":"Android telefonhang bekapcsolva.");
+  });}
+  @JavascriptInterface public boolean isCharon(){
+   return getSharedPreferences(prefName,MODE_PRIVATE).getBoolean("charon_enabled",false);
+  }
   @JavascriptInterface public void speak(String t){ui.post(()->say(t));}
   @JavascriptInterface public String getControlStatus(){return ControlService.currentStatus();}
   @JavascriptInterface public void openAppSettings(){ui.post(()->{
