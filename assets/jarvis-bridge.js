@@ -5,7 +5,7 @@ css.textContent='#jarvisMini{position:fixed;z-index:300;right:9px;bottom:110px;w
 document.head.appendChild(css);
 var mini=document.createElement('button');mini.id='jarvisMini';mini.textContent='J';
 var pane=document.createElement('div');pane.id='jarvisDock';
-pane.innerHTML='<div class="topline">JARVIS // ARC CORE <button id="jclose">✕</button></div><div class="hint">EREDETI HUD 7.6 · NATÍV VEZÉRLÉS</div><div class="grid"><button id="jmic">◉ MIKROFON</button><button id="jaccess">▦ VEZÉRLÉS</button><button id="jstop">■ STOP</button><button id="jhome">⌂ HOME</button><button id="jback">‹ VISSZA</button><button id="jscroll">↓ GÖRGETÉS</button><button id="jsetup">⚙ API</button><button id="jstatus">▷ ÁLLAPOT</button><button id="jmini">◇ MINI HUD</button></div><div id="jlog">JARVIS készen áll. A telefonvezérlést az Android kisegítő beállításaiban engedélyezd.</div><div class="hint">PARANCS / CHAT</div><textarea id="jprompt" rows="3" placeholder="Pl. Nyisd meg a YouTube-ot"></textarea><button id="jsend" style="width:100%">PARANCS INDÍTÁSA / ÜZENET</button><div id="jkeypane"><div class="hint">GEMINI API-KULCS</div><input id="jkey" type="password" placeholder="Gemini API-kulcs"><button id="jsave">KULCS MENTÉSE</button><button id="jcharon">CHARON FELHŐHANG BE/KI</button><button id="jtestvoice">HANGPRÓBA</button><p>A Charon csak bekapcsolás után, Gemini API-kulccsal szólal meg. API-költség keletkezhet; hibánál Android-hangra vált.</p></div>';
+pane.innerHTML='<div class="topline">JARVIS // ARC CORE <button id="jclose">✕</button></div><div class="hint">EREDETI HUD 7.6 · NATÍV VEZÉRLÉS</div><div class="grid"><button id="jmic">◉ MIKROFON</button><button id="jaccess">▦ VEZÉRLÉS</button><button id="jstop">■ STOP</button><button id="jhome">⌂ HOME</button><button id="jback">‹ VISSZA</button><button id="jscroll">↓ GÖRGETÉS</button><button id="jsetup">⚙ API</button><button id="jstatus">▷ ÁLLAPOT</button><button id="jmini">◇ MINI HUD</button></div><div id="jlog">JARVIS készen áll. A telefonvezérlést az Android kisegítő beállításaiban engedélyezd.</div><div class="hint">PARANCS / CHAT</div><textarea id="jprompt" rows="3" placeholder="Pl. Nyisd meg a YouTube-ot"></textarea><button id="jsend" style="width:100%">PARANCS INDÍTÁSA / ÜZENET</button><div id="jkeypane"><div class="hint">GEMINI API-KULCS</div><input id="jkey" type="password" placeholder="Gemini API-kulcs"><button id="jsave">KULCS MENTÉSE</button><div class="hint">GEMINI SZÖVEGMODELL / API TESZT</div><select id="jmodel" style="width:100%;min-height:43px;background:#061d30;border:1px solid #327f96;color:#bdfaff"><option value="gemini-3.8-flash">Gemini 3.8 Flash</option><option value="gemini-3.6-flash">Gemini 3.6 Flash</option><option value="gemini-2.5-flash">Gemini 2.5 Flash (korlátozott hozzáférés)</option></select><button id="jmodels">ELÉRHETŐ MODELLEK LEKÉRÉSE</button><button id="jtestmodel">VÁLASZTESZT (1 KIS KÉRÉS)</button><button id="jsavemodel">MODELL KIVÁLASZTÁSA</button><div id="jmodelstatus" style="color:#9fe5f1;font:11px/1.6 monospace;padding:7px">A teszt egy rövid API-hívást végez; költséggel járhat. Nem indít automatikus ismétlést.</div><button id="jcharon">CHARON FELHŐHANG BE/KI</button><button id="jtestvoice">HANGPRÓBA</button><p>A Charon csak bekapcsolás után, Gemini API-kulccsal szólal meg. API-költség keletkezhet; hibánál Android-hangra vált.</p></div>';
 document.body.appendChild(mini);document.body.appendChild(pane);
 function $(id){return document.getElementById(id)}
 function log(msg){var x=$('jlog');x.textContent=(x.textContent.length>3000?x.textContent.slice(-1500):x.textContent)+'\n'+msg;x.scrollTop=x.scrollHeight}
@@ -27,13 +27,55 @@ $('jstop').onclick=function(){call('stop')};
 $('jhome').onclick=function(){call('sendCommand','főképernyő')};
 $('jback').onclick=function(){call('sendCommand','vissza')};
 $('jscroll').onclick=function(){call('sendCommand','görgess le')};
-$('jsetup').onclick=function(){$('jkeypane').classList.toggle('on')};
+$('jsetup').onclick=function(){
+ $('jkeypane').classList.toggle('on');
+ try{
+  if(window.JarvisNative){
+   var name=window.JarvisNative.getGeminiModel();
+   var selector=$('jmodel');
+   var found=false;for(var i=0;i<selector.options.length;i++)if(selector.options[i].value===name)found=true;
+   if(!found&&name){var option=document.createElement('option');option.value=name;option.textContent=name;selector.appendChild(option)}
+   selector.value=name;
+   $('jmodelstatus').textContent=window.JarvisNative.hasKey()?'API-kulcs elmentve a telefonon. Futtasd az elérhető modellek lekérését.':'Még nincs Gemini API-kulcs mentve.';
+  }
+ }catch(e){log('Gemini beállítás: '+e.message)}
+};
 $('jstatus').onclick=function(){log(window.JarvisNative?window.JarvisNative.getControlStatus():'Natív kapcsolat nincs')};
-$('jsave').onclick=function(){var v=$('jkey').value.trim();if(v){call('saveKey',v);$('jkey').value=''}};
+$('jsave').onclick=function(){
+ var v=$('jkey').value.trim();
+ if(!v){log('Nem adtál meg Gemini-kulcsot.');return}
+ call('saveKey',v);$('jkey').value='';
+ $('jmodelstatus').textContent='A kulcs mentése kérve. Most kérd le az elérhető modelleket.';
+};
+$('jmodels').onclick=function(){call('listGeminiModels');$('jmodelstatus').textContent='Modelllista lekérése...'};
+$('jtestmodel').onclick=function(){var model=$('jmodel').value;call('testGeminiModel',model);$('jmodelstatus').textContent='Próbahívás: '+model+'...'};
+$('jsavemodel').onclick=function(){var model=$('jmodel').value;if(!model)return;call('saveGeminiModel',model);$('jmodelstatus').textContent='Kiválasztva: '+model+'. A választeszt igazolja majd a tényleges hozzáférést.'};
 $('jcharon').onclick=function(){try{var state=!!window.JarvisNative.isCharon();call('setCharon',!state);log(!state?'Charon felhőhang kiválasztva.':'Android telefonhang kiválasztva.')}catch(e){log(e.message)}};
 $('jtestvoice').onclick=function(){call('speak','JARVIS online. A rendszerek működnek, uram.');};
 $('jsend').onclick=function(){var v=$('jprompt').value.trim();if(v){log('› '+v);call('sendCommand',v);$('jprompt').value=''}};
-window.jarvisReceive=function(k,m){log('['+k+'] '+m)};
+window.jarvisReceive=function(k,m){
+ if(k==='gemini_models'||k==='gemini_test'){
+  try{
+   var result=JSON.parse(m);
+   if(k==='gemini_models'&&result.ok&&Array.isArray(result.models)){
+    var select=$('jmodel'),previous=select.value;
+    select.replaceChildren();
+    result.models.forEach(function(item){
+     if(!item||typeof item.id!=='string')return;
+     var option=document.createElement('option');
+     option.value=item.id;option.textContent=(item.label||item.id)+' – '+item.id;
+     select.appendChild(option);
+    });
+    if(result.models.some(function(item){return item.id===previous}))select.value=previous;
+    else if(result.models.some(function(item){return item.id==='gemini-3.8-flash'}))select.value='gemini-3.8-flash';
+   }
+   $('jmodelstatus').textContent=(result.ok?'OK: ':'HIBA: ')+(result.message||'Válasz nélkül')+(result.http?' (HTTP '+result.http+')':'');
+   log('['+k+'] '+$('jmodelstatus').textContent);
+  }catch(e){log('Nem értelmezhető Gemini-tesztválasz.')}
+  return;
+ }
+ log('['+k+'] '+m);
+};
 window.jarvisClosePanel=function(){visible(false)};
 var brainScript=document.createElement('script');brainScript.src='jarvis-brain.js';document.body.appendChild(brainScript);
 })();
