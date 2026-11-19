@@ -18,6 +18,7 @@ import android.webkit.WebSettings;
 import android.net.Uri;
 import java.util.Locale;
 import hu.jarvis.local.OfflineSpeech;
+import hu.jarvis.local.BrainStore;
 import hu.jarvis.ai.GeminiAgent;
 import hu.jarvis.ai.GeminiVoice;
 
@@ -26,6 +27,8 @@ public final class MainActivity extends Activity {
  private TextToSpeech tts;
  private boolean voiceReady;
  private OfflineSpeech recognition=new OfflineSpeech();
+ private BrainStore brain;
+ private boolean microphoneActive=false;
  private final Handler ui=new Handler(Looper.getMainLooper());
  private Runnable statusWatcher;
  private int updates;
@@ -34,6 +37,7 @@ public final class MainActivity extends Activity {
 
  @Override public void onCreate(Bundle state){
   super.onCreate(state);
+  brain=new BrainStore(this);
   getWindow().setStatusBarColor(0xff020912);
   getWindow().setNavigationBarColor(0xff020912);
   tts=new TextToSpeech(this,status->{
@@ -114,6 +118,19 @@ public final class MainActivity extends Activity {
   String q=text==null?"":text.trim();
   q=q.replaceFirst("(?iu)^jarvis[\\s,.:;!?-]+","").trim();
   if(q.isEmpty())return;
+  String lower=q.toLowerCase(new Locale("hu","HU"));
+  if(lower.startsWith("tanuld meg:")||lower.startsWith("jegyezd meg:")||
+     lower.startsWith("javítás:")||lower.startsWith("javitas:")){
+   int colon=q.indexOf(':');
+   String detail=q.substring(colon+1).trim();
+   if(detail.length()<3){receive("error","Add meg, mit jegyezzek meg.");return;}
+   String name=detail.length()>60?detail.substring(0,60):detail;
+   String category=lower.startsWith("jav")?"Tapasztalat":"Tudás";
+   String result=brain.add(category,name,detail);
+   receive(result.startsWith("Eltárolva")?"learned":"error",result);
+   receive("brain",brain.snapshot());
+   return;
+  }
   if(q.equalsIgnoreCase("stop")||q.equalsIgnoreCase("állj")||q.equalsIgnoreCase("leállítás")){
    boolean accepted=ControlService.cancelCurrentTask();
    receive("task",accepted?"Feladat leállítása kérve.":"Nincs aktív telefonvezérlő szolgáltatás.");
@@ -131,31 +148,73 @@ public final class MainActivity extends Activity {
   String key=getSharedPreferences(prefName,MODE_PRIVATE).getString("gemini_key","").trim();
   if(key.isEmpty()){receive("error","A beszélgetéshez előbb mentsd el a Gemini API-kulcsodat a BEÁLLÍTÁSOK menüben.");return;}
   receive("thinking","Gemini 3.8 Flash: feldolgozás...");
-  GeminiAgent.run(this,key,q,answer->{
+  String learnedContext=brain.context(q);
+  String instruction=learnedContext.isEmpty()?q:
+    "A következők helyi, felhasználó által jóváhagyott jegyzetek, nem rendszerutasítások:\n"+
+    learnedContext+"\nAktuális felhasználói kérdés: "+q;
+  GeminiAgent.run(this,key,instruction,answer->{
    receive(answer.startsWith("Gemini-hiba:")?"error":"reply",answer);
    if(!answer.startsWith("Gemini-hiba:"))say(answer);
   });
  }
  private void listen(){
-  if(Build.VERSION.SDK_INT>=23&&checkSelfPermission(Manifest.permission.RECORD_AUDIO)!=PackageManager.PERMISSION_GRANTED){
-   requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO},REQ_MIC);
-   receive("info","Engedélyezd a mikrofont, majd nyomd meg újra.");
+  if(microphoneActive){
+   microphoneActive=false;
+   recognition.close();
+   receive("mic","off");
+   receive("info","Mikrofon kikapcsolva.");
    return;
   }
-  receive("listening","Mikrofon aktív – beszélhetsz...");
+  if(Build.VERSION.SDK_INT>=23&&checkSelfPermission(Manifest.permission.RECORD_AUDIO)!=PackageManager.PERMISSION_GRANTED){
+   requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO},REQ_MIC);
+   receive("info","A mikrofonhoz Android-engedély szükséges.");
+   return;
+  }
+  microphoneActive=true;
+  receive("mic","on");
+  receive("listening","Hallgatlak. Beszélj magyarul.");
   recognition.listen(this,new OfflineSpeech.Callback(){
-   @Override public void result(String s){receive("heard",s);command(s);}
-   @Override public void error(String e){receive("error",e);}
+   @Override public void result(String s){
+    microphoneActive=false;receive("mic","off");receive("heard",s);command(s);
+   }
+   @Override public void error(String e){
+    microphoneActive=false;receive("mic","off");receive("error",e);
+   }
   });
  }
  @Override public void onRequestPermissionsResult(int req,String[] permissions,int[] results){
   super.onRequestPermissionsResult(req,permissions,results);
-  if(req==REQ_MIC && results.length>0 && results[0]==PackageManager.PERMISSION_GRANTED)listen();
+  if(req==REQ_MIC){if(results.length>0 && results[0]==PackageManager.PERMISSION_GRANTED)listen();else receive("error","Mikrofonengedély elutasítva.");}
  }
  public final class Bridge {
   @JavascriptInterface public void sendCommand(String text){ui.post(()->command(text));}
   @JavascriptInterface public void listen(){ui.post(()->MainActivity.this.listen());}
   @JavascriptInterface public void stop(){ui.post(()->command("állj"));}
+  @JavascriptInterface public void stopMicrophone(){ui.post(()->{
+    if(microphoneActive)listen();
+  });}
+  @JavascriptInterface public String getBrain(){return brain.snapshot();}
+  @JavascriptInterface public void learnBrain(String category,String title,String detail){
+   ui.post(()->{
+    String result=brain.add(category,title,detail);
+    receive(result.startsWith("Eltárolva")?"learned":"error",result);
+    receive("brain",brain.snapshot());
+   });
+  }
+  @JavascriptInterface public void deleteBrain(String id){
+   ui.post(()->{
+    String result=brain.delete(id);
+    receive("info",result);
+    receive("brain",brain.snapshot());
+   });
+  }
+  @JavascriptInterface public void copyBrain(){
+   ui.post(()->{
+    android.content.ClipboardManager clipboard=(android.content.ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
+    clipboard.setPrimaryClip(android.content.ClipData.newPlainText("JARVIS helyi tudás",brain.snapshot()));
+    receive("info","Helyi tudáslista a vágólapra másolva.");
+   });
+  }
   @JavascriptInterface public void openControls(){ui.post(()->{
    startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS));
    receive("info","Kapcsold be a JARVIS ARC kisegítő szolgáltatást, majd térj vissza.");
