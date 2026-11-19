@@ -112,6 +112,7 @@ public final class MainActivity extends Activity {
  }
  private void command(String text){
   String q=text==null?"":text.trim();
+  q=q.replaceFirst("(?iu)^jarvis[\\s,.:;!?-]+","").trim();
   if(q.isEmpty())return;
   if(q.equalsIgnoreCase("stop")||q.equalsIgnoreCase("állj")||q.equalsIgnoreCase("leállítás")){
    boolean accepted=ControlService.cancelCurrentTask();
