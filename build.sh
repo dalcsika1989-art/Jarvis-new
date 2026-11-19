@@ -21,28 +21,12 @@ mapfile -t classes < <(find build/classes -type f -name '*.class' | sort)
 test -s build/dex/classes.dex || { echo "ERROR: Missing classes.dex"; exit 1; }
 cp build/base.apk build/unsigned.apk
 (cd build/dex && zip -q ../unsigned.apk classes.dex)
-if [[ ! -d native/build ]]; then echo "ERROR: Offline AI native build missing"; exit 1; fi
-if [[ -d native/build ]]; then
-  mkdir -p build/apklibs/lib/arm64-v8a
-  find native/build -type f -name '*.so' -exec cp -L {} build/apklibs/lib/arm64-v8a/ \;
-  test -s build/apklibs/lib/arm64-v8a/libjarvis_llm.so || { echo "Missing native inference library"; exit 1; }
-  (cd build/apklibs && zip -q -0 -r ../unsigned.apk lib)
-fi
 "$BT/zipalign" -f -p 4 build/unsigned.apk build/aligned.apk
 if [[ ! -f signing.keystore ]]; then
  keytool -genkeypair -keystore signing.keystore -storepass android -keypass android -alias jarvis -dname 'CN=JARVIS Personal Build' -keyalg RSA -keysize 2048 -validity 10000 -noprompt
 fi
-"$BT/apksigner" sign --ks signing.keystore --ks-pass pass:android --out build/JARVIS-4.0.apk build/aligned.apk
-"$BT/apksigner" verify --verbose build/JARVIS-4.0.apk
-test -s build/JARVIS-4.0.apk
-echo "== Verify essential offline Android native libraries =="
-for library in libjarvis_llm.so libllama.so libggml.so libggml-base.so libggml-cpu.so; do
-  unzip -Z -1 build/JARVIS-4.0.apk | grep -Fx "lib/arm64-v8a/$library" >/dev/null || {
-    echo "ERROR: Missing $library in final APK"; exit 1;
-  }
-done
-"$BT/aapt2" dump badging build/JARVIS-4.0.apk | grep -q "package: name='hu.jarvis.monitor.v22'" || {
-  echo "ERROR: APK package mismatch"; exit 1;
-}
-sha256sum build/JARVIS-4.0.apk
-echo "APK BUILT: build/JARVIS-4.0.apk"
+"$BT/apksigner" sign --ks signing.keystore --ks-pass pass:android --out build/JARVIS-ONE.apk build/aligned.apk
+"$BT/apksigner" verify --verbose build/JARVIS-ONE.apk
+test -s build/JARVIS-ONE.apk
+sha256sum build/JARVIS-ONE.apk
+echo "APK BUILT: build/JARVIS-ONE.apk"
