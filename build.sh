@@ -25,8 +25,8 @@ cp build/base.apk build/unsigned.apk
 if [[ ! -f signing.keystore ]]; then
  keytool -genkeypair -keystore signing.keystore -storepass android -keypass android -alias jarvis -dname 'CN=JARVIS Personal Build' -keyalg RSA -keysize 2048 -validity 10000 -noprompt
 fi
-"$BT/apksigner" sign --ks signing.keystore --ks-pass pass:android --out build/JARVIS-ARC-7.6.apk build/aligned.apk
-"$BT/apksigner" verify --verbose build/JARVIS-ARC-7.6.apk
-test -s build/JARVIS-ARC-7.6.apk
-sha256sum build/JARVIS-ARC-7.6.apk
-echo "APK BUILT: build/JARVIS-ARC-7.6.apk"
+"$BT/apksigner" sign --ks signing.keystore --ks-pass pass:android --out build/JARVIS-ARC-7.8.apk build/aligned.apk
+"$BT/apksigner" verify --verbose build/JARVIS-ARC-7.8.apk
+test -s build/JARVIS-ARC-7.8.apk
+sha256sum build/JARVIS-ARC-7.8.apk
+echo "APK BUILT: build/JARVIS-ARC-7.8.apk"
