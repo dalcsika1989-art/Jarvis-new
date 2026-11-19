@@ -11,7 +11,16 @@ function $(id){return document.getElementById(id)}
 function log(msg){var x=$('jlog');x.textContent=(x.textContent.length>3000?x.textContent.slice(-1500):x.textContent)+'\n'+msg;x.scrollTop=x.scrollHeight}
 function call(m,v){try{if(!window.JarvisNative){log('HTML-előnézet: nincs Android-kapcsolat');return;}if(v===undefined)window.JarvisNative[m]();else window.JarvisNative[m](v)}catch(e){log('Hiba: '+e.message)}}
 function visible(on){pane.classList.toggle('on',on);mini.style.display=on?'none':'block'}
-mini.onclick=function(){visible(true)};$('jclose').onclick=$('jmini').onclick=function(){visible(false)};
+mini.onclick=function(){visible(true)};
+var originalVoice=document.getElementById('voice');
+if(originalVoice)originalVoice.addEventListener('click',function(event){
+ event.preventDefault();event.stopImmediatePropagation();visible(true);call('listen');
+},true);
+var originalApps=document.getElementById('apps');
+if(originalApps)originalApps.addEventListener('click',function(event){
+ event.preventDefault();event.stopImmediatePropagation();visible(true);
+ $('jprompt').value='nyisd meg ';$('jprompt').focus();
+},true);$('jclose').onclick=$('jmini').onclick=function(){visible(false)};
 $('jmic').onclick=function(){call('listen')};
 $('jaccess').onclick=function(){call('openControls')};
 $('jstop').onclick=function(){call('stop')};
