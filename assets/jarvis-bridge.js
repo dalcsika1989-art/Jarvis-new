@@ -1,12 +1,25 @@
 (function(){
 'use strict';
 var css=document.createElement('style');
-css.textContent='#jarvisMini{position:fixed;z-index:300;right:9px;bottom:110px;width:60px;height:60px;border-radius:50%;border:2px solid #63efff;background:radial-gradient(circle,#c8ffff,#1d8aab 23%,#041529 51%,#031525);box-shadow:0 0 23px #00cfff,inset 0 0 15px #27bfff;color:#dbfaff;pointer-events:auto;touch-action:none;font:bold 17px sans-serif}#jarvisDock{position:fixed;z-index:320;inset:0;background:rgba(0,9,22,.97);color:#bdfaff;overflow:auto;padding:25px 15px;display:none;pointer-events:auto;font:13px/1.6 sans-serif}#jarvisDock.on{display:block}#jarvisDock button{border:1px solid #347e98;border-radius:6px;background:linear-gradient(140deg,#082137,#06172b);color:#c4faff;min-height:46px;padding:10px 6px;font:12px monospace}#jarvisDock .topline{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #227c9b;padding-bottom:10px;font:16px monospace;letter-spacing:.13em}#jarvisDock .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:13px 0}#jarvisDock #jlog{border:1px solid #206583;background:#020f20;padding:13px;white-space:pre-wrap;min-height:150px;max-height:35vh;overflow:auto}#jarvisDock textarea,#jarvisDock input{box-sizing:border-box;width:100%;padding:12px;background:#041b2e;color:white;border:1px solid #2c819c;border-radius:6px;font:14px sans-serif}#jarvisDock #jkeypane{display:none}#jarvisDock #jkeypane.on{display:block}#jarvisDock .hint{position:static;margin:12px 0 5px;color:#78d4e7}';
+css.textContent='#jarvisMini{position:fixed;z-index:300;right:9px;bottom:110px;width:60px;height:60px;border-radius:50%;border:2px solid #63efff;background:radial-gradient(circle,#c8ffff,#1d8aab 23%,#041529 51%,#031525);box-shadow:0 0 23px #00cfff,inset 0 0 15px #27bfff;color:#dbfaff;pointer-events:auto;touch-action:none;font:bold 17px sans-serif}#jarvisDock{position:fixed;z-index:320;inset:0;background:rgba(0,9,22,.97);color:#bdfaff;overflow:auto;padding:25px 15px;display:none;pointer-events:auto;font:13px/1.6 sans-serif}#jarvisDock.on{display:block}#jarvisDock button{border:1px solid #347e98;border-radius:6px;background:linear-gradient(140deg,#082137,#06172b);color:#c4faff;min-height:46px;padding:10px 6px;font:12px monospace}#jarvisDock .topline{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #227c9b;padding-bottom:10px;font:16px monospace;letter-spacing:.13em}#jarvisDock .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:13px 0}#jarvisDock #jlog{border:1px solid #206583;background:#020f20;padding:13px;white-space:pre-wrap;min-height:150px;max-height:35vh;overflow:auto}#jarvisDock textarea,#jarvisDock input{box-sizing:border-box;width:100%;padding:12px;background:#041b2e;color:white;border:1px solid #2c819c;border-radius:6px;font:14px sans-serif}#jarvisDock #jkeypane{display:none}#jarvisDock #jkeypane.on{display:block}#jarvisDock .hint{position:static;margin:12px 0 5px;color:#78d4e7}#jarvisAnswer{position:fixed;bottom:180px;left:4%;right:4%;z-index:355;padding:12px 42px 12px 12px;border:1px solid #4ad2ef;border-radius:9px;color:#dcffff;background:linear-gradient(135deg,#031527f5,#072d3ff5);box-shadow:0 0 19px #075b82;font:13px/1.5 sans-serif;display:none;max-height:40vh;overflow:auto;pointer-events:auto;white-space:pre-wrap;overflow-wrap:anywhere}#jarvisAnswer.on{display:block}#jarvisAnswerClose{position:absolute;top:6px;right:7px;background:#123a4b;color:#d8faff;border:1px solid #337d95;border-radius:5px;font-size:16px;min-height:28px;min-width:30px}';
 document.head.appendChild(css);
 var mini=document.createElement('button');mini.id='jarvisMini';mini.textContent='J';
 var pane=document.createElement('div');pane.id='jarvisDock';
 pane.innerHTML='<div class="topline">JARVIS // ARC CORE <button id="jclose">✕</button></div><div class="hint">EREDETI HUD 7.6 · NATÍV VEZÉRLÉS</div><div class="grid"><button id="jmic">◉ MIKROFON</button><button id="jaccess">▦ VEZÉRLÉS</button><button id="jstop">■ STOP</button><button id="jhome">⌂ HOME</button><button id="jback">‹ VISSZA</button><button id="jscroll">↓ GÖRGETÉS</button><button id="jsetup">⚙ API</button><button id="jstatus">▷ ÁLLAPOT</button><button id="jmini">◇ MINI HUD</button></div><div id="jlog">JARVIS készen áll. A telefonvezérlést az Android kisegítő beállításaiban engedélyezd.</div><div class="hint">PARANCS / CHAT</div><textarea id="jprompt" rows="3" placeholder="Pl. Nyisd meg a YouTube-ot"></textarea><button id="jsend" style="width:100%">PARANCS INDÍTÁSA / ÜZENET</button><div id="jkeypane"><div class="hint">GEMINI API-KULCS</div><input id="jkey" type="password" placeholder="Gemini API-kulcs"><button id="jsave">KULCS MENTÉSE</button><div class="hint">GEMINI SZÖVEGMODELL / API TESZT</div><select id="jmodel" style="width:100%;min-height:43px;background:#061d30;border:1px solid #327f96;color:#bdfaff"><option value="gemini-3.8-flash">Gemini 3.8 Flash</option><option value="gemini-3.6-flash">Gemini 3.6 Flash</option><option value="gemini-2.5-flash">Gemini 2.5 Flash (korlátozott hozzáférés)</option></select><button id="jmodels">ELÉRHETŐ MODELLEK LEKÉRÉSE</button><button id="jtestmodel">VÁLASZTESZT (1 KIS KÉRÉS)</button><button id="jsavemodel">MODELL KIVÁLASZTÁSA</button><div id="jmodelstatus" style="color:#9fe5f1;font:11px/1.6 monospace;padding:7px">A teszt egy rövid API-hívást végez; költséggel járhat. Nem indít automatikus ismétlést.</div><button id="jcharon">CHARON FELHŐHANG BE/KI</button><button id="jtestvoice">HANGPRÓBA</button><p>A Charon csak bekapcsolás után, Gemini API-kulccsal szólal meg. API-költség keletkezhet; hibánál Android-hangra vált.</p></div>';
 document.body.appendChild(mini);document.body.appendChild(pane);
+var floatingAnswer=document.createElement('div');floatingAnswer.id='jarvisAnswer';
+var floatingClose=document.createElement('button');floatingClose.id='jarvisAnswerClose';
+floatingClose.type='button';floatingClose.textContent='×';
+var floatingText=document.createElement('div');floatingText.id='jarvisAnswerText';
+floatingAnswer.appendChild(floatingClose);floatingAnswer.appendChild(floatingText);
+document.body.appendChild(floatingAnswer);
+floatingClose.onclick=function(event){event.stopPropagation();floatingAnswer.classList.remove('on');};
+floatingAnswer.addEventListener('click',function(){visible(true)});
+function showOnHud(message){
+ floatingText.textContent=message;
+ floatingAnswer.classList.add('on');
+}
+
 function $(id){return document.getElementById(id)}
 function log(msg){var x=$('jlog');x.textContent=(x.textContent.length>3000?x.textContent.slice(-1500):x.textContent)+'\n'+msg;x.scrollTop=x.scrollHeight}
 function call(m,v){try{if(!window.JarvisNative){log('HTML-előnézet: nincs Android-kapcsolat');return;}if(v===undefined)window.JarvisNative[m]();else window.JarvisNative[m](v)}catch(e){log('Hiba: '+e.message)}}
@@ -52,8 +65,14 @@ $('jtestmodel').onclick=function(){var model=$('jmodel').value;call('testGeminiM
 $('jsavemodel').onclick=function(){var model=$('jmodel').value;if(!model)return;call('saveGeminiModel',model);$('jmodelstatus').textContent='Kiválasztva: '+model+'. A választeszt igazolja majd a tényleges hozzáférést.'};
 $('jcharon').onclick=function(){try{var state=!!window.JarvisNative.isCharon();call('setCharon',!state);log(!state?'Charon felhőhang kiválasztva.':'Android telefonhang kiválasztva.')}catch(e){log(e.message)}};
 $('jtestvoice').onclick=function(){call('speak','JARVIS online. A rendszerek működnek, uram.');};
-$('jsend').onclick=function(){var v=$('jprompt').value.trim();if(v){log('› '+v);call('sendCommand',v);$('jprompt').value=''}};
+$('jsend').onclick=function(){var v=$('jprompt').value.trim();if(v){log('› '+v);showOnHud('KÉRDÉS: '+v);call('sendCommand',v);$('jprompt').value=''}};
 window.jarvisReceive=function(k,m){
+ if(k==='reply'){showOnHud('JARVIS: '+m)}
+ else if(k==='error'){showOnHud('JARVIS HIBA: '+m)}
+ else if(k==='thinking'){showOnHud('JARVIS: '+m)}
+ else if(k==='listening'){showOnHud('MIKROFON: '+m)}
+ else if(k==='heard'){showOnHud('FELISMERVE: '+m)}
+
  if(k==='gemini_models'||k==='gemini_test'){
   try{
    var result=JSON.parse(m);
