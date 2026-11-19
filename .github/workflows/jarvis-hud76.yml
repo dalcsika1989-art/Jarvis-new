@@ -1,4 +1,4 @@
-name: JARVIS ARC 7.6 Premium HUD APK
+name: JARVIS ARC Premium HUD (7.8 Gemini diagnostic)
 on:
   push:
     branches: [jarvis-hud76]
@@ -28,12 +28,15 @@ jobs:
           grep -q 'BrainStore' src/hu/jarvis/app/MainActivity.java
           node --check assets/jarvis-bridge.js
           node --check assets/jarvis-brain.js
+          grep -q 'gemini_models' assets/jarvis-bridge.js
+          grep -q 'listGeminiModels' src/hu/jarvis/app/MainActivity.java
+          grep -q 'validModel' src/hu/jarvis/ai/GeminiConnection.java
           grep -q 'JARVIS' assets/index.html
           grep -q 'JarvisNative' assets/jarvis-bridge.js
       - name: Compile and sign JARVIS ARC APK
         run: bash build.sh
       - uses: actions/upload-artifact@v4
         with:
-          name: JARVIS-ARC-7.6-PREMIUM
-          path: build/JARVIS-ARC-7.6.apk
+          name: JARVIS-ARC-7.8-GEMINI
+          path: build/JARVIS-ARC-7.8.apk
           if-no-files-found: error
