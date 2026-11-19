@@ -10,7 +10,7 @@ public final class GeminiAgent {
     JSONObject part=new JSONObject().put("text","Te JARVIS vagy. A magyar utasítást értelmezd. Kizárólag JSON objektumot adj vissza, három mezővel: reply (magyar válasz), action (none, open_url, home, back vagy scroll), url (HTTPS webcím vagy üres). Csak kifejezett kérésre válassz műveletet. Ne állíts végrehajtást bizonyíték nélkül. Felhasználói utasítás: "+instruction);
     contents.put(new JSONObject().put("role","user").put("parts",new JSONArray().put(part)));
     body.put("contents",contents).put("generationConfig",new JSONObject().put("responseMimeType","application/json"));
-    URL url=new URL("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent");
+    URL url=new URL("https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent");
     HttpURLConnection c=(HttpURLConnection)url.openConnection();c.setRequestMethod("POST");c.setConnectTimeout(15000);c.setReadTimeout(45000);c.setDoOutput(true);
     c.setRequestProperty("Content-Type","application/json");c.setRequestProperty("x-goog-api-key",key);
     try(OutputStream os=c.getOutputStream()){os.write(body.toString().getBytes("UTF-8"));}
