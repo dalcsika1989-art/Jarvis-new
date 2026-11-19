@@ -23,6 +23,11 @@ jobs:
         run: |
           test -s assets/index.html
           test -s assets/jarvis-bridge.js
+          test -s assets/jarvis-brain.js
+          grep -q 'getBrain' src/hu/jarvis/app/MainActivity.java
+          grep -q 'BrainStore' src/hu/jarvis/app/MainActivity.java
+          node --check assets/jarvis-bridge.js
+          node --check assets/jarvis-brain.js
           grep -q 'JARVIS' assets/index.html
           grep -q 'JarvisNative' assets/jarvis-bridge.js
       - name: Compile and sign JARVIS ARC APK
