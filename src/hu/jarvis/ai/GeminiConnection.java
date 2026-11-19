@@ -86,8 +86,8 @@ public final class GeminiConnection {
       String url="https://generativelanguage.googleapis.com/v1beta/models?pageSize=100";
       if(!page.isEmpty())url+="&pageToken="+URLEncoder.encode(page,"UTF-8");
       JSONObject returned=request(key,"GET",url,null);
-      if(returned.has("ok")&&!returned.optBoolean("ok")){result=returned;
-       activity.runOnUiThread(()->callback.done(result.toString()));return;}
+      if(returned.has("ok")&&!returned.optBoolean("ok")){final String errorJson=returned.toString();
+       activity.runOnUiThread(()->callback.done(errorJson));return;}
       JSONArray models=returned.optJSONArray("models");
       if(models!=null)for(int i=0;i<models.length();i++){
        JSONObject entry=models.optJSONObject(i);if(entry==null)continue;
