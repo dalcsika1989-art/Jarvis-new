@@ -6,14 +6,18 @@ import org.json.*;
 public final class ScreenAgent {
  public interface Listener { void event(String type,String message); }
  private ScreenAgent(){}
+ private static volatile int session=0;
+ public static void cancel(){session++;}
  public static void run(Activity activity,String apiKey,String goal,Listener listener){
   if(!ControlService.active()){listener.event("error","Engedélyezd a JARVIS kisegítő szolgáltatást.");return;}
   if(goal==null||goal.trim().isEmpty()){listener.event("error","Hiányzik a cél.");return;}
-  listener.event("task","Ügynök: képernyőelemzés indul. Maximum 8 lépés.");
-  next(activity,apiKey,goal,0,listener);
+  int token=++session;
+  listener.event("task","Ügynök: képernyőelemzés indul. Maximum 12 lépés.");
+  next(activity,apiKey,goal,0,token,listener);
  }
- private static void next(Activity activity,String key,String goal,int index,Listener listener){
-  if(index>=8){listener.event("task","Ügynök leállt: elérte a 8 lépéses korlátot.");return;}
+ private static void next(Activity activity,String key,String goal,int index,int token,Listener listener){
+  if(token!=session)return;
+  if(index>=12){listener.event("task","Ügynök leállt: elérte a 12 lépéses korlátot.");return;}
   String screen=ControlService.screenSummary();
   if(screen.startsWith("Nincs")||screen.startsWith("Képernyő")){listener.event("error",screen);return;}
   String prompt="TELEFONVEZÉRLŐ ÜGYNÖK. Cél: "+goal+
@@ -28,7 +32,9 @@ public final class ScreenAgent {
    "Ne találj ki gombokat. Ha üzenetküldés, vásárlás, fizetés vagy adatmegosztás következne, STOP: kérj felhasználói jóváhagyást. "+
    "Ha nem tudod biztonságosan folytatni, stop.";
   GroqAgent.run(activity,key,prompt,response->{
+   if(token!=session)return;
    try{
+    if(response.startsWith("Groq-hiba:")){listener.event("error",response);return;}
     String cleaned=response.trim();int a=cleaned.indexOf('{'),b=cleaned.lastIndexOf('}');
     if(a<0||b<a)throw new IllegalArgumentException(response);
     JSONObject obj=new JSONObject(cleaned.substring(a,b+1));
@@ -45,14 +51,25 @@ public final class ScreenAgent {
      default:throw new IllegalArgumentException("Ismeretlen művelet: "+action);
     }
     if(!ControlService.executeLocalCommand(cmd)){listener.event("error","Művelet nem fogadható: "+cmd);return;}
-    listener.event("task","Ügynök "+(index+1)+"/8: "+cmd);
-    new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(()->{
-     String status=ControlService.currentStatus();
-     if(status.startsWith("Sikertelen:")||status.startsWith("Feladat megszakítva")){listener.event("error",status);return;}
-     if(status.startsWith("Minden sorba állított")||status.startsWith("Minden parancs"))next(activity,key,goal,index+1,listener);
-     else listener.event("task","Ügynök várakozik: "+status+" (új parancs szükséges a folytatáshoz).");
-    },1900);
+    listener.event("task","Ügynök "+(index+1)+"/12: "+cmd);
+    waitForStep(activity,key,goal,index,token,listener,0);
+
    }catch(Exception e){listener.event("error","Ügynök tervezési hiba: "+(response.length()>180?response.substring(0,180):response));}
   });
  }
+ private static void waitForStep(Activity activity,String key,String goal,int index,int token,Listener listener,int checks){
+  new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(()->{
+   if(token!=session)return;
+   String status=ControlService.currentStatus();
+   if(status.startsWith("Sikertelen:")||status.startsWith("Feladat megszakítva")){
+    listener.event("error",status);return;
+   }
+   if(status.startsWith("Minden sorba állított")||status.startsWith("Minden parancs")){
+    next(activity,key,goal,index+1,token,listener);return;
+   }
+   if(checks>=20){listener.event("error","Ügynök: a művelet nem fejeződött be 12 másodperc alatt. "+status);return;}
+   waitForStep(activity,key,goal,index,token,listener,checks+1);
+  },600);
+ }
+
 }
