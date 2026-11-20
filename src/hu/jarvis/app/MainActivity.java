@@ -21,6 +21,7 @@ import hu.jarvis.local.OfflineSpeech;
 import hu.jarvis.local.BrainStore;
 import hu.jarvis.ai.GeminiAgent;
 import hu.jarvis.ai.GroqAgent;
+import hu.jarvis.ai.ScreenAgent;
 import hu.jarvis.ai.GeminiConnection;
 import hu.jarvis.ai.GeminiVoice;
 
@@ -147,6 +148,16 @@ public final class MainActivity extends Activity {
    boolean accepted=ControlService.cancelCurrentTask();
    receive("task",accepted?"Feladat leállítása kérve.":"Nincs aktív telefonvezérlő szolgáltatás.");
    return;
+  }
+  if(lower.startsWith("ügynök:")||lower.startsWith("ugynok:")){
+   String goal=q.substring(q.indexOf(':')+1).trim();
+   String key=getSharedPreferences(prefName,MODE_PRIVATE).getString("groq_key","").trim();
+   if(key.isEmpty()){receive("error","Groq-kulcs szükséges az ügynökhöz.");return;}
+   ScreenAgent.run(this,key,goal,(type,msg)->receive(type,msg));
+   return;
+  }
+  if(lower.equals("képernyő elemzése")||lower.equals("kepernyo elemzese")){
+   receive("task",ControlService.screenSummary());return;
   }
   if(ControlService.executeLocalCommand(q)){
    receive("task","Parancs továbbítva: "+q);
