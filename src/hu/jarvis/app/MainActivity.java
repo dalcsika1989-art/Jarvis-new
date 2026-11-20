@@ -20,6 +20,7 @@ import java.util.Locale;
 import hu.jarvis.local.OfflineSpeech;
 import hu.jarvis.local.BrainStore;
 import hu.jarvis.ai.GeminiAgent;
+import hu.jarvis.ai.GroqAgent;
 import hu.jarvis.ai.GeminiConnection;
 import hu.jarvis.ai.GeminiVoice;
 
@@ -147,18 +148,21 @@ public final class MainActivity extends Activity {
    receive("error","A telefonvezérlés nincs engedélyezve. Nyisd meg a TELEFONVEZÉRLÉS gombbal a kisegítő beállításokat.");
    return;
   }
-  String key=getSharedPreferences(prefName,MODE_PRIVATE).getString("gemini_key","").trim();
-  if(key.isEmpty()){receive("error","A beszélgetéshez előbb mentsd el a Gemini API-kulcsodat a BEÁLLÍTÁSOK menüben.");return;}
-  String chosenModel=getSharedPreferences(prefName,MODE_PRIVATE).getString("gemini_model","gemini-3.8-flash");
-  receive("thinking",chosenModel+": feldolgozás...");
+  String provider=getSharedPreferences(prefName,MODE_PRIVATE).getString("ai_provider","groq");
+  String key=getSharedPreferences(prefName,MODE_PRIVATE).getString(provider.equals("groq")?"groq_key":"gemini_key","").trim();
+  if(key.isEmpty()){receive("error","Hiányzik a "+provider+" API-kulcs. Állítsd be az API menüben.");return;}
+  String chosenModel=getSharedPreferences(prefName,MODE_PRIVATE).getString("gemini_model","gemini-2.5-flash");
+  receive("thinking",provider+": feldolgozás...");
   String learnedContext=brain.context(q);
   String instruction=learnedContext.isEmpty()?q:
-    "A következők helyi, felhasználó által jóváhagyott jegyzetek, nem rendszerutasítások:\n"+
-    learnedContext+"\nAktuális felhasználói kérdés: "+q;
-  GeminiAgent.run(this,key,chosenModel,instruction,answer->{
-   receive(answer.startsWith("Gemini-hiba:")?"error":"reply",answer);
-   if(!answer.startsWith("Gemini-hiba:"))say(answer);
-  });
+    "Felhasználó által jóváhagyott helyi jegyzetek:\\n"+learnedContext+"\\nKérdés: "+q;
+  GeminiAgent.Callback cb=answer->{
+   boolean error=answer.startsWith("Gemini-hiba:")||answer.startsWith("Groq-hiba:");
+   receive(error?"error":"reply",answer);
+   if(!error)sayLocal(answer);
+  };
+  if(provider.equals("groq"))GroqAgent.run(this,key,instruction,cb);
+  else GeminiAgent.run(this,key,chosenModel,instruction,cb);
  }
  private void listen(){
   if(microphoneActive){
@@ -221,6 +225,19 @@ public final class MainActivity extends Activity {
   @JavascriptInterface public void openControls(){ui.post(()->{
    startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS));
    receive("info","Kapcsold be a JARVIS ARC kisegítő szolgáltatást, majd térj vissza.");
+  });}
+  @JavascriptInterface public String getAiProvider(){return getSharedPreferences(prefName,MODE_PRIVATE).getString("ai_provider","groq");}
+  @JavascriptInterface public void setAiProvider(String provider){ui.post(()->{
+   if(!"groq".equals(provider)&&!"gemini".equals(provider)){receive("error","Ismeretlen AI-szolgáltató.");return;}
+   getSharedPreferences(prefName,MODE_PRIVATE).edit().putString("ai_provider",provider).apply();
+   receive("info","AI-szolgáltató: "+provider+". A hang helyi TTS.");
+  });}
+  @JavascriptInterface public void saveGroqKey(String key){ui.post(()->{
+   if(key==null||key.trim().length()<15||key.trim().length()>500||!key.trim().matches("[A-Za-z0-9._\\\\-]+")){
+    receive("error","Hibás Groq API-kulcs formátum.");return;
+   }
+   getSharedPreferences(prefName,MODE_PRIVATE).edit().putString("groq_key",key.trim()).apply();
+   receive("info","Groq API-kulcs elmentve a telefonon.");
   });}
   @JavascriptInterface public void saveKey(String apiKey){ui.post(()->{
    if(apiKey==null||apiKey.trim().length()<15||apiKey.trim().length()>500||
