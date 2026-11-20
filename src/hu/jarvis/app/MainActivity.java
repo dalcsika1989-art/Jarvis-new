@@ -145,12 +145,15 @@ public final class MainActivity extends Activity {
    return;
   }
   if(q.equalsIgnoreCase("stop")||q.equalsIgnoreCase("állj")||q.equalsIgnoreCase("leállítás")){
+   ScreenAgent.cancel();
    boolean accepted=ControlService.cancelCurrentTask();
    receive("task",accepted?"Feladat leállítása kérve.":"Nincs aktív telefonvezérlő szolgáltatás.");
    return;
   }
-  if(lower.startsWith("ügynök:")||lower.startsWith("ugynok:")){
-   String goal=q.substring(q.indexOf(':')+1).trim();
+  boolean multiStep=(lower.contains(" és ")||lower.contains(" majd ")||lower.contains(" utána ")||lower.contains(" aztán "));
+  boolean actionGoal=lower.startsWith("nyisd meg ")||lower.startsWith("indítsd el ")||lower.startsWith("keresd meg ")||lower.startsWith("kattints ")||lower.startsWith("menj ")||lower.startsWith("írj ");
+  if(lower.startsWith("ügynök:")||lower.startsWith("ugynok:")||(multiStep&&actionGoal)){
+   String goal=q.indexOf(':')>=0?q.substring(q.indexOf(':')+1).trim():q;
    String key=getSharedPreferences(prefName,MODE_PRIVATE).getString("groq_key","").trim();
    if(key.isEmpty()){receive("error","Groq-kulcs szükséges az ügynökhöz.");return;}
    ScreenAgent.run(this,key,goal,(type,msg)->receive(type,msg));
