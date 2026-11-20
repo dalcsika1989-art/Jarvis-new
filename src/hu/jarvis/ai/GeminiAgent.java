@@ -43,7 +43,12 @@ public final class GeminiAgent {
        .put("contents",new JSONArray().put(new JSONObject()
           .put("role","user")
           .put("parts",new JSONArray().put(userPart))));
-    // Fast response profile: limit output; 2.5 Flash supports zero thinking budget.\n    JSONObject generation=new JSONObject().put("maxOutputTokens",384);\n    if(model.startsWith("gemini-2.5-flash"))generation.put("thinkingConfig",\n       new JSONObject().put("thinkingBudget",0));\n    body.put("generationConfig",generation);\n    // Avoid forcing application/json: plain-text answers must remain usable.
+    // Fast response profile: limit output; 2.5 Flash supports zero thinking budget.
+    JSONObject generation=new JSONObject().put("maxOutputTokens",384);
+    if(model.startsWith("gemini-2.5-flash"))generation.put("thinkingConfig",
+       new JSONObject().put("thinkingBudget",0));
+    body.put("generationConfig",generation);
+    // Avoid forcing application/json: plain-text answers must remain usable.
     URL url=new URL("https://generativelanguage.googleapis.com/v1beta/models/"+model+":generateContent");
     connection=(HttpURLConnection)url.openConnection();
     connection.setRequestMethod("POST");
