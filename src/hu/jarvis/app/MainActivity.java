@@ -33,7 +33,7 @@ public final class MainActivity extends Activity {
  private final Handler ui=new Handler(Looper.getMainLooper());
  private Runnable statusWatcher;
  private int updates;
- private final String prefName="jarvis_hud76_settings";
+ private final String prefName="jarvis_voice_lab_settings";
  private static final int REQ_MIC=829;
 
  @Override public void onCreate(Bundle state){
@@ -45,7 +45,7 @@ public final class MainActivity extends Activity {
    if(status==TextToSpeech.SUCCESS && tts!=null){
     tts.setLanguage(new Locale("hu","HU"));
     tts.setSpeechRate(1.03f);
-    tts.setPitch(0.83f);
+    tts.setPitch(0.68f);
     voiceReady=true;
    }
   });
@@ -92,7 +92,7 @@ public final class MainActivity extends Activity {
  }
  private void say(String text){
   String key=getSharedPreferences(prefName,MODE_PRIVATE).getString("gemini_key","");
-  if(!getSharedPreferences(prefName,MODE_PRIVATE).getBoolean("charon_enabled",false)||key.isEmpty()){
+  if(true){ // Voice Lab: local TTS only, no Gemini voice API usage
    sayLocal(text);return;
   }
   receive("info","Charon felhőhang generálása...");
