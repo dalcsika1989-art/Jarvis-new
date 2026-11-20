@@ -239,6 +239,29 @@ public class ControlService extends AccessibilityService {
   });
   return true;
  }
+ public static String screenSummary(){
+  ControlService service=live;
+  if(service==null)return "Nincs aktív kisegítő szolgáltatás.";
+  AccessibilityNodeInfo root=service.getRootInActiveWindow();
+  if(root==null)return "Képernyő nem olvasható.";
+  StringBuilder out=new StringBuilder();
+  out.append("Alkalmazás: ").append(root.getPackageName()).append("\\n");
+  appendVisible(root,out,0);
+  return out.toString();
+ }
+ private static void appendVisible(AccessibilityNodeInfo node,StringBuilder out,int depth){
+  if(node==null||depth>22||out.length()>3200)return;
+  if(node.isVisibleToUser()&&!node.isPassword()&&!node.isEditable()){
+   CharSequence t=node.getText(),d=node.getContentDescription();
+   String label=t!=null?t.toString():d!=null?d.toString():"";
+   if(!label.trim().isEmpty()){
+    label=label.replaceAll("[\\\\r\\\\n]+"," ").trim();
+    if(label.length()>100)label=label.substring(0,100);
+    out.append(node.isClickable()?"[gomb] ":"[szöveg] ").append(label).append("\\n");
+   }
+  }
+  for(int i=0;i<node.getChildCount()&&out.length()<3200;i++)appendVisible(node.getChild(i),out,depth+1);
+ }
  static boolean scrollBack(AccessibilityNodeInfo n){if(n==null)return false;if(n.isScrollable()&&n.performAction(AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD))return true;for(int i=0;i<n.getChildCount();i++)if(scrollBack(n.getChild(i)))return true;return false;}
  static boolean scroll(AccessibilityNodeInfo n){if(n==null)return false;if(n.isScrollable()&&n.performAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD))return true;for(int i=0;i<n.getChildCount();i++)if(scroll(n.getChild(i)))return true;return false;}
  static void collect(AccessibilityNodeInfo n,StringBuilder s,int depth){if(n==null||depth>18||s.length()>6000)return;if(n.getText()!=null)s.append(n.getText()).append(". ");for(int i=0;i<n.getChildCount();i++)collect(n.getChild(i),s,depth+1);}
