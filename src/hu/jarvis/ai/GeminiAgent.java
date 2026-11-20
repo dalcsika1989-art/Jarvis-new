@@ -34,7 +34,7 @@ public final class GeminiAgent {
    try{
     JSONObject userPart=new JSONObject().put("text",
        "Te JARVIS vagy, magyarul válaszoló digitális asszisztens. "+
-       "Válaszolj közérthetően, közvetlenül és egyszerű SZÖVEGBEN; "+
+       "Válaszolj röviden, közvetlenül, általában legfeljebb 3 mondatban, egyszerű SZÖVEGBEN; "+
        "ne használj JSON-t, kódblokkot vagy más strukturált formátumot, "+
        "kivéve ha a felhasználó kifejezetten kéri. "+
        "Ne állítsd, hogy telefonos műveletet hajtottál végre, ha erre nincs visszaigazolás.\n"+
@@ -43,7 +43,7 @@ public final class GeminiAgent {
        .put("contents",new JSONArray().put(new JSONObject()
           .put("role","user")
           .put("parts",new JSONArray().put(userPart))));
-    // Avoid forcing application/json: plain-text answers must remain usable.
+    // Fast response profile: limit output; 2.5 Flash supports zero thinking budget.\n    JSONObject generation=new JSONObject().put("maxOutputTokens",384);\n    if(model.startsWith("gemini-2.5-flash"))generation.put("thinkingConfig",\n       new JSONObject().put("thinkingBudget",0));\n    body.put("generationConfig",generation);\n    // Avoid forcing application/json: plain-text answers must remain usable.
     URL url=new URL("https://generativelanguage.googleapis.com/v1beta/models/"+model+":generateContent");
     connection=(HttpURLConnection)url.openConnection();
     connection.setRequestMethod("POST");
