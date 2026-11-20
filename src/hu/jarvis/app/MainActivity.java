@@ -72,12 +72,21 @@ public final class MainActivity extends Activity {
    }
    @Override public void onPageFinished(WebView view,String url){
     receive("ready","JARVIS ARC HUD 7.6 betöltve. Telefonvezérléshez engedélyezd a JARVIS kisegítő szolgáltatást.");
+    openRequestedPanel();
    }
   });
   setContentView(web);
   web.loadUrl("file:///android_asset/index.html");
  }
 
+ @Override protected void onNewIntent(Intent intent){super.onNewIntent(intent);setIntent(intent);openRequestedPanel();}
+ private void openRequestedPanel(){
+  Intent i=getIntent();if(i==null)return;
+  String action=i.getStringExtra("jarvis_panel");if(action==null)return;
+  i.removeExtra("jarvis_panel");
+  String safe=org.json.JSONObject.quote(action);
+  ui.postDelayed(()->{if(web!=null)web.evaluateJavascript("window.jarvisOpenPanel&&window.jarvisOpenPanel("+safe+");",null);},350);
+ }
  private void receive(String kind,String message){
   if(web==null)return;
   String safeKind=org.json.JSONObject.quote(kind==null?"info":kind);
