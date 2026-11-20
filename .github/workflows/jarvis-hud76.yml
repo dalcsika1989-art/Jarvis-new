@@ -1,7 +1,7 @@
-name: JARVIS ARC 7.9 Answer & Charon Repair
+name: JARVIS Offline Voice Lab APK
 on:
   push:
-    branches: [jarvis-hud76]
+    branches: [jarvis-offline-voice-lab]
   workflow_dispatch:
 jobs:
   build:
@@ -37,6 +37,6 @@ jobs:
         run: bash build.sh
       - uses: actions/upload-artifact@v4
         with:
-          name: JARVIS-ARC-7.9-FIX
+          name: JARVIS-OFFLINE-VOICE-LAB
           path: build/JARVIS-ARC-7.9.apk
           if-no-files-found: error
