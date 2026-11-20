@@ -1,7 +1,7 @@
-name: JARVIS Offline Voice Lab APK
+name: JARVIS ARC New Model APK
 on:
   push:
-    branches: [jarvis-offline-voice-lab]
+    branches: [jarvis-arc-new-model]
   workflow_dispatch:
 jobs:
   build:
@@ -37,6 +37,6 @@ jobs:
         run: bash build.sh
       - uses: actions/upload-artifact@v4
         with:
-          name: JARVIS-OFFLINE-VOICE-LAB
+          name: JARVIS-ARC-NEW-MODEL
           path: build/JARVIS-ARC-7.9.apk
           if-no-files-found: error
