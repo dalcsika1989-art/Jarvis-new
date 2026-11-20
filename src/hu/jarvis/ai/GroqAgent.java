@@ -11,7 +11,7 @@ public final class GroqAgent {
   new Thread(()->{
    HttpURLConnection conn=null;String result;
    try{
-    JSONObject body=new JSONObject().put("model","llama-3.3-70b-versatile")
+    JSONObject body=new JSONObject().put("model","openai/gpt-oss-20b")
       .put("max_tokens",384).put("temperature",0.4)
       .put("messages",new JSONArray()
         .put(new JSONObject().put("role","system").put("content","Te JARVIS vagy. Magyarul, tömören és érthetően válaszolj. Ne állítsd, hogy elvégeztél egy telefonműveletet, ha nincs róla visszaigazolás."))
@@ -26,7 +26,7 @@ public final class GroqAgent {
     InputStream input=status<400?conn.getInputStream():conn.getErrorStream();
     ByteArrayOutputStream buffer=new ByteArrayOutputStream();
     if(input!=null)try(InputStream in=input){byte[] chunk=new byte[4096];int n;while((n=in.read(chunk))!=-1){if(buffer.size()+n>240000)throw new IOException("Túl nagy válasz.");buffer.write(chunk,0,n);}}
-    if(status>=400)throw new IOException("HTTP "+status+(status==429?" – Groq kvótakorlát.":status==401?" – Hibás Groq API-kulcs.":" – Groq API-hiba."));
+    if(status>=400)throw new IOException("HTTP "+status+(status==429?" – Groq kvótakorlát.":status==401?" – Hibás Groq API-kulcs.":status==404?" – A Groq modell nem érhető el.":" – Groq API-hiba."));
     JSONObject json=new JSONObject(buffer.toString("UTF-8"));
     JSONArray choices=json.getJSONArray("choices");
     result=choices.getJSONObject(0).getJSONObject("message").optString("content","").trim();
