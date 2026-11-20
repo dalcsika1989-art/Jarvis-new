@@ -34,7 +34,7 @@ public final class MainActivity extends Activity {
  private final Handler ui=new Handler(Looper.getMainLooper());
  private Runnable statusWatcher;
  private int updates;
- private final String prefName="jarvis_voice_lab_settings";
+ private final String prefName="jarvis_arc_new_model_settings";
  private static final int REQ_MIC=829;
 
  @Override public void onCreate(Bundle state){
