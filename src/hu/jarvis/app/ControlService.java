@@ -12,7 +12,7 @@ import android.os.Handler;
 import android.os.Looper;
 import java.util.*;
 public class ControlService extends AccessibilityService {
- static ControlService live; WindowManager wm; LinearLayout bubble; WindowManager.LayoutParams pos; boolean expanded=false;
+ static ControlService live; WindowManager wm; FrameLayout bubble; WindowManager.LayoutParams pos; boolean expanded=false;
  private final Handler handler=new Handler(Looper.getMainLooper());
  private final ArrayDeque<String> pending=new ArrayDeque<>();
  private boolean processing=false;
@@ -36,9 +36,27 @@ public class ControlService extends AccessibilityService {
   nextAdvanceAt=when;
   handler.postAtTime(advance,when);
  }
- public void onServiceConnected(){live=this;setStatus("JARVIS vezérlő készen áll.");wm=(WindowManager)getSystemService(WINDOW_SERVICE);bubble=new LinearLayout(this);bubble.setOrientation(1);bubble.setPadding(5,5,5,5);bubble.setBackgroundColor(0xe6102935);pos=new WindowManager.LayoutParams(WindowManager.LayoutParams.WRAP_CONTENT,WindowManager.LayoutParams.WRAP_CONTENT,WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,PixelFormat.TRANSLUCENT);pos.gravity=Gravity.TOP|Gravity.END;pos.x=8;pos.y=180;render();try{wm.addView(bubble,pos);}catch(Exception e){bubble=null;}}
- void button(String text,Runnable click){Button b=new Button(this);b.setText(text);b.setTextColor(0xff83efff);b.setTextSize(12);b.setMinWidth(44);b.setMinimumWidth(44);b.setPadding(8,0,8,0);bubble.addView(b,new LinearLayout.LayoutParams(-2,44));b.setOnClickListener(v->click.run());}
-
+ public void onServiceConnected(){live=this;setStatus("JARVIS vezérlő készen áll.");wm=(WindowManager)getSystemService(WINDOW_SERVICE);bubble=new FrameLayout(this);pos=new WindowManager.LayoutParams(WindowManager.LayoutParams.WRAP_CONTENT,WindowManager.LayoutParams.WRAP_CONTENT,WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,PixelFormat.TRANSLUCENT);pos.gravity=Gravity.TOP|Gravity.END;pos.x=8;pos.y=180;render();try{wm.addView(bubble,pos);}catch(Exception e){bubble=null;}}
+ private int dp(float n){return (int)(n*getResources().getDisplayMetrics().density+.5f);}
+ private void radialButton(String symbol,String title,int cx,int cy,Runnable click){
+  LinearLayout tile=new LinearLayout(this);tile.setOrientation(LinearLayout.VERTICAL);tile.setGravity(Gravity.CENTER);
+  android.graphics.drawable.GradientDrawable bg=new android.graphics.drawable.GradientDrawable();
+  bg.setColor(0xee071c31);bg.setCornerRadius(dp(16));bg.setStroke(dp(1),0xff39d7f5);tile.setBackground(bg);
+  TextView glyph=new TextView(this);glyph.setText(symbol);glyph.setTextColor(0xff74efff);glyph.setTextSize(23);glyph.setGravity(Gravity.CENTER);
+  TextView label=new TextView(this);label.setText(title);label.setTextColor(0xffe0faff);label.setTextSize(10);label.setGravity(Gravity.CENTER);
+  tile.addView(glyph);tile.addView(label);
+  FrameLayout.LayoutParams lp=new FrameLayout.LayoutParams(dp(92),dp(68));
+  lp.leftMargin=dp(cx-46);lp.topMargin=dp(cy-34);bubble.addView(tile,lp);
+  tile.setAlpha(0f);tile.setScaleX(.55f);tile.setScaleY(.55f);
+  tile.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(190).start();
+  tile.setOnClickListener(v->click.run());
+ }
+ private void openPanel(String action){
+  expanded=false;render();
+  Intent i=new Intent(this,MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_SINGLE_TOP);
+  i.putExtra("jarvis_panel",action);
+  startActivity(i);
+ }
  static final class ArcHead extends View {
   final Paint paint=new Paint(3);
   ArcHead(android.content.Context c){super(c);setClickable(true);}
@@ -56,13 +74,44 @@ public class ControlService extends AccessibilityService {
    if(isAttachedToWindow())postInvalidateDelayed(120);
   }
  }
- private void addReactorHead(){
-  int size=(int)(54*getResources().getDisplayMetrics().density+.5f);
-  ArcHead head=new ArcHead(this);bubble.addView(head,new LinearLayout.LayoutParams(size,size));
+ private void addReactorHead(int cx,int cy){
+  ArcHead head=new ArcHead(this);
+  FrameLayout.LayoutParams lp=new FrameLayout.LayoutParams(dp(60),dp(60));
+  lp.leftMargin=dp(cx-30);lp.topMargin=dp(cy-30);
+  bubble.addView(head,lp);
   head.setOnClickListener(v->{expanded=!expanded;render();});
+  head.setOnTouchListener(new View.OnTouchListener(){
+   float x,y;int px,py;boolean drag;
+   public boolean onTouch(View v,MotionEvent e){
+    if(e.getAction()==MotionEvent.ACTION_DOWN){x=e.getRawX();y=e.getRawY();px=pos.x;py=pos.y;drag=false;return true;}
+    if(e.getAction()==MotionEvent.ACTION_MOVE){
+     if(Math.abs(e.getRawX()-x)+Math.abs(e.getRawY()-y)>dp(12))drag=true;
+     if(drag&&!expanded){pos.x=Math.max(0,px-(int)(e.getRawX()-x));pos.y=Math.max(0,py+(int)(e.getRawY()-y));wm.updateViewLayout(bubble,pos);}
+     return true;
+    }
+    if(e.getAction()==MotionEvent.ACTION_UP){if(!drag){expanded=!expanded;render();}return true;}
+    return true;
+   }
+  });
  }
-
- void render(){if(bubble==null)return;bubble.removeAllViews();addReactorHead();if(expanded){button("■ STOP",()->stopTask());button("ÁLLAPOT",()->Toast.makeText(this,currentStatus(),Toast.LENGTH_LONG).show());button("‹",()->performGlobalAction(GLOBAL_ACTION_BACK));button("⌂",()->performGlobalAction(GLOBAL_ACTION_HOME));button("↓",()->{if(!scroll(getRootInActiveWindow()))Toast.makeText(this,"Nincs görgethető tartalom",Toast.LENGTH_SHORT).show();});button("JARVIS",()->{expanded=false;render();startActivity(new Intent(this,MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_SINGLE_TOP));});}View head=bubble.getChildAt(0);head.setOnTouchListener(new View.OnTouchListener(){float x,y;int px,py;boolean drag;public boolean onTouch(View v,MotionEvent e){if(e.getAction()==MotionEvent.ACTION_DOWN){x=e.getRawX();y=e.getRawY();px=pos.x;py=pos.y;drag=false;}if(e.getAction()==MotionEvent.ACTION_MOVE){if(Math.abs(e.getRawX()-x)+Math.abs(e.getRawY()-y)>12)drag=true;if(drag){pos.x=Math.max(0,px-(int)(e.getRawX()-x));pos.y=Math.max(0,py+(int)(e.getRawY()-y));wm.updateViewLayout(bubble,pos);return true;}}if(e.getAction()==MotionEvent.ACTION_UP&&drag)return true;return false;}});}
+ void render(){
+  if(bubble==null)return;
+  bubble.removeAllViews();
+  int size=expanded?340:60;
+  pos.width=dp(size);pos.height=dp(size);
+  bubble.setBackgroundColor(expanded?0xe8061525:0x00000000);
+  if(expanded){
+   // Six evenly spaced actions surrounding the ARC reactor.
+   radialButton("◉","CHAT",170,49,()->openPanel("chat"));
+   radialButton("🎙","MIKROFON",274,110,()->openPanel("mic"));
+   radialButton("◇","AGY",274,230,()->openPanel("brain"));
+   radialButton("⚙","BEÁLLÍTÁS",170,291,()->openPanel("settings"));
+   radialButton("▦","VEZÉRLÉS",66,230,()->openPanel("control"));
+   radialButton("◷","ÁLLAPOT",66,110,()->Toast.makeText(this,currentStatus(),Toast.LENGTH_LONG).show());
+   addReactorHead(170,170);
+  }else addReactorHead(30,30);
+  try{if(bubble.getParent()!=null)wm.updateViewLayout(bubble,pos);}catch(Exception e){android.util.Log.w("JARVIS","Overlay layout",e);}
+ }
  public void onAccessibilityEvent(AccessibilityEvent e){
   if(!processing||pending.isEmpty()||e==null)return;
   int type=e.getEventType();
