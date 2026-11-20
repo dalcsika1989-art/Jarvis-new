@@ -98,6 +98,7 @@ window.jarvisReceive=function(k,m){
  }
  log('['+k+'] '+m);
 };
+window.jarvisOpenPanel=function(action){visible(true);if(action==='settings'){$('jkeypane').classList.add('on');}else if(action==='mic'){$('jmic').click();}else if(action==='control'){$('jaccess').click();}else if(action==='brain'){var b=document.getElementById('jbrain');if(b)b.click();}else if(action==='chat'){$('jprompt').focus();}else if(action==='status'){$('jstatus').click();}};
 window.jarvisClosePanel=function(){visible(false)};
 var brainScript=document.createElement('script');brainScript.src='jarvis-brain.js';document.body.appendChild(brainScript);
 })();
