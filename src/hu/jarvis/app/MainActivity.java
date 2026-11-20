@@ -233,7 +233,7 @@ public final class MainActivity extends Activity {
    receive("info","AI-szolgáltató: "+provider+". A hang helyi TTS.");
   });}
   @JavascriptInterface public void saveGroqKey(String key){ui.post(()->{
-   if(key==null||key.trim().length()<15||key.trim().length()>500||!key.trim().matches("[A-Za-z0-9._\\\\-]+")){
+   if(key==null||key.trim().length()<15||key.trim().length()>500||key.trim().contains(" ")){
     receive("error","Hibás Groq API-kulcs formátum.");return;
    }
    getSharedPreferences(prefName,MODE_PRIVATE).edit().putString("groq_key",key.trim()).apply();
