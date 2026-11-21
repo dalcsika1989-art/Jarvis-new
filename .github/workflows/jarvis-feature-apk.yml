@@ -48,3 +48,30 @@ jobs:
           else
             gh release create "$TAG" "$APK" --target jarvis-hud-apk-build --title "JARVIS HUD v10 — Android TEST APK" --prerelease --notes "Debug/test build, not a verified production release. Android permissions and all ten functions require device-level testing."
           fi
+      - name: Record verifiable CI build status
+        if: always()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CI_OUTCOME: ${{ job.status }}
+        run: |
+          set -e
+          STATUS_JSON=$(python3 - <<'PY'
+          import json, os
+          print(json.dumps({
+              "job_status": os.environ.get("CI_OUTCOME","unknown"),
+              "source_branch": "jarvis-hud-apk-build",
+              "run_id": os.environ.get("GITHUB_RUN_ID"),
+              "run_url": "https://github.com/"+os.environ.get("GITHUB_REPOSITORY","")+"/actions/runs/"+os.environ.get("GITHUB_RUN_ID",""),
+              "test_type": "APK compilation; hardware validation still required",
+              "apk_name": "JARVIS-HUD-10-modules-debug-APK"
+          }, ensure_ascii=False))
+          PY
+          )
+          ENCODED=$(printf "%s" "$STATUS_JSON" | base64 -w0)
+          SHA=$(gh api "repos/$GITHUB_REPOSITORY/contents/docs/jarvis-build-status.json?ref=main" --jq .sha 2>/dev/null || true)
+          if [ -n "$SHA" ]; then
+            gh api -X PUT "repos/$GITHUB_REPOSITORY/contents/docs/jarvis-build-status.json" -f message="Record JARVIS CI result" -f content="$ENCODED" -f branch="main" -f sha="$SHA"
+          else
+            gh api -X PUT "repos/$GITHUB_REPOSITORY/contents/docs/jarvis-build-status.json" -f message="Record JARVIS CI result" -f content="$ENCODED" -f branch="main"
+          fi
