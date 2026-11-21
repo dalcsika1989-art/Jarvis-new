@@ -45,7 +45,8 @@ public final class MainActivity extends Activity {
   getWindow().setNavigationBarColor(0xff020912);
   tts=new TextToSpeech(this,status->{
    if(status==TextToSpeech.SUCCESS && tts!=null){
-    tts.setLanguage(new Locale("hu","HU"));
+    int lang=tts.setLanguage(new Locale("hu","HU"));
+    if(lang==TextToSpeech.LANG_MISSING_DATA||lang==TextToSpeech.LANG_NOT_SUPPORTED)receive("error","Magyar TTS-hang nincs telepítve az Androidon.");
     tts.setSpeechRate(1.03f);
     tts.setPitch(0.68f);
     voiceReady=true;
@@ -156,7 +157,7 @@ public final class MainActivity extends Activity {
    String goal=q.indexOf(':')>=0?q.substring(q.indexOf(':')+1).trim():q;
    String key=getSharedPreferences(prefName,MODE_PRIVATE).getString("groq_key","").trim();
    if(key.isEmpty()){receive("error","Groq-kulcs szükséges az ügynökhöz.");return;}
-   ScreenAgent.run(this,key,goal,(type,msg)->receive(type,msg));
+   ScreenAgent.run(this,key,goal,(type,msg)->{receive(type,msg);if(("task".equals(type)||"error".equals(type))&&(msg.startsWith("Ügynök:")||msg.startsWith("Ügynök leállt")||msg.startsWith("Groq-hiba:")))sayLocal(msg);});
    return;
   }
   if(lower.equals("képernyő elemzése")||lower.equals("kepernyo elemzese")){
