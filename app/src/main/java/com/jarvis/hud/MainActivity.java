@@ -104,6 +104,19 @@ public class MainActivity extends Activity {
     startActivity(new Intent(Intent.ACTION_VIEW,u));jsCall("jarvisSystemMessage","Böngésző megnyitva.");
    }catch(Exception e){jsCall("jarvisSystemMessage","Hivatkozás hiba: "+e.getMessage());}
   });}
+  @JavascriptInterface public void startAgent(String json){runOnUiThread(()->{
+   if(json==null||json.length()>7000){jsCall("jarvisSystemMessage","A műveleti terv túl hosszú.");return;}
+   try{
+    Intent task=new Intent(MainActivity.this,MissionAgentService.class);
+    task.setAction(MissionAgentService.ACTION_START);task.putExtra("steps",json);
+    startForegroundService(task);jsCall("jarvisSystemMessage","Natív Mission Control elindítva.");
+   }catch(Exception ex){jsCall("jarvisSystemMessage","Mission Control indítási hiba: "+ex.getMessage());}
+  });}
+  @JavascriptInterface public String agentStatus(){return MissionAgentService.getStatus(MainActivity.this);}
+  @JavascriptInterface public void stopAgent(){runOnUiThread(()->{
+   Intent task=new Intent(MainActivity.this,MissionAgentService.class);
+   task.setAction(MissionAgentService.ACTION_STOP);startService(task);
+  });}
   @JavascriptInterface public void launchApp(String pkg,String id){runOnUiThread(()->{
    try{Intent i=getPackageManager().getLaunchIntentForPackage(pkg);
     if(i==null)throw new IllegalStateException("Alkalmazás nem telepített / nem látható");
