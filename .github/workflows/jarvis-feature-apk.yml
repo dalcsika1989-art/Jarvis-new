@@ -1,5 +1,5 @@
 name: Compile JARVIS HUD Android APK
-# Include latest JARVIS ARC launcher icon, research privacy, and model selector
+# V11 permission wizard, grounded search, verification actions and backup
 on:
   push:
     branches: [main]
@@ -47,11 +47,11 @@ jobs:
         run: |
           APK="$(find app/build/outputs/apk/debug -name '*.apk' | head -1)"
           if [ -z "$APK" ]; then echo "APK missing"; exit 1; fi
-          TAG="jarvis-hud-v10-debug"
+          TAG="jarvis-hud-v11-debug"
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" "$APK" --clobber
           else
-            gh release create "$TAG" "$APK" --target jarvis-hud-apk-build --title "JARVIS HUD v10 — Android TEST APK" --prerelease --notes "Debug/test build, not a verified production release. Android permissions and all ten functions require device-level testing."
+            gh release create "$TAG" "$APK" --target jarvis-hud-apk-build --title "JARVIS HUD v11 — Android TEST APK" --prerelease --notes "Debug/test build, not a verified production release. Android permissions and all ten functions require device-level testing."
           fi
       - name: Record verifiable CI build status
         if: always()
