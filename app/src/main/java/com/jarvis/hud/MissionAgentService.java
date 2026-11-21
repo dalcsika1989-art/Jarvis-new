@@ -126,14 +126,28 @@ public final class MissionAgentService extends Service {
    }
   }catch(Exception e){detail=type+" hiba: "+e.getMessage();}
   if(success){
+   getSharedPreferences(STORE,MODE_PRIVATE).edit().putInt("consecutive_failures",0).apply();
    attempts=0;index++;report("running","Sikeres: "+type);
    handler.postDelayed(next,"app".equals(type)?1800:800);
   }else if(!"click".equals(type)&&!"input".equals(type)&&attempts<2){
+   registerFailure();
    attempts++;report("retry","Próbálkozás "+attempts+"/2: "+type);
    handler.postDelayed(next,1200);
   }else{
+   registerFailure();
    halt("failed","Nem sikerült: "+detail+" ("+(index+1)+". lépés)");
   }
+ }
+ private void registerFailure(){
+  SharedPreferences store=getSharedPreferences(STORE,MODE_PRIVATE);
+  int failureCount=store.getInt("consecutive_failures",0)+1;
+  if(failureCount>=5){
+   store.edit().putInt("consecutive_failures",0).apply();
+   ((NotificationManager)getSystemService(NOTIFICATION_SERVICE)).notify(503,
+    new Notification.Builder(this,CHANNEL).setSmallIcon(android.R.drawable.ic_dialog_alert)
+    .setContentTitle("JARVIS: 5 sikertelen próbálkozás")
+    .setContentText("A Mission Control hibába ütközött. Ellenőrzés szükséges.").build());
+  }else store.edit().putInt("consecutive_failures",failureCount).apply();
  }
  private void halt(String phase,String detail){
   handler.removeCallbacks(next);
