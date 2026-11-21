@@ -76,38 +76,4 @@ public final class ScreenAgent {
   },600);
  }
 
-}    waitUntilIdle(activity,key,goal,index,runId,listener,0);
-
-   }catch(Exception e){listener.event("error","Ügynök tervezési hiba: "+(response.length()>180?response.substring(0,180):response));}
-  });
- }
- private static void waitForStep(Activity activity,String key,String goal,int index,int token,Listener listener,int checks){
-  new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(()->{
-   if(token!=session)return;
-   String status=ControlService.currentStatus();
-   if(status.startsWith("Sikertelen:")||status.startsWith("Feladat megszakítva")){
-    listener.event("error",status);return;
-   }
-   if(status.startsWith("Minden sorba állított")||status.startsWith("Minden parancs")){
-    next(activity,key,goal,index+1,token,listener);return;
-   }
-   if(checks>=20){listener.event("error","Ügynök: a művelet nem fejeződött be 12 másodperc alatt. "+status);return;}
-   waitForStep(activity,key,goal,index,token,listener,checks+1);
-  },600);
- }
-
- private static void waitUntilIdle(Activity activity,String key,String goal,int index,int runId,Listener listener,int tries){
-  if(runId!=generation)return;
-  String status=ControlService.currentStatus();
-  if(status.startsWith("Sikertelen:")||status.startsWith("Feladat megszakítva")){
-   listener.event("error",status);return;
-  }
-  if(status.startsWith("Minden ")||status.startsWith("Kész")||status.startsWith("JARVIS vezérlő készen")){
-   new Handler(Looper.getMainLooper()).postDelayed(()->next(activity,key,goal,index+1,runId,listener),550);
-   return;
-  }
-  if(tries>=24){listener.event("error","Ügynök időtúllépés: "+status);return;}
-  new Handler(Looper.getMainLooper()).postDelayed(()->waitUntilIdle(activity,key,goal,index,runId,listener,tries+1),500);
- }
-
 }
