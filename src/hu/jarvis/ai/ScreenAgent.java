@@ -8,8 +8,6 @@ import android.os.Looper;
 public final class ScreenAgent {
  public interface Listener { void event(String type,String message); }
  private ScreenAgent(){}
- private static volatile int generation=0;
- public static void cancel(){generation++;}
  private static volatile int session=0;
  public static void cancel(){session++;}
  public static void run(Activity activity,String apiKey,String goal,Listener listener){
