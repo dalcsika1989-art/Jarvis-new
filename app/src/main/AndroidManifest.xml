@@ -17,6 +17,9 @@
    <intent-filter><action android:name="android.accessibilityservice.AccessibilityService"/></intent-filter>
    <meta-data android:name="android.accessibilityservice" android:resource="@xml/jarvis_accessibility"/>
   </service>
+  <service android:name=".MissionAgentService" android:exported="false" android:foregroundServiceType="specialUse">
+   <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="User-approved multi-step accessibility mission execution"/>
+  </service>
   <service android:name=".OverlayService" android:exported="false" android:foregroundServiceType="specialUse">
    <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="Floating HUD quick-launch button"/>
   </service>
