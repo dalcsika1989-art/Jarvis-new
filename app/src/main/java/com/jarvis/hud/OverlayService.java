@@ -16,6 +16,7 @@ import android.view.WindowManager;
 import android.widget.TextView;
 
 public class OverlayService extends Service {
+ public static volatile boolean isRunning=false;
  private WindowManager wm;private TextView bubble;private WindowManager.LayoutParams params;
  @Override public void onCreate(){super.onCreate();
   ((NotificationManager)getSystemService(NOTIFICATION_SERVICE)).createNotificationChannel(new NotificationChannel("jarvis_overlay","JARVIS lebegő HUD",NotificationManager.IMPORTANCE_LOW));
@@ -35,9 +36,9 @@ public class OverlayService extends Service {
     case MotionEvent.ACTION_UP:if(Math.abs(e.getRawX()-downX)<15&&Math.abs(e.getRawY()-downY)<15&&System.currentTimeMillis()-startTime<600){Intent i=new Intent(OverlayService.this,MainActivity.class);i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_SINGLE_TOP);startActivity(i);}return true;}return false;
    }
   });
-  try{wm.addView(bubble,params);}catch(Exception e){stopSelf();}
+  try{wm.addView(bubble,params);isRunning=true;}catch(Exception e){isRunning=false;stopSelf();}
  }
  @Override public int onStartCommand(Intent i,int flags,int id){return START_NOT_STICKY;}
- @Override public void onDestroy(){if(wm!=null&&bubble!=null){try{wm.removeView(bubble);}catch(Exception ignored){}}super.onDestroy();}
+ @Override public void onDestroy(){isRunning=false;if(wm!=null&&bubble!=null){try{wm.removeView(bubble);}catch(Exception ignored){}}super.onDestroy();}
  @Override public IBinder onBind(Intent i){return null;}
 }
