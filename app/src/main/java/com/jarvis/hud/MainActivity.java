@@ -210,6 +210,10 @@ public class MainActivity extends Activity {
    }catch(Exception e){jsCall("jarvisSystemMessage","Alkalmazás hiba: "+e.getMessage());}
   });}
   @JavascriptInterface public void accessibilitySettings(){runOnUiThread(()->startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)));}
+  @JavascriptInterface public void appSettings(){runOnUiThread(()->{
+   Intent i=new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,Uri.parse("package:"+getPackageName()));
+   startActivity(i);
+  });}
   @JavascriptInterface public boolean accessibilityReady(){return JarvisAccessibility.instance!=null;}
   @JavascriptInterface public void action(String type,String value,String reqId){runOnUiThread(()->{
    JarvisAccessibility svc=JarvisAccessibility.instance;
@@ -244,7 +248,9 @@ public class MainActivity extends Activity {
     d.put("tts",ttsReady);
     d.put("openai_key",vault.has("openai"));
     d.put("gemini_key",vault.has("gemini"));
-    d.put("notifications",Build.VERSION.SDK_INT<33||checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)==PackageManager.PERMISSION_GRANTED);
+    NotificationManager notify=(NotificationManager)getSystemService(NOTIFICATION_SERVICE);
+    boolean permitted=Build.VERSION.SDK_INT<33||checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)==PackageManager.PERMISSION_GRANTED;
+    d.put("notifications",permitted&&notify.areNotificationsEnabled());
     d.put("microphone",checkSelfPermission(Manifest.permission.RECORD_AUDIO)==PackageManager.PERMISSION_GRANTED);
     d.put("speechRecognizer",SpeechRecognizer.isRecognitionAvailable(MainActivity.this));
     d.put("overlay_running",OverlayService.isRunning);
@@ -279,10 +285,18 @@ public class MainActivity extends Activity {
    });
   }
   @JavascriptInterface public void notifyStatus(String text){runOnUiThread(()->{
-   if(Build.VERSION.SDK_INT>=33&&checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)!=PackageManager.PERMISSION_GRANTED){jsCall("jarvisSystemMessage","Értesítési engedély szükséges.");return;}
-   Notification n=new Notification.Builder(MainActivity.this,"jarvis").setSmallIcon(android.R.drawable.ic_dialog_info).setContentTitle("JARVIS HUD").setContentText(text.length()>180?text.substring(0,180):text).build();
-   ((NotificationManager)getSystemService(NOTIFICATION_SERVICE)).notify(100,n);
-   jsCall("jarvisSystemMessage","Android értesítés elküldve. Garmin tükrözés a Garmin Connect beállításaitól függ.");
+   try{
+    if(Build.VERSION.SDK_INT>=33&&checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)!=PackageManager.PERMISSION_GRANTED)
+     throw new SecurityException("Értesítési engedély szükséges.");
+    NotificationManager mgr=(NotificationManager)getSystemService(NOTIFICATION_SERVICE);
+    if(!mgr.areNotificationsEnabled())throw new SecurityException("Az Android értesítések le vannak tiltva.");
+    String content=text==null?"JARVIS teszt":text.substring(0,Math.min(180,text.length()));
+    Notification n=new Notification.Builder(MainActivity.this,"jarvis")
+     .setSmallIcon(android.R.drawable.ic_dialog_info)
+     .setContentTitle("JARVIS HUD").setContentText(content).build();
+    mgr.notify(100,n);
+    jsCall("jarvisNotificationStatus","ok","Android értesítés elküldve; Garmin kézbesítése külön ellenőrizendő.");
+   }catch(Exception e){jsCall("jarvisNotificationStatus","error",e.getMessage());}
   });}
   @JavascriptInterface public void overlay(boolean enable){runOnUiThread(()->{
    if(enable){
