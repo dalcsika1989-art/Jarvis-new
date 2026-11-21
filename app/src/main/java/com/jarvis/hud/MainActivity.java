@@ -155,6 +155,14 @@ public class MainActivity extends Activity {
     return d.toString();
    }catch(Exception e){return "{\"error\":\"diagnostics failed\"}";}
   }
+  @JavascriptInterface public void screenshot(String id){runOnUiThread(()->{
+   JarvisAccessibility service=JarvisAccessibility.instance;
+   if(service==null){jsCall("jarvisScreenshotResult",id,"error","Accessibility nincs engedélyezve.");return;}
+   service.screenshot(payload->{
+    if(payload.startsWith("ERROR:"))jsCall("jarvisScreenshotResult",id,"error",payload.substring(6));
+    else jsCall("jarvisScreenshotResult",id,"ok",payload);
+   });
+  });}
   @JavascriptInterface public void requestNotifications(){if(Build.VERSION.SDK_INT>=33){runOnUiThread(()->requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS},NOTIFICATION_REQUEST));}}
   @JavascriptInterface public void notifyStatus(String text){runOnUiThread(()->{
    if(Build.VERSION.SDK_INT>=33&&checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)!=PackageManager.PERMISSION_GRANTED){jsCall("jarvisSystemMessage","Értesítési engedély szükséges.");return;}
