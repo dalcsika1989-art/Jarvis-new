@@ -245,6 +245,10 @@ public class MainActivity extends Activity {
     d.put("openai_key",vault.has("openai"));
     d.put("gemini_key",vault.has("gemini"));
     d.put("notifications",Build.VERSION.SDK_INT<33||checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)==PackageManager.PERMISSION_GRANTED);
+    d.put("microphone",checkSelfPermission(Manifest.permission.RECORD_AUDIO)==PackageManager.PERMISSION_GRANTED);
+    d.put("speechRecognizer",SpeechRecognizer.isRecognitionAvailable(MainActivity.this));
+    d.put("overlay_running",OverlayService.isRunning);
+    d.put("agent",MissionAgentService.getStatus(MainActivity.this));
     return d.toString();
    }catch(Exception e){return "{\"error\":\"diagnostics failed\"}";}
   }
@@ -256,7 +260,24 @@ public class MainActivity extends Activity {
     else jsCall("jarvisScreenshotResult",id,"ok",payload);
    });
   });}
-  @JavascriptInterface public void requestNotifications(){if(Build.VERSION.SDK_INT>=33){runOnUiThread(()->requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS},NOTIFICATION_REQUEST));}}
+  @JavascriptInterface public void requestMicrophone(){
+   runOnUiThread(()->{
+    if(checkSelfPermission(Manifest.permission.RECORD_AUDIO)==PackageManager.PERMISSION_GRANTED){
+     jsCall("jarvisPermissionResult","microphone","granted");
+    }else{
+     requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO},44);
+    }
+   });
+  }
+  @JavascriptInterface public void requestNotifications(){
+   runOnUiThread(()->{
+    if(Build.VERSION.SDK_INT>=33){
+     if(checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)==PackageManager.PERMISSION_GRANTED){
+      jsCall("jarvisPermissionResult","notifications","granted");
+     }else requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS},NOTIFICATION_REQUEST);
+    }else jsCall("jarvisPermissionResult","notifications","granted");
+   });
+  }
   @JavascriptInterface public void notifyStatus(String text){runOnUiThread(()->{
    if(Build.VERSION.SDK_INT>=33&&checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)!=PackageManager.PERMISSION_GRANTED){jsCall("jarvisSystemMessage","Értesítési engedély szükséges.");return;}
    Notification n=new Notification.Builder(MainActivity.this,"jarvis").setSmallIcon(android.R.drawable.ic_dialog_info).setContentTitle("JARVIS HUD").setContentText(text.length()>180?text.substring(0,180):text).build();
@@ -274,6 +295,14 @@ public class MainActivity extends Activity {
     try{Intent i=new Intent(MainActivity.this,OverlayService.class);startForegroundService(i);jsCall("jarvisSystemMessage","Lebegő JARVIS HUD elindítva.");}catch(Exception e){jsCall("jarvisSystemMessage","HUD hiba: "+e.getMessage());}
    }else{stopService(new Intent(MainActivity.this,OverlayService.class));jsCall("jarvisSystemMessage","Lebegő HUD leállítva.");}
   });}
+ }
+ @Override public void onRequestPermissionsResult(int requestCode,String[] permissions,int[] results){
+  super.onRequestPermissionsResult(requestCode,permissions,results);
+  if(requestCode==44||requestCode==NOTIFICATION_REQUEST){
+   String field=requestCode==44?"microphone":"notifications";
+   boolean ok=results.length>0&&results[0]==PackageManager.PERMISSION_GRANTED;
+   jsCall("jarvisPermissionResult",field,ok?"granted":"denied");
+  }
  }
  @Override protected void onActivityResult(int r,int code,Intent data){
   super.onActivityResult(r,code,data);
