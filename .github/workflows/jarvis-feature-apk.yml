@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 35
     permissions:
-      contents: read
+      contents: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -35,3 +35,16 @@ jobs:
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
           retention-days: 30
+      - name: Publish APK as prerelease
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          APK="$(find app/build/outputs/apk/debug -name '*.apk' | head -1)"
+          if [ -z "$APK" ]; then echo "APK missing"; exit 1; fi
+          TAG="jarvis-hud-v10-debug"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$APK" --clobber
+          else
+            gh release create "$TAG" "$APK" --target jarvis-hud-apk-build --title "JARVIS HUD v10 — Android TEST APK" --prerelease --notes "Debug/test build, not a verified production release. Android permissions and all ten functions require device-level testing."
+          fi
