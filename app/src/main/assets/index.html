@@ -26,7 +26,7 @@ button,select,input,textarea{font:inherit;border:1px solid var(--line);border-ra
 <script>
 "use strict";
 const $=x=>document.getElementById(x),native=()=>typeof window.JarvisNative!=="undefined";
-let cfg=load("cfg",{provider:"offline",model:"gemini-3.8-flash",pitch:0.7}),mem=load("memory",[]),tasks=load("tasks",[]),chatHistory=load("chat",[]).slice(-12),mission=null,activeRequest=null,failures=0,state="READY",runId=0;
+let cfg=load("cfg",{provider:"offline",model:"gemini-3.8-flash",pitch:0.7}),mem=load("memory",[]),tasks=load("tasks",[]),chatHistory=load("chat",[]).slice(-12),mission=load("pendingMission",null),activeRequest=null,failures=0,state="READY",runId=0,nativeAgentActive=false,nativeAgentTimer=null;
 function load(k,d){try{return JSON.parse(localStorage.getItem("jarvis_10_"+k))||d}catch(e){return d}}
 function save(k,v){try{localStorage.setItem("jarvis_10_"+k,JSON.stringify(v));return true}catch(e){message("Tárolás nem elérhető");return false}}
 function message(s,kind){$("status").textContent=s;$("status").className="panelStatus "+(kind||"");$("missionLog").textContent=new Date().toLocaleTimeString("hu-HU")+" · "+s+"\n"+$("missionLog").textContent.slice(0,2500)}
@@ -35,7 +35,7 @@ function pane(id){document.querySelectorAll("section").forEach(e=>e.classList.to
 document.querySelectorAll("[data-pane]").forEach(b=>b.addEventListener("click",()=>pane(b.dataset.pane)));
 function say(s){if(native()){JarvisNative.speak(String(s),Number(cfg.pitch))}else if("speechSynthesis"in window){speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(String(s));u.lang="hu-HU";u.pitch=Number(cfg.pitch);speechSynthesis.speak(u)}}
 function listen(){setState("LISTEN");if(native())JarvisNative.listen();else message("A natív mikrofon csak APK-ban működik.","warn")}
-function stop(){runId++;activeRequest=null;mission=null;setState("READY");if(native()){JarvisNative.cancelAi();JarvisNative.stopSpeech()}else speechSynthesis?.cancel();message("Folyamat leállítva.");renderMission()}
+function stop(){runId++;activeRequest=null;if(nativeAgentActive&&native())JarvisNative.stopAgent();nativeAgentActive=false;if(nativeAgentTimer){clearInterval(nativeAgentTimer);nativeAgentTimer=null}mission=null;save("pendingMission",null);setState("READY");if(native()){JarvisNative.cancelAi();JarvisNative.stopSpeech()}else speechSynthesis?.cancel();message("Folyamat leállítva.");renderMission()}
 $("listen").onclick=listen;$("listen2").onclick=listen;$("stop").onclick=stop;$("voiceStop").onclick=()=>native()?JarvisNative.stopSpeech():speechSynthesis?.cancel();
 $("testSpeak").onclick=$("voiceDemo").onclick=()=>{setState("SPEAK");say("JARVIS rendszer online, Uram. Az Android funkciók készen állnak a tesztre.");setTimeout(()=>setState("READY"),3000)};
 $("pitch").value=cfg.pitch;$("pitch").oninput=e=>{cfg.pitch=Number(e.target.value);save("cfg",cfg)};
@@ -107,7 +107,40 @@ function receiveAIPlan(text){
  }catch(e){setState("ERROR");message("AI terv hiba: "+e.message,"fail")}
 }
 
-$("runMission").onclick=()=>{if(!mission)return;mission.approved=true;message("Terv jóváhagyva; végrehajtás indul.");renderMission();nextStep()};
+$("runMission").onclick=()=>{
+ if(!mission)return;
+ mission.approved=true;message("Terv jóváhagyva; végrehajtás indul.");renderMission();
+ const nativeSteps=["app","click","scroll_down","scroll_up","input","back","home","read"];
+ if(native()&&mission.steps.every(s=>nativeSteps.includes(s.type))){
+  nativeAgentActive=true;save("pendingMission",mission);
+  JarvisNative.startAgent(JSON.stringify(mission.steps));setState("THINK");nativeAgentTimer=setInterval(pollNativeAgent,1300);
+  setTimeout(pollNativeAgent,500);
+ }else nextStep();
+};
+function pollNativeAgent(){
+ if(!native()||!nativeAgentActive)return;
+ let status;
+ try{status=JSON.parse(JarvisNative.agentStatus())}catch(e){message("A natív ügynök állapota nem olvasható.","warn");return}
+ if(!status||!mission)return;
+ if(typeof status.index==="number")mission.index=status.index;
+ renderMission();
+ if(status.phase==="running"||status.phase==="retry"){
+  setState("THINK");message("Natív ügynök: "+status.detail,status.phase==="retry"?"warn":"");
+  return;
+ }
+ if(status.phase==="idle")return;
+ nativeAgentActive=false;if(nativeAgentTimer){clearInterval(nativeAgentTimer);nativeAgentTimer=null}
+ save("pendingMission",null);
+ if(status.phase==="completed"){
+  setState("READY");message("Küldetés elkészült: "+status.total+" lépés.","good");
+ }else{
+  setState("ERROR");message("Küldetés megszakadt: "+status.detail,"fail");
+ }
+ mission=null;renderMission();
+}
+window.addEventListener("focus",pollNativeAgent);
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)pollNativeAgent()});
+
 $("cancelMission").onclick=stop;
 function nextStep(){
  if(!mission||mission.cancelled)return;
@@ -162,5 +195,5 @@ $("runGlobal").onclick=()=>{let d=refreshDiag(),checks=[
  ["9. RESEARCH AGENT","Webkeresés és AI gomb; forrásos automatikus böngészés nincs"],
  ["10. LEBEGŐ HUD",d.overlay?"Overlay engedély megvan; indítás szükséges":"Overlay engedély szükséges"]
  ];let out=$("globalResults");out.replaceChildren();checks.forEach(([n,s])=>{let row=document.createElement("div");row.className="globalRow";let a=document.createElement("span");a.textContent=n;let b=document.createElement("small");b.textContent=s;row.append(a,b);out.append(row)});message("Globális előfeltétel-ellenőrzés lefutott; az integrációs tesztekhez Android szükséges.")};
-refreshDiag();message(native()?"Natív Android híd betöltve.":"HTML előnézet. Natív Android híd nem elérhető.","good");
+if(native()&&mission&&mission.approved){try{let st=JSON.parse(JarvisNative.agentStatus());if(st.phase==="running"||st.phase==="retry"){nativeAgentActive=true;nativeAgentTimer=setInterval(pollNativeAgent,1300);pollNativeAgent()}else{mission=null;save("pendingMission",null)}}catch(e){}}renderMission();refreshDiag();message(native()?"Natív Android híd betöltve.":"HTML előnézet. Natív Android híd nem elérhető.","good");
 </script></body></html>
