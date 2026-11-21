@@ -1,37 +1,173 @@
 package com.jarvis.hud;
 import android.app.Activity;
+import android.app.ActivityManager;
+import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
-import android.app.Notification;
-import android.os.Bundle;
 import android.os.BatteryManager;
+import android.os.Build;
+import android.os.Bundle;
+import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.provider.Settings;
 import android.speech.RecognizerIntent;
 import android.speech.tts.TextToSpeech;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.webkit.WebResourceRequest;
 import android.webkit.JavascriptInterface;
+import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.Locale;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
 public class MainActivity extends Activity {
- WebView web; TextToSpeech tts; static final int SPEECH=42;
- @Override public void onCreate(Bundle b){super.onCreate(b);web=new WebView(this);setContentView(web);web.getSettings().setJavaScriptEnabled(true);web.getSettings().setDomStorageEnabled(true);web.setWebViewClient(new WebViewClient());web.addJavascriptInterface(new Bridge(),"JarvisNative");web.loadUrl("file:///android_asset/index.html");tts=new TextToSpeech(this,s->{if(s==TextToSpeech.SUCCESS)tts.setLanguage(new Locale("hu","HU"));});((NotificationManager)getSystemService(NOTIFICATION_SERVICE)).createNotificationChannel(new NotificationChannel("jarvis","JARVIS Status",NotificationManager.IMPORTANCE_DEFAULT));}
- public class Bridge {
-  @JavascriptInterface public void listen(){runOnUiThread(()->{try{Intent i=new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);i.putExtra(RecognizerIntent.EXTRA_LANGUAGE,"hu-HU");i.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);startActivityForResult(i,SPEECH);}catch(Exception e){send("A beszédfelismerés nem érhető el.");}});}
-  @JavascriptInterface public void speak(String s){runOnUiThread(()->tts.speak(s,TextToSpeech.QUEUE_FLUSH,null,"jarvis"));}
-  @JavascriptInterface public void stopSpeech(){runOnUiThread(()->tts.stop());}
-  @JavascriptInterface public void openUrl(String url){runOnUiThread(()->{try{Uri u=Uri.parse(url);if(!"https".equals(u.getScheme()))throw new Exception();startActivity(new Intent(Intent.ACTION_VIEW,u));}catch(Exception e){send("Csak HTTPS hivatkozás nyitható.");}});}
-  @JavascriptInterface public void openApp(String pkg){runOnUiThread(()->{try{Intent i=getPackageManager().getLaunchIntentForPackage(pkg);if(i==null)throw new Exception();startActivity(i);}catch(Exception e){send("Az alkalmazás nem érhető el.");}});}
-  @JavascriptInterface public String battery(){BatteryManager b=(BatteryManager)getSystemService(BATTERY_SERVICE);return String.valueOf(b.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY));}
-  @JavascriptInterface public boolean accessibilityReady(){return JarvisAccessibility.instance!=null;}
-  @JavascriptInterface public void accessibilitySettings(){runOnUiThread(()->startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)));}
-  @JavascriptInterface public void action(String type,String value){runOnUiThread(()->{JarvisAccessibility a=JarvisAccessibility.instance;if(a==null){send("Accessibility nincs engedélyezve.");return;}boolean ok=false;switch(type){case "click":ok=a.clickText(value);break;case "scroll":ok=a.scroll();break;case "input":ok=a.input(value);break;case "back":ok=a.performGlobalAction(android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_BACK);break;case "home":ok=a.performGlobalAction(android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_HOME);break;}send(ok?"Művelet végrehajtva.":"Nem sikerült a művelet. Ellenőrizd a képernyőt.");});}
-  @JavascriptInterface public void notifyStatus(String s){runOnUiThread(()->{Notification n=new Notification.Builder(MainActivity.this,"jarvis").setSmallIcon(android.R.drawable.ic_dialog_info).setContentTitle("JARVIS HUD").setContentText(s).build();((NotificationManager)getSystemService(NOTIFICATION_SERVICE)).notify(100,n);});}
+ private WebView web;
+ private TextToSpeech tts;
+ private boolean ttsReady=false;
+ private final ExecutorService aiPool=Executors.newSingleThreadExecutor();
+ private Future<?> aiWork;
+ private SecureStore vault;
+ private static final int SPEECH=42;
+ private static final int NOTIFICATION_REQUEST=43;
+ private static final String START_PAGE="file:///android_asset/index.html";
+ @Override public void onCreate(Bundle saved){
+  super.onCreate(saved);
+  vault=new SecureStore(this);
+  web=new WebView(this);
+  setContentView(web);
+  web.getSettings().setJavaScriptEnabled(true);
+  web.getSettings().setDomStorageEnabled(true);
+  web.getSettings().setAllowFileAccess(true);
+  web.getSettings().setAllowFileAccessFromFileURLs(false);
+  web.getSettings().setAllowUniversalAccessFromFileURLs(false);
+  web.setWebViewClient(new WebViewClient(){
+   @Override public boolean shouldOverrideUrlLoading(WebView v, WebResourceRequest req){
+    Uri u=req.getUrl();if(START_PAGE.equals(u.toString()))return false;
+    if("https".equals(u.getScheme())){startActivity(new Intent(Intent.ACTION_VIEW,u));}return true;
+   }
+  });
+  web.addJavascriptInterface(new Bridge(),"JarvisNative");
+  web.loadUrl(START_PAGE);
+  tts=new TextToSpeech(this,status->{if(status==TextToSpeech.SUCCESS&&tts!=null){int code=tts.setLanguage(new Locale("hu","HU"));ttsReady=code!=TextToSpeech.LANG_MISSING_DATA&&code!=TextToSpeech.LANG_NOT_SUPPORTED;}});
+  ((NotificationManager)getSystemService(NOTIFICATION_SERVICE)).createNotificationChannel(new NotificationChannel("jarvis","JARVIS feladatjelentések",NotificationManager.IMPORTANCE_DEFAULT));
  }
- void send(String s){runOnUiThread(()->web.evaluateJavascript("window.jarvisResult("+org.json.JSONObject.quote(s)+")",null));}
- @Override protected void onActivityResult(int r,int c,Intent d){super.onActivityResult(r,c,d);if(r==SPEECH && c==RESULT_OK && d!=null){ArrayList<String> a=d.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);if(a!=null&&!a.isEmpty())send(a.get(0));}}
- @Override protected void onDestroy(){if(tts!=null){tts.stop();tts.shutdown();}super.onDestroy();}
+ private void jsCall(String name,String... args){
+  runOnUiThread(()->{
+   if(web==null)return;
+   StringBuilder s=new StringBuilder("if(typeof window."+name+"==='function')window."+name+"(");
+   for(int i=0;i<args.length;i++){if(i>0)s.append(',');s.append(JSONObject.quote(args[i]==null?"":args[i]));}s.append(");");
+   web.evaluateJavascript(s.toString(),null);
+  });
+ }
+ public class Bridge{
+  @JavascriptInterface public void listen(){
+   runOnUiThread(()->{try{
+    Intent i=new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+    i.putExtra(RecognizerIntent.EXTRA_LANGUAGE,"hu-HU");
+    i.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+    i.putExtra(RecognizerIntent.EXTRA_PROMPT,"JARVIS hallgatja a parancsot");
+    startActivityForResult(i,SPEECH);
+   }catch(Exception e){jsCall("jarvisVoiceResult","", "Nem érhető el a rendszer beszédfelismerője.");}});
+  }
+  @JavascriptInterface public void speak(String text,float pitch){runOnUiThread(()->{
+   if(!ttsReady){jsCall("jarvisSpeechStatus","error");return;}
+   tts.setPitch(Math.max(0.55f,Math.min(1.4f,pitch)));
+   tts.speak(text.length()>1400?text.substring(0,1400):text,TextToSpeech.QUEUE_FLUSH,null,"jarvis-speech");
+   jsCall("jarvisSpeechStatus","started");
+  });}
+  @JavascriptInterface public void stopSpeech(){runOnUiThread(()->{if(tts!=null)tts.stop();jsCall("jarvisSpeechStatus","stopped");});}
+  @JavascriptInterface public void saveKey(String provider,String value){try{vault.put(provider,value);jsCall("jarvisSystemMessage","API kulcs biztonságosan mentve: "+provider);}catch(Exception e){jsCall("jarvisSystemMessage","Kulcstárolási hiba: "+e.getMessage());}}
+  @JavascriptInterface public boolean hasKey(String provider){return vault.has(provider);}
+  @JavascriptInterface public void askAi(String provider,String model,String historyJson,String reqId){
+   if(aiWork!=null)aiWork.cancel(true);
+   aiWork=aiPool.submit(()->{try{
+    String key=vault.get(provider);
+    String response=AiGateway.request(provider,model,key,historyJson);
+    if(!Thread.currentThread().isInterrupted())jsCall("jarvisAiResult",reqId,"ok",response);
+   }catch(Exception e){if(!Thread.currentThread().isInterrupted())jsCall("jarvisAiResult",reqId,"error",e.getMessage());}});
+  }
+  @JavascriptInterface public void cancelAi(){if(aiWork!=null)aiWork.cancel(true);}
+  @JavascriptInterface public void openUrl(String url){runOnUiThread(()->{
+   try{Uri u=Uri.parse(url);if(!"https".equals(u.getScheme()))throw new IllegalArgumentException("HTTPS szükséges.");
+    startActivity(new Intent(Intent.ACTION_VIEW,u));jsCall("jarvisSystemMessage","Böngésző megnyitva.");
+   }catch(Exception e){jsCall("jarvisSystemMessage","Hivatkozás hiba: "+e.getMessage());}
+  });}
+  @JavascriptInterface public void openApp(String pkg){runOnUiThread(()->{
+   try{Intent i=getPackageManager().getLaunchIntentForPackage(pkg);
+    if(i==null)throw new IllegalStateException("Nincs telepítve / nem látható");
+    startActivity(i);jsCall("jarvisSystemMessage","Alkalmazás megnyitva: "+pkg);
+   }catch(Exception e){jsCall("jarvisSystemMessage","Alkalmazás hiba: "+e.getMessage());}
+  });}
+  @JavascriptInterface public void accessibilitySettings(){runOnUiThread(()->startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)));}
+  @JavascriptInterface public boolean accessibilityReady(){return JarvisAccessibility.instance!=null;}
+  @JavascriptInterface public void action(String type,String value,String reqId){runOnUiThread(()->{
+   JarvisAccessibility svc=JarvisAccessibility.instance;
+   if(svc==null){jsCall("jarvisActionResult",reqId,"error","Az Accessibility nincs engedélyezve.");return;}
+   boolean ok=false;String detail="";
+   try{
+    switch(type){
+     case "click":ok=svc.clickText(value);detail="Szöveg kiválasztása: "+value;break;
+     case "scroll_down":ok=svc.scroll(false);detail="Görgetés lefelé";break;
+     case "scroll_up":ok=svc.scroll(true);detail="Görgetés felfelé";break;
+     case "input":ok=svc.input(value);detail="Szövegbevitel";break;
+     case "back":ok=svc.performGlobalAction(android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_BACK);detail="Vissza";break;
+     case "home":ok=svc.performGlobalAction(android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_HOME);detail="Főképernyő";break;
+     case "read":detail=svc.readScreen();ok=!detail.isEmpty();break;
+     default:detail="Ismeretlen művelet";
+    }
+   }catch(Exception e){detail="Android művelet hiba: "+e.getMessage();}
+   jsCall("jarvisActionResult",reqId,ok?"ok":"error",detail);
+  });}
+  @JavascriptInterface public String diagnostics(){
+   try{
+    JSONObject d=new JSONObject();
+    BatteryManager bat=(BatteryManager)getSystemService(BATTERY_SERVICE);
+    ActivityManager mgr=(ActivityManager)getSystemService(ACTIVITY_SERVICE);
+    ActivityManager.MemoryInfo mem=new ActivityManager.MemoryInfo();mgr.getMemoryInfo(mem);
+    d.put("device",Build.MANUFACTURER+" "+Build.MODEL);
+    d.put("sdk",Build.VERSION.SDK_INT);
+    d.put("battery",bat.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY));
+    d.put("availableRAM_MB",mem.availMem/1048576);
+    d.put("accessibility",JarvisAccessibility.instance!=null);
+    d.put("overlay",Build.VERSION.SDK_INT<23||Settings.canDrawOverlays(MainActivity.this));
+    d.put("tts",ttsReady);
+    d.put("openai_key",vault.has("openai"));
+    d.put("gemini_key",vault.has("gemini"));
+    d.put("notifications",Build.VERSION.SDK_INT<33||checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)==PackageManager.PERMISSION_GRANTED);
+    return d.toString();
+   }catch(Exception e){return "{\"error\":\"diagnostics failed\"}";}
+  }
+  @JavascriptInterface public void requestNotifications(){if(Build.VERSION.SDK_INT>=33){runOnUiThread(()->requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS},NOTIFICATION_REQUEST));}}
+  @JavascriptInterface public void notifyStatus(String text){runOnUiThread(()->{
+   if(Build.VERSION.SDK_INT>=33&&checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)!=PackageManager.PERMISSION_GRANTED){jsCall("jarvisSystemMessage","Értesítési engedély szükséges.");return;}
+   Notification n=new Notification.Builder(MainActivity.this,"jarvis").setSmallIcon(android.R.drawable.ic_dialog_info).setContentTitle("JARVIS HUD").setContentText(text.length()>180?text.substring(0,180):text).build();
+   ((NotificationManager)getSystemService(NOTIFICATION_SERVICE)).notify(100,n);
+   jsCall("jarvisSystemMessage","Android értesítés elküldve. Garmin tükrözés a Garmin Connect beállításaitól függ.");
+  });}
+  @JavascriptInterface public void overlay(boolean enable){runOnUiThread(()->{
+   if(enable){
+    if(Build.VERSION.SDK_INT>=23&&!Settings.canDrawOverlays(MainActivity.this)){
+     Intent i=new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,Uri.parse("package:"+getPackageName()));
+     startActivity(i);
+     jsCall("jarvisSystemMessage","Engedélyezd a más alkalmazások feletti megjelenítést, majd aktiváld ismét.");
+     return;
+    }
+    try{Intent i=new Intent(MainActivity.this,OverlayService.class);startForegroundService(i);jsCall("jarvisSystemMessage","Lebegő JARVIS HUD elindítva.");}catch(Exception e){jsCall("jarvisSystemMessage","HUD hiba: "+e.getMessage());}
+   }else{stopService(new Intent(MainActivity.this,OverlayService.class));jsCall("jarvisSystemMessage","Lebegő HUD leállítva.");}
+  });}
+ }
+ @Override protected void onActivityResult(int r,int code,Intent data){
+  super.onActivityResult(r,code,data);
+  if(r==SPEECH){ArrayList<String> out=(code==RESULT_OK&&data!=null)?data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS):null;
+   if(out!=null&&!out.isEmpty())jsCall("jarvisVoiceResult",out.get(0),"");
+   else jsCall("jarvisVoiceResult","","A beszédfelismerés megszakadt vagy nem sikerült.");
+  }
+ }
+ @Override protected void onDestroy(){if(aiWork!=null)aiWork.cancel(true);aiPool.shutdownNow();if(tts!=null){tts.stop();tts.shutdown();}if(web!=null){web.removeJavascriptInterface("JarvisNative");web.destroy();}super.onDestroy();}
 }
