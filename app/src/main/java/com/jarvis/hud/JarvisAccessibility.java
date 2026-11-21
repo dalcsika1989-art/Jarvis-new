@@ -4,6 +4,14 @@ import android.accessibilityservice.AccessibilityServiceInfo;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.os.Bundle;
+import android.os.Build;
+import android.graphics.Bitmap;
+import android.graphics.Rect;
+import android.view.Display;
+import android.hardware.HardwareBuffer;
+import android.util.Base64;
+import java.io.ByteArrayOutputStream;
+import java.util.function.Consumer;
 import java.util.List;
 public class JarvisAccessibility extends AccessibilityService {
  public static volatile JarvisAccessibility instance;
@@ -47,4 +55,30 @@ public class JarvisAccessibility extends AccessibilityService {
   if(text!=null&&text.length()>0&&text.length()<400){out.append(text).append("\n");}
   for(int i=0;i<node.getChildCount();i++)appendText(node.getChild(i),out,depth+1);
  }
+ public void screenshot(Consumer<String> callback) {
+  if(Build.VERSION.SDK_INT<30){callback.accept("ERROR:Requires Android 11+");return;}
+  takeScreenshot(Display.DEFAULT_DISPLAY,getMainExecutor(),new AccessibilityService.TakeScreenshotCallback(){
+   @Override public void onSuccess(AccessibilityService.ScreenshotResult result){
+    HardwareBuffer buffer=result.getHardwareBuffer();
+    if(buffer==null){callback.accept("ERROR:No screenshot buffer");return;}
+    Bitmap hw=null; Bitmap small=null; Bitmap software=null;
+    try{
+     hw=Bitmap.wrapHardwareBuffer(buffer,result.getColorSpace());
+     if(hw==null)throw new IllegalStateException("Hardware bitmap unavailable");
+     int width=hw.getWidth(),height=hw.getHeight();
+     int targetWidth=Math.min(640,width);
+     int targetHeight=(int)(height*(targetWidth/(double)width));
+     software=hw.copy(Bitmap.Config.ARGB_8888,false);
+     small=Bitmap.createScaledBitmap(software,targetWidth,targetHeight,true);
+     ByteArrayOutputStream bytes=new ByteArrayOutputStream();
+     if(!small.compress(Bitmap.CompressFormat.JPEG,66,bytes))throw new IllegalStateException("Image conversion failed");
+     String payload=Base64.encodeToString(bytes.toByteArray(),Base64.NO_WRAP);
+     callback.accept(payload);
+    }catch(Exception ex){callback.accept("ERROR:"+ex.getMessage());}
+    finally{if(small!=null&&!small.isRecycled())small.recycle();if(software!=null&&!software.isRecycled())software.recycle();buffer.close();}
+   }
+   @Override public void onFailure(int code){callback.accept("ERROR:Screenshot service code "+code);}
+  });
+ }
+
 }
