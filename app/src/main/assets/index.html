@@ -21,7 +21,7 @@ button,select,input,textarea{font:inherit;border:1px solid var(--line);border-ra
 <section id="research"><div class="card"><h2>9 · RESEARCH AGENT</h2><input id="researchInput" placeholder="Például: Xiaomi roller használt árak"/><label>Gemini keresési modell</label><input id="researchModel" value="gemini-3.5-flash" placeholder="gemini-3.5-flash"/><p class="muted">Az elérhető modelleket az AI AGY panelen, API-kulcs megadása után lehet lekérdezni.</p><div class="row"><button class="primary" id="webSearch">WEBKERESÉS CHROME-BAN</button><button id="researchAI">GEMINI ÉLŐ KUTATÁS</button></div><p class="muted">A Gemini Grounding with Google Search külön API-hozzáféréssel friss forrásokat keres. A hivatkozások a találatok rendelkezésre állásától függnek, a funkció API-díjat vonhat maga után.</p><div id="researchResults" class="entry"></div></div></section>
 <section id="overlay"><div class="card"><h2>10 · LEBEGŐ HUD</h2><p>Az ARC gyorsikon más alkalmazások felett jelenhet meg. Érintésre JARVIS nyílik, az ikon húzással mozgatható.</p><div class="row"><button class="primary" id="overlayStart">HUD AKTIVÁLÁSA</button><button class="danger" id="overlayStop">HUD LEÁLLÍTÁSA</button></div><p class="muted">Android „Más alkalmazások feletti megjelenítés” engedély szükséges.</p></div></section>
 <section id="global"><div class="card"><h2>GLOBAL TEST · 10 MODUL · JAVÍTÓKÖZPONT</h2><p class="muted">A vizsgálat megkülönbözteti a hiányzó engedélyt, az elkészült alapfunkciót és a ténylegesen kipróbált modult. A rendszerengedélyeket csak te adhatod meg.</p><button class="primary" id="runGlobal">ÁLLAPOT FRISSÍTÉSE</button><div id="globalSummary" class="panelStatus"></div><div id="globalResults"></div></div></section>
-<section id="settings"><div class="card"><h2>SECURE API SETTINGS</h2><label>OpenAI API-kulcs</label><input id="openaiKey" type="password" autocomplete="off" placeholder="OpenAI API key"/><button id="saveOpenAI">OPENAI KULCS MENTÉS</button><button id="getOpenAIKey">OPENAI API-KULCS OLDAL</button><label>Gemini API-kulcs</label><input id="geminiKey" type="password" autocomplete="off" placeholder="Gemini API key"/><button id="saveGemini">GEMINI KULCS MENTÉS</button><button id="getGeminiKey">GEMINI API-KULCS OLDAL</button><p class="warning">Az API-hozzáférés külön szolgáltatói fióktól és kvótától függ. Az alkalmazás nem tartalmaz beépített ingyenes AI API-t. A kulcsot nem írjuk ki képernyőre vagy naplóba.</p><button class="danger" id="wipe">HELYI ADATOK TÖRLÉSE</button></div></section>
+<section id="settings"><div class="card"><h2>SECURE API SETTINGS</h2><label>OpenAI API-kulcs</label><input id="openaiKey" type="password" autocomplete="off" placeholder="OpenAI API key"/><button id="saveOpenAI">OPENAI KULCS MENTÉS</button><button id="getOpenAIKey">OPENAI API-KULCS OLDAL</button><label>Gemini API-kulcs</label><input id="geminiKey" type="password" autocomplete="off" placeholder="Gemini API key"/><button id="saveGemini">GEMINI KULCS MENTÉS</button><button id="getGeminiKey">GEMINI API-KULCS OLDAL</button><p class="warning">Az API-hozzáférés külön szolgáltatói fióktól és kvótától függ. Az alkalmazás nem tartalmaz beépített ingyenes AI API-t. A kulcsot nem írjuk ki képernyőre vagy naplóba.</p><h2>MENTÉS ÉS HELYREÁLLÍTÁS</h2><p class="muted">Teszt-APK frissítéskor az Android az eltérő debug aláírás miatt eltávolítást kérhet. Mentéskor a memóriád, feladataid és chatelőzményeid megosztását te választod ki. API-kulcsok nem kerülnek a mentésbe.</p><button id="backupExport">MENTÉS MEGOSZTÁSA</button><textarea id="backupInput" rows="3" placeholder="Ide illeszd be a korábban kimentett JARVIS-adatokat (JSON)"></textarea><button id="backupImport">HELYI ADATOK VISSZAÁLLÍTÁSA</button><button class="danger" id="wipe">HELYI ADATOK TÖRLÉSE</button></div></section>
 </main><footer><input id="command" placeholder="Jarvis, nyisd meg..."/><button class="primary" id="submit">KÜLDÉS</button></footer>
 <script>
 "use strict";
@@ -29,6 +29,7 @@ const $=x=>document.getElementById(x),native=()=>typeof window.JarvisNative!=="u
 let verified=load("verified",{revision:11});if(verified.revision!==11)verified={revision:11};function markTest(name){verified[name]=true;save("verified",verified);if($("global").classList.contains("active"))renderGlobal()}
 
 let cfg=load("cfg",{provider:"offline",model:"gemini-3.5-flash",pitch:0.7}),mem=load("memory",[]),tasks=load("tasks",[]),chatHistory=load("chat",[]).slice(-12),mission=load("pendingMission",null),activeRequest=null,failures=0,state="READY",runId=0,nativeAgentActive=false,nativeAgentTimer=null;
+if(cfg.model==="gemini-3.8-flash"||cfg.model==="gpt-6-luna"){cfg.model=cfg.provider==="openai"?"gpt-4o-mini":"gemini-3.5-flash";save("cfg",cfg)}
 function load(k,d){try{return JSON.parse(localStorage.getItem("jarvis_10_"+k))||d}catch(e){return d}}
 function save(k,v){try{localStorage.setItem("jarvis_10_"+k,JSON.stringify(v));return true}catch(e){message("Tárolás nem elérhető");return false}}
 function message(s,kind){$("status").textContent=s;$("status").className="panelStatus "+(kind||"");$("missionLog").textContent=new Date().toLocaleTimeString("hu-HU")+" · "+s+"\n"+$("missionLog").textContent.slice(0,2500)}
@@ -85,6 +86,31 @@ $("aiPrompt").onkeydown=e=>{if(e.key==="Enter")$("ask").click()};
 $("clearChat").onclick=()=>{if(confirm("Beszélgetési előzmények törlése?")){chatHistory=[];save("chat",chatHistory);renderChat()}};
 $("saveOpenAI").onclick=()=>saveKey("openai","openaiKey");$("saveGemini").onclick=()=>saveKey("gemini","geminiKey");
 function saveKey(provider,id){if(!native()){message("Az API-kulcs mentése csak az APK-ban támogatott.","warn");return}let k=$(id).value.trim();if(!k){message("Előbb add meg az API-kulcsot.","warn");return}JarvisNative.saveKey(provider,k);$(id).value=""}
+$("backupExport").onclick=()=>{
+ const exported={format:"JARVIS-v11-backup",memory:mem,tasks,chat:chatHistory,cfg:{provider:cfg.provider,model:cfg.model,pitch:cfg.pitch,shareMemory:cfg.shareMemory||false}};
+ const data=JSON.stringify(exported,null,2);
+ if(native())JarvisNative.shareBackup(data);
+ else {$("backupInput").value=data;message("A mentés a szövegmezőben van. Másold biztonságos helyre.")}
+};
+$("backupImport").onclick=()=>{
+ try{
+  const raw=$("backupInput").value;
+  if(raw.length>250000)throw Error("Túl nagy mentés.");
+  const backup=JSON.parse(raw);
+  if(backup.format!=="JARVIS-v11-backup"&&!backup.memory)throw Error("Ismeretlen mentési formátum.");
+  if(!Array.isArray(backup.memory)||!Array.isArray(backup.tasks)||!Array.isArray(backup.chat))throw Error("Hiányzó adattömbök.");
+  if(backup.memory.length>1000||backup.tasks.length>1000||backup.chat.length>120)throw Error("Túl sok bejegyzés.");
+  const checkedMemory=backup.memory.map(x=>String(x).slice(0,1000));
+  const checkedTasks=backup.tasks.map(t=>({text:String(t.text||"").slice(0,1000),done:!!t.done})).filter(t=>t.text);
+  const checkedChat=backup.chat.filter(x=>x&&["user","assistant"].includes(x.role)).map(x=>({role:x.role,content:String(x.content||"").slice(0,2500)})).slice(-12);
+  if(!confirm("Felülírod a helyi memóriát, feladatokat és beszélgetéseket ezzel a mentéssel?"))return;
+  mem=checkedMemory;tasks=checkedTasks;chatHistory=checkedChat;
+  save("memory",mem);save("tasks",tasks);save("chat",chatHistory);
+  renderMemory();renderTasks();renderChat();
+  $("backupInput").value="";
+  message("A helyi mentés visszaállítva.","good");
+ }catch(e){message("Mentés visszaállítása sikertelen: "+e.message,"fail")}
+};
 $("wipe").onclick=()=>{if(!confirm("Minden helyi feladat, memória és beszélgetés törlése? Az API-kulcsok külön mentődnek."))return;mem=[];tasks=[];chatHistory=[];["memory","tasks","chat"].forEach(k=>save(k,[]));renderMemory();renderTasks();renderChat();message("Helyi adatok törölve.")};
 const apps={"chrome":"com.android.chrome","youtube":"com.google.android.youtube","messenger":"com.facebook.orca","whatsapp":"com.whatsapp","instagram":"com.instagram.android","galéria":"com.sec.android.gallery3d","gallery":"com.sec.android.gallery3d"};
 function parseSingle(text){
