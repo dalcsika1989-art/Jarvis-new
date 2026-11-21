@@ -92,6 +92,12 @@ public class MainActivity extends Activity {
     if(!Thread.currentThread().isInterrupted())jsCall("jarvisAiResult",reqId,"ok",response);
    }catch(Exception e){if(!Thread.currentThread().isInterrupted())jsCall("jarvisAiResult",reqId,"error",e.getMessage());}});
   }
+  @JavascriptInterface public void research(String question,String id){
+   aiWork=aiPool.submit(()->{try{
+    String result=ResearchGateway.search(vault.get("gemini"),question);
+    if(!Thread.currentThread().isInterrupted())jsCall("jarvisResearchResult",id,"ok",result);
+   }catch(Exception e){if(!Thread.currentThread().isInterrupted())jsCall("jarvisResearchResult",id,"error",e.getMessage());}});
+  }
   @JavascriptInterface public void cancelAi(){if(aiWork!=null)aiWork.cancel(true);}
   @JavascriptInterface public void openUrl(String url){runOnUiThread(()->{
    try{Uri u=Uri.parse(url);if(!"https".equals(u.getScheme()))throw new IllegalArgumentException("HTTPS szükséges.");
