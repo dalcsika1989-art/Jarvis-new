@@ -98,6 +98,12 @@ public class MainActivity extends Activity {
     startActivity(new Intent(Intent.ACTION_VIEW,u));jsCall("jarvisSystemMessage","Böngésző megnyitva.");
    }catch(Exception e){jsCall("jarvisSystemMessage","Hivatkozás hiba: "+e.getMessage());}
   });}
+  @JavascriptInterface public void launchApp(String pkg,String id){runOnUiThread(()->{
+   try{Intent i=getPackageManager().getLaunchIntentForPackage(pkg);
+    if(i==null)throw new IllegalStateException("Alkalmazás nem telepített / nem látható");
+    startActivity(i);jsCall("jarvisActionResult",id,"ok","Alkalmazás indítása elküldve: "+pkg);
+   }catch(Exception e){jsCall("jarvisActionResult",id,"error","App indítás sikertelen: "+e.getMessage());}
+  });}
   @JavascriptInterface public void openApp(String pkg){runOnUiThread(()->{
    try{Intent i=getPackageManager().getLaunchIntentForPackage(pkg);
     if(i==null)throw new IllegalStateException("Nincs telepítve / nem látható");
