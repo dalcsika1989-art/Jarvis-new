@@ -16,6 +16,7 @@ public final class ResearchGateway {
    c.setRequestMethod("POST");c.setConnectTimeout(12000);c.setReadTimeout(60000);c.setDoOutput(true);
    c.setRequestProperty("Content-Type","application/json");c.setRequestProperty("x-goog-api-key",key);
    JSONObject payload=new JSONObject().put("model","gemini-3.8-flash")
+    .put("store",false)
     .put("input","Készíts magyar nyelvű, konkrét és tényszerű összefoglalót friss Google Search találatok alapján. Ha nincs megbízható forrás, jelezd. Kérdés: "+question)
     .put("tools",new JSONArray().put(new JSONObject().put("type","google_search")));
    try(OutputStream out=c.getOutputStream()){out.write(payload.toString().getBytes(StandardCharsets.UTF_8));}
