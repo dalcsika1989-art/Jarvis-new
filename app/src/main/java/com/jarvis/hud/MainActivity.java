@@ -14,6 +14,10 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.provider.Settings;
 import android.speech.RecognizerIntent;
+import android.speech.SpeechRecognizer;
+import android.speech.RecognitionListener;
+import android.os.Handler;
+import android.os.Looper;
 import android.speech.tts.TextToSpeech;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -33,6 +37,59 @@ public class MainActivity extends Activity {
  private final ExecutorService aiPool=Executors.newSingleThreadExecutor();
  private Future<?> aiWork;
  private SecureStore vault;
+ private SpeechRecognizer wakeRecognizer;
+ private boolean wakeMode=false;
+ private int wakeErrors=0;
+ private final Handler wakeHandler=new Handler(Looper.getMainLooper());
+ private final Runnable restartWake=new Runnable(){@Override public void run(){beginWakeSession();}};
+ private void beginWakeSession(){
+  if(!wakeMode||wakeRecognizer==null)return;
+  if(checkSelfPermission(Manifest.permission.RECORD_AUDIO)!=PackageManager.PERMISSION_GRANTED){stopWake();return;}
+  Intent i=new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+  i.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+  i.putExtra(RecognizerIntent.EXTRA_LANGUAGE,"hu-HU");
+  i.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS,false);
+  try{wakeRecognizer.startListening(i);}catch(Exception e){stopWake();jsCall("jarvisWakeStatus","error","A mikrofon nem indítható.");}
+ }
+ private void stopWake(){
+  wakeMode=false;wakeHandler.removeCallbacks(restartWake);
+  if(wakeRecognizer!=null){try{wakeRecognizer.cancel();wakeRecognizer.destroy();}catch(Exception ignored){}wakeRecognizer=null;}
+  jsCall("jarvisWakeStatus","off","Ébresztőszó mód leállt.");
+ }
+ private final RecognitionListener wakeListener=new RecognitionListener(){
+  @Override public void onReadyForSpeech(Bundle p){jsCall("jarvisWakeStatus","listening","JARVIS ébresztőszó figyelés aktív.");}
+  @Override public void onBeginningOfSpeech(){}
+  @Override public void onRmsChanged(float rms){}
+  @Override public void onBufferReceived(byte[] data){}
+  @Override public void onEndOfSpeech(){}
+  @Override public void onError(int code){
+   if(!wakeMode)return;
+   wakeErrors++;
+   if(code==SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS||wakeErrors>=6){
+    stopWake();jsCall("jarvisWakeStatus","error","A beszédfelismerő leállt. Kód: "+code);return;
+   }
+   wakeHandler.postDelayed(restartWake,Math.min(5000,400*wakeErrors));
+  }
+  @Override public void onResults(Bundle data){
+   if(!wakeMode)return;
+   ArrayList<String> phrases=data.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+   if(phrases!=null&&!phrases.isEmpty()){
+    String heard=phrases.get(0).trim();
+    int found=heard.toLowerCase(Locale.ROOT).indexOf("jarvis");
+    if(found>=0&&found<=5){
+     String command=heard.substring(found+6).trim();
+     stopWake();
+     if(command.isEmpty())jsCall("jarvisWakeStatus","ready","Jarvis felismerve; nyomd meg a mikrofont a parancshoz.");
+     else jsCall("jarvisWakeCommand",command);
+     return;
+    }
+   }
+   wakeErrors=0;wakeHandler.postDelayed(restartWake,700);
+  }
+  @Override public void onPartialResults(Bundle partial){}
+  @Override public void onEvent(int event,Bundle params){}
+ };
+
  private static final int SPEECH=42;
  private static final int NOTIFICATION_REQUEST=43;
  private static final String START_PAGE="file:///android_asset/index.html";
@@ -66,6 +123,23 @@ public class MainActivity extends Activity {
   });
  }
  public class Bridge{
+  @JavascriptInterface public void wakeMode(boolean enabled){runOnUiThread(()->{
+   if(!enabled){stopWake();return;}
+   if(checkSelfPermission(Manifest.permission.RECORD_AUDIO)!=PackageManager.PERMISSION_GRANTED){
+    requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO},44);
+    jsCall("jarvisWakeStatus","permission","Mikrofonengedély szükséges. Engedélyezés után kapcsold be ismét.");
+    return;
+   }
+   if(!SpeechRecognizer.isRecognitionAvailable(MainActivity.this)){
+    jsCall("jarvisWakeStatus","error","A készüléken nincs elérhető beszédfelismerő.");return;
+   }
+   stopWake();
+   try{
+    wakeRecognizer=SpeechRecognizer.createSpeechRecognizer(MainActivity.this);
+    wakeRecognizer.setRecognitionListener(wakeListener);
+    wakeErrors=0;wakeMode=true;beginWakeSession();
+   }catch(Exception e){stopWake();jsCall("jarvisWakeStatus","error",e.getMessage());}
+  });}
   @JavascriptInterface public void listen(){
    runOnUiThread(()->{try{
     Intent i=new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
@@ -202,5 +276,6 @@ public class MainActivity extends Activity {
    else jsCall("jarvisVoiceResult","","A beszédfelismerés megszakadt vagy nem sikerült.");
   }
  }
- @Override protected void onDestroy(){if(aiWork!=null)aiWork.cancel(true);aiPool.shutdownNow();if(tts!=null){tts.stop();tts.shutdown();}if(web!=null){web.removeJavascriptInterface("JarvisNative");web.destroy();}super.onDestroy();}
+ @Override protected void onPause(){super.onPause();if(wakeMode)stopWake();}
+ @Override protected void onDestroy(){stopWake();if(aiWork!=null)aiWork.cancel(true);aiPool.shutdownNow();if(tts!=null){tts.stop();tts.shutdown();}if(web!=null){web.removeJavascriptInterface("JarvisNative");web.destroy();}super.onDestroy();}
 }
