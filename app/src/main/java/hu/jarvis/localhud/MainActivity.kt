@@ -55,7 +55,7 @@ class MainActivity : Activity() {
     }
     private fun js(script:String){runOnUiThread{if(!isDestroyed)web.evaluateJavascript(script,null)}}
     private fun voice(text:String,error:String=""){js("window.jarvisVoice("+JSONObject.quote(text)+","+JSONObject.quote(error)+")")}
-    private inner class NativeHud {
+    inner class NativeHud {
         @JavascriptInterface fun request(id:String,path:String,body:String,background:Boolean){
             if(id.length>32)return
             if(path !in setOf("/bridge/state","/bridge/command") || body.length>16384){
