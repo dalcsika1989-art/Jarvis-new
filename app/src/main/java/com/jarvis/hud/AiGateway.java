@@ -37,7 +37,7 @@ public final class AiGateway {
    int status=con.getResponseCode();InputStream stream=status<400?con.getInputStream():con.getErrorStream();
    ByteArrayOutputStream buffer=new ByteArrayOutputStream();byte[] chunk=new byte[4096];int n;int total=0;while(stream!=null&&(n=stream.read(chunk))!=-1){total+=n;if(total>600000)throw new IllegalStateException("Túl nagy AI-válasz");buffer.write(chunk,0,n);}
    JSONObject obj=new JSONObject(buffer.toString("UTF-8"));
-   if(status>=400)throw new IllegalStateException("AI HTTP "+status+": "+obj.optJSONObject("error").optString("message","API hiba"));
+   if(status>=400)throw new IllegalStateException("AI HTTP "+status+": "+(obj.optJSONObject("error")!=null?obj.optJSONObject("error").optString("message","API hiba"):"API hiba"));
    String answer;
    if(provider.equals("openai"))answer=obj.getJSONArray("choices").getJSONObject(0).getJSONObject("message").optString("content");
    else{JSONArray parts=obj.getJSONArray("candidates").getJSONObject(0).getJSONObject("content").getJSONArray("parts");StringBuilder sb=new StringBuilder();for(int i=0;i<parts.length();i++)sb.append(parts.getJSONObject(i).optString("text"));answer=sb.toString();}
