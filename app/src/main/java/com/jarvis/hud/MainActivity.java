@@ -277,10 +277,15 @@ public class MainActivity extends Activity {
   }
   @JavascriptInterface public void requestNotifications(){
    runOnUiThread(()->{
-    if(Build.VERSION.SDK_INT>=33){
-     if(checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)==PackageManager.PERMISSION_GRANTED){
-      jsCall("jarvisPermissionResult","notifications","granted");
-     }else requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS},NOTIFICATION_REQUEST);
+    if(Build.VERSION.SDK_INT>=33&&checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)!=PackageManager.PERMISSION_GRANTED){
+     requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS},NOTIFICATION_REQUEST);
+     return;
+    }
+    NotificationManager mgr=(NotificationManager)getSystemService(NOTIFICATION_SERVICE);
+    if(!mgr.areNotificationsEnabled()){
+     Intent appSettings=new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS);
+     appSettings.putExtra(Settings.EXTRA_APP_PACKAGE,getPackageName());
+     startActivity(appSettings);
     }else jsCall("jarvisPermissionResult","notifications","granted");
    });
   }
