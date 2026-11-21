@@ -24,6 +24,8 @@ jobs:
           gradle-version: '8.9'
       - name: Install Android 35 SDK
         run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+      - name: Validate HUD and Android source
+        run: python3 scripts/verify_hud.py
       - name: Build debug APK
         run: gradle --no-daemon :app:assembleDebug --stacktrace
       - name: Upload APK
