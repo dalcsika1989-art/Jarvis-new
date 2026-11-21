@@ -1,4 +1,5 @@
 name: Compile JARVIS HUD Android APK
+# Include latest JARVIS ARC launcher icon, research privacy, and model selector
 on:
   push:
     branches: [main]
