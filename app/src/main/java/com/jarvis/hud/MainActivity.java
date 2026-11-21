@@ -210,6 +210,15 @@ public class MainActivity extends Activity {
    }catch(Exception e){jsCall("jarvisSystemMessage","Alkalmazás hiba: "+e.getMessage());}
   });}
   @JavascriptInterface public void accessibilitySettings(){runOnUiThread(()->startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)));}
+  @JavascriptInterface public void shareBackup(String json){runOnUiThread(()->{
+   if(json==null||json.length()>250000){jsCall("jarvisSystemMessage","A mentés mérete túl nagy.");return;}
+   Intent share=new Intent(Intent.ACTION_SEND);
+   share.setType("text/plain");
+   share.putExtra(Intent.EXTRA_SUBJECT,"JARVIS v11 adatmentés");
+   share.putExtra(Intent.EXTRA_TEXT,json);
+   try{startActivity(Intent.createChooser(share,"JARVIS mentés biztonságos helyre"));}
+   catch(Exception e){jsCall("jarvisSystemMessage","Mentésmegosztási hiba: "+e.getMessage());}
+  });}
   @JavascriptInterface public void appSettings(){runOnUiThread(()->{
    Intent i=new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,Uri.parse("package:"+getPackageName()));
    startActivity(i);
