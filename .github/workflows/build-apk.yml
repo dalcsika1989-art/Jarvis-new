@@ -2,6 +2,8 @@ name: Build JARVIS 10 Module APK
 on:
   push:
     branches: [jarvis-hud-apk-build]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 jobs:
   build:
