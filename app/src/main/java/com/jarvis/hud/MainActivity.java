@@ -172,9 +172,9 @@ public class MainActivity extends Activity {
     if(!Thread.currentThread().isInterrupted())jsCall("jarvisAiResult",reqId,"ok",response);
    }catch(Exception e){if(!Thread.currentThread().isInterrupted())jsCall("jarvisAiResult",reqId,"error",e.getMessage());}});
   }
-  @JavascriptInterface public void research(String question,String id){
+  @JavascriptInterface public void research(String question,String model,String id){
    aiWork=aiPool.submit(()->{try{
-    String result=ResearchGateway.search(vault.get("gemini"),question);
+    String result=ResearchGateway.search(vault.get("gemini"),model,question);
     if(!Thread.currentThread().isInterrupted())jsCall("jarvisResearchResult",id,"ok",result);
    }catch(Exception e){if(!Thread.currentThread().isInterrupted())jsCall("jarvisResearchResult",id,"error",e.getMessage());}});
   }
