@@ -45,4 +45,43 @@ public final class AiGateway {
    return answer;
   }finally{con.disconnect();}
  }
+ public static String listModels(String provider,String key) throws Exception {
+  if(key==null||key.isEmpty())throw new IllegalArgumentException("Előbb add meg az API-kulcsot.");
+  String endpoint;
+  if("openai".equals(provider))endpoint="https://api.openai.com/v1/models";
+  else if("gemini".equals(provider))endpoint="https://generativelanguage.googleapis.com/v1beta/models";
+  else throw new IllegalArgumentException("Ismeretlen szolgáltató.");
+  HttpURLConnection c=(HttpURLConnection)new URL(endpoint).openConnection();
+  try{
+   c.setRequestMethod("GET");c.setConnectTimeout(10000);c.setReadTimeout(18000);
+   if("openai".equals(provider))c.setRequestProperty("Authorization","Bearer "+key);
+   else c.setRequestProperty("x-goog-api-key",key);
+   int status=c.getResponseCode();
+   if(status>=400)throw new IllegalStateException("Modellista HTTP "+status);
+   try(InputStream stream=c.getInputStream()){
+    ByteArrayOutputStream buffer=new ByteArrayOutputStream();byte[] tmp=new byte[4096];int n,total=0;
+    while((n=stream.read(tmp))!=-1){total+=n;if(total>500000)throw new IllegalStateException("A modellista túl hosszú.");buffer.write(tmp,0,n);}
+    JSONObject data=new JSONObject(buffer.toString("UTF-8"));
+    JSONArray arr=data.optJSONArray("openai".equals(provider)?"data":"models");
+    JSONArray names=new JSONArray();
+    if(arr!=null)for(int i=0;i<arr.length()&&names.length()<80;i++){
+     JSONObject m=arr.optJSONObject(i);if(m==null)continue;
+     String id="openai".equals(provider)?m.optString("id"):m.optString("name").replaceFirst("^models/","");
+     if(id.isEmpty())continue;
+     if("openai".equals(provider)){
+      if(!id.startsWith("gpt-")&&!id.startsWith("o1")&&!id.startsWith("o3")&&!id.startsWith("o4"))continue;
+      if(id.contains("audio")||id.contains("realtime")||id.contains("transcribe"))continue;
+     }else{
+      JSONArray methods=m.optJSONArray("supportedGenerationMethods");
+      boolean canGenerate=false;
+      if(methods!=null)for(int j=0;j<methods.length();j++)if("generateContent".equals(methods.optString(j)))canGenerate=true;
+      if(!canGenerate)continue;
+     }
+     names.put(id);
+    }
+    return names.toString();
+   }
+  }finally{c.disconnect();}
+ }
+
 }
