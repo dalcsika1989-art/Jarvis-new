@@ -158,6 +158,12 @@ public class MainActivity extends Activity {
   @JavascriptInterface public void stopSpeech(){runOnUiThread(()->{if(tts!=null)tts.stop();jsCall("jarvisSpeechStatus","stopped");});}
   @JavascriptInterface public void saveKey(String provider,String value){try{vault.put(provider,value);jsCall("jarvisSystemMessage","API kulcs biztonságosan mentve: "+provider);}catch(Exception e){jsCall("jarvisSystemMessage","Kulcstárolási hiba: "+e.getMessage());}}
   @JavascriptInterface public boolean hasKey(String provider){return vault.has(provider);}
+  @JavascriptInterface public void listModels(String provider,String id){
+   aiPool.submit(()->{
+    try{String models=AiGateway.listModels(provider,vault.get(provider));jsCall("jarvisModelListResult",id,"ok",models);}
+    catch(Exception e){jsCall("jarvisModelListResult",id,"error",e.getMessage());}
+   });
+  }
   @JavascriptInterface public void askAi(String provider,String model,String historyJson,String reqId){
    if(aiWork!=null)aiWork.cancel(true);
    aiWork=aiPool.submit(()->{try{
