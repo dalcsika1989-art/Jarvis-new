@@ -1,5 +1,5 @@
 name: Compile JARVIS HUD Android APK
-# V11 permission wizard, grounded search, verification actions and backup
+# V11 permission wizard: screenshot-reported fixes, AI test action, grounding and backup verified from latest feature branch
 on:
   push:
     branches: [main]
