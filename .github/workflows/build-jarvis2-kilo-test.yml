@@ -1,7 +1,7 @@
-name: Build JARVIS 2.0 Kilo TEST APK
+name: Build JARVIS Kilo Control Separate APK
 on:
   push:
-    branches: [jarvis-kilo-ci-from-draft]
+    branches: [jarvis-kilo-controller-v1]
     paths:
       - '.github/workflows/build-jarvis2-kilo-test.yml'
   workflow_dispatch:
@@ -35,6 +35,10 @@ jobs:
           unzip -q jarvis2-input/JARVIS-2.0-Kilo-CLOUD-APK-EPITO.zip -d jarvis2-input
           test ! -e jarvis2-input/JARVIS-2.0/signing.keystore
           grep -q 'package="hu.jarvis.kilotest"' jarvis2-input/JARVIS-2.0/AndroidManifest.xml
+      - name: Apply isolated controller modifications
+        run: |
+          python3 .github/scripts/patch_kilo_controller.py jarvis2-input/JARVIS-2.0
+          grep -q 'package="hu.jarvis.kilocontrol"' jarvis2-input/JARVIS-2.0/AndroidManifest.xml
       - name: Build test APK
         run: |
           cd jarvis2-input/JARVIS-2.0
@@ -42,7 +46,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: JARVIS-2.0-KILO-TEST-APK
+          name: JARVIS-KILO-CONTROL-APK
           path: jarvis2-input/JARVIS-2.0/dist/JARVIS-2.0-KILO-TEST.apk
           if-no-files-found: error
           retention-days: 7
