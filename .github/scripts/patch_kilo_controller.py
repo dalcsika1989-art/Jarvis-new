@@ -70,3 +70,48 @@ edit("MainActivity.java",[
 ('cloud.setText("Magyar férfi AI-hang: Gemini Charon (internet és TTS-kvóta kell)");','cloud.setText("Külső Gemini hang kikapcsolva");cloud.setVisibility(android.view.View.GONE);'),
 ('kiloKey.setHint("Kilo API-kulcs (külön a Gemini-kulcstól)");','kiloKey.setHint("Kilo API-kulcs");')
 ])
+
+
+# JARVIS KILO CONTROL v2: fix full multi-step commands and background status.
+def v2_patch(name, old, new):
+    p=java/name
+    s=p.read_text(encoding="utf-8")
+    if s.count(old)!=1:
+        raise RuntimeError(f"v2 {name}: expected one match, got {s.count(old)}: {old[:75]}")
+    p.write_text(s.replace(old,new,1),encoding="utf-8")
+
+v2_patch("CommandRouting.java",
+    ' static boolean needsAgent(String raw,boolean auto){String n=AgentRules.norm(raw);if(!auto)return false;if(simpleOpen(raw)||n.equals("gorgess le")||n.equals("gorgess fel"))return false;',
+    ' static String stripWake(String raw){String s=raw==null?"":raw.trim();String cleaned=s.replaceFirst("(?iu)^(?:hey\\\\s+)?(?:jarvis|dzsarvisz|zsárvisz)\\\\s*[,;:!.\\\\-]?\\\\s*","").trim();return cleaned.isEmpty()?s:cleaned;}\n static boolean needsAgent(String raw,boolean auto){String n=AgentRules.norm(raw);if(!auto)return n.startsWith("nyisd meg ")&&!simpleOpen(raw);if(simpleOpen(raw)||n.equals("gorgess le")||n.equals("gorgess fel"))return false;')
+v2_patch("MainActivity.java",
+    'void command(String raw){String n=norm(raw);if(raw.trim().isEmpty())return;',
+    'void command(String raw){raw=CommandRouting.stripWake(raw);String n=norm(raw);if(raw.trim().isEmpty())return;')
+v2_patch("MainActivity.java",
+    'if(n.startsWith("nyisd meg")){String wanted=CommandRouting.appName(raw);',
+    'if(n.startsWith("nyisd meg")&&!CommandRouting.simpleOpen(raw)){startAgent(raw);return;}if(n.startsWith("nyisd meg")){String wanted=CommandRouting.appName(raw);')
+v2_patch("MainActivity.java",
+    'void startAgent(String goal){ControlService c=ControlService.live;',
+    'void startAgent(String goal){event("agent","TELJES FELADAT • "+goal);ControlService c=ControlService.live;')
+v2_patch("AgentRunner.java",
+    'log(text+" • "+String.format(java.util.Locale.ROOT,"%.1f s",elapsed/1000.));JarvisApp.speak(text);',
+    'log(text+" • "+String.format(java.util.Locale.ROOT,"%.1f s",elapsed/1000.));service.notifyState(text,false);JarvisApp.speak(text);')
+# Favoriting is explicitly requested and allowed, with approval when necessary.
+v2_patch("AgentRunner.java",
+    'if(scopedRisk&&SearchWorkflow.matches(goal)){finish(gen,',
+    'if(scopedRisk&&SearchWorkflow.matches(goal)&&!SearchWorkflow.favoriteAction(goal,kind,label)){finish(gen,')
+v2_patch("SearchWorkflow.java",
+    ' static JSONObject plan()throws Exception{',
+    ' static boolean favoriteAction(String goal,String kind,String label){String g=AgentRules.norm(goal),l=AgentRules.norm(label);return (kind.equals("tap")||kind.equals("long_press"))&&g.matches(".*(sziv|kedvenc|favorite|favorit|merken).*")&&l.matches(".*(herz|merk|favorit|kedvenc|sziv|bookmark).*");}\n static JSONObject plan()throws Exception{')
+v2_patch("SearchWorkflow.java",
+    'step("Eredmény összefoglalása","Ellenőrzött találatok és elérhető hivatkozások; üzenetküldés és vásárlás nélkül.")',
+    'step("Kedvencek és összefoglaló","Kizárólag kért, ellenőrzött hirdetések jelölése, majd rövid összegzés; üzenetküldés és vásárlás nélkül.")')
+# Separate package ID because each cloud build uses a new temporary signature.
+manifest=root/"AndroidManifest.xml"
+s=manifest.read_text(encoding="utf-8")
+if s.count('package="hu.jarvis.kilocontrol"')!=1:raise RuntimeError("v2: base app package changed unexpectedly")
+s=s.replace('package="hu.jarvis.kilocontrol"','package="hu.jarvis.kilocontrol2"').replace('android:label="JARVIS KILO CONTROL"','android:label="JARVIS KILO CONTROL 2"').replace('android:versionName="2.0-Kilo-Control"','android:versionName="2.1-Kilo-Control"')
+manifest.write_text(s,encoding="utf-8")
+for p in java.glob("*.java"):
+    s=p.read_text(encoding="utf-8")
+    if "hu.jarvis.kilocontrol" in s:p.write_text(s.replace("hu.jarvis.kilocontrol","hu.jarvis.kilocontrol2"),encoding="utf-8")
+print("Kilo Control v2: multistep command routing, favorites, final-status notification and independent APK package ready.")
