@@ -1,7 +1,7 @@
-name: Build JARVIS HUD Bridge APK (No API Key)
+name: Build JARVIS 2.0 Reactor APK (No API Key)
 on:
   push:
-    branches: [jarvis-local-hud-bridge]
+    branches: [jarvis-local-hud-reactor-2-0]
   workflow_dispatch:
 jobs:
   build:
@@ -29,7 +29,7 @@ jobs:
         run: gradle :app:assembleDebug --no-daemon --stacktrace
       - uses: actions/upload-artifact@v4
         with:
-          name: jarvis-hud-bridge-debug-apk
+          name: jarvis-reactor-2-0-no-api-debug-apk
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
           retention-days: 14
