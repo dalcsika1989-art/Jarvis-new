@@ -1,7 +1,7 @@
 name: Build JARVIS 2.0 Reactor APK (No API Key)
 on:
   push:
-    branches: [jarvis-local-hud-reactor-2-0]
+    branches: [jarvis-online-conversation-no-api]
   workflow_dispatch:
 jobs:
   build:
@@ -29,7 +29,7 @@ jobs:
         run: gradle :app:assembleDebug --no-daemon --stacktrace
       - uses: actions/upload-artifact@v4
         with:
-          name: jarvis-reactor-2-0-no-api-debug-apk
+          name: jarvis-online-chatgpt-no-api-debug-apk
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
           retention-days: 14
