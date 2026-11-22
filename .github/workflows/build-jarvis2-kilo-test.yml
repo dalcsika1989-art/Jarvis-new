@@ -1,7 +1,7 @@
-name: Build JARVIS Kilo Control Separate APK v1.1
+name: Build JARVIS Kilo Control v2 (full tasks)
 on:
   push:
-    branches: [jarvis-kilo-controller-v1]
+    branches: [jarvis-kilo-controller-v2]
     paths:
       - '.github/workflows/build-jarvis2-kilo-test.yml'
   workflow_dispatch:
@@ -46,7 +46,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: JARVIS-KILO-CONTROL-APK
+          name: JARVIS-KILO-CONTROL-v2-APK
           path: jarvis2-input/JARVIS-2.0/dist/JARVIS-2.0-KILO-TEST.apk
           if-no-files-found: error
           retention-days: 7
