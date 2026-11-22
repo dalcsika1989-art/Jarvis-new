@@ -83,21 +83,21 @@ class MainActivity : Activity() {
         try {
             val intent=Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
                 .putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-                .putExtra(RecognizerIntent.EXTRA_LANGUAGE,"en-US")
-                .putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE,true)
+                .putExtra(RecognizerIntent.EXTRA_LANGUAGE,"hu-HU")
+                .putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE,false)
                 .putExtra(RecognizerIntent.EXTRA_MAX_RESULTS,1)
             startActivityForResult(intent,42)
-        } catch (_:Exception){voice("","No Android speech recognizer installed.")}
+        } catch (_:Exception){voice("","Nincs elérhető Android beszédfelismerő. Ellenőrizd a Google beszédszolgáltatásokat.")}
     }
     override fun onRequestPermissionsResult(requestCode:Int,permissions:Array<out String>,grantResults:IntArray){
         super.onRequestPermissionsResult(requestCode,permissions,grantResults)
-        if(requestCode==41) { if(grantResults.firstOrNull()==PackageManager.PERMISSION_GRANTED)startVoice() else voice("","Microphone permission denied.") }
+        if(requestCode==41) { if(grantResults.firstOrNull()==PackageManager.PERMISSION_GRANTED)startVoice() else voice("","A mikrofonengedély nincs megadva.") }
     }
     override fun onActivityResult(requestCode:Int,resultCode:Int,data:Intent?){
         super.onActivityResult(requestCode,resultCode,data)
         if(requestCode==42){
             val text=data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.firstOrNull()
-            if(resultCode==RESULT_OK && !text.isNullOrBlank())voice(text) else voice("","Speech recognition cancelled or unavailable.")
+            if(resultCode==RESULT_OK && !text.isNullOrBlank())voice(text) else voice("","A magyar beszédfelismerés nem érhető el. Ellenőrizd a Google beszédszolgáltatásokat és a mikrofonengedélyt.")
         }
     }
     override fun onDestroy(){
