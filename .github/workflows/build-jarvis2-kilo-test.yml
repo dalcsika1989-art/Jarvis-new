@@ -1,4 +1,4 @@
-name: Build JARVIS Kilo Control Separate APK
+name: Build JARVIS Kilo Control Separate APK v1.1
 on:
   push:
     branches: [jarvis-kilo-controller-v1]
