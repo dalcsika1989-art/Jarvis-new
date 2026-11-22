@@ -56,6 +56,19 @@ class MainActivity : Activity() {
     private fun js(script:String){runOnUiThread{if(!isDestroyed)web.evaluateJavascript(script,null)}}
     private fun voice(text:String,error:String=""){js("window.jarvisVoice("+JSONObject.quote(text)+","+JSONObject.quote(error)+")")}
     inner class NativeHud {
+        @JavascriptInterface fun openChatGPT(){runOnUiThread {
+            try {
+                val launch=packageManager.getLaunchIntentForPackage("com.openai.chatgpt")
+                if(launch==null){
+                    js("window.jarvisOnlineChatStatus('A ChatGPT alkalmazás nem található. Telepítsd a hivatalos ChatGPT alkalmazást.')")
+                }else{
+                    startActivity(launch)
+                }
+            }catch (_:Exception){
+                js("window.jarvisOnlineChatStatus('A ChatGPT alkalmazás indítása sikertelen.')")
+            }
+        }}
+
         @JavascriptInterface fun request(id:String,path:String,body:String,background:Boolean){
             if(id.length>32)return
             if(path !in setOf("/bridge/state","/bridge/command") || body.length>16384){
