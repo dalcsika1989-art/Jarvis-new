@@ -127,7 +127,7 @@ class MainActivity : Activity() {
             if(incoming.getJSONObject(incoming.length()-1).optString("role")!="user")
                 return result(false,"Hiányzik a felhasználói kérdés.")
             val payload=JSONObject().put("model","kilo-auto/free")
-                .put("messages",messages).put("max_tokens",450)
+                .put("messages",messages) // Same payload shape as the working Python client.
             conn=(URL("https://api.kilo.ai/api/gateway/chat/completions").openConnection() as HttpURLConnection)
             val connection=conn
             connection.requestMethod="POST"
@@ -135,20 +135,44 @@ class MainActivity : Activity() {
             connection.readTimeout=26000
             connection.instanceFollowRedirects=false
             connection.doOutput=true
-            connection.setRequestProperty("Content-Type","application/json; charset=utf-8")
+            connection.setRequestProperty("Content-Type","application/json")
             connection.setRequestProperty("Accept","application/json")
             val bytes=payload.toString().toByteArray(Charsets.UTF_8)
             connection.setFixedLengthStreamingMode(bytes.size)
             connection.outputStream.use{it.write(bytes)}
             val status=connection.responseCode
             if(status !in 200..299){
+                // A 429 can be from the gateway IP quota OR a transient upstream shared pool.
+                // Inspect the provider response; never assert that the user has exhausted quota.
+                val errorBody=try {
+                    connection.errorStream?.bufferedReader(Charsets.UTF_8)?.use { it.readText().take(6000) }.orEmpty()
+                } catch (_:Exception) { "" }
+                val json=try { JSONObject(errorBody) } catch (_:Exception) { JSONObject() }
+                val errorObject=json.optJSONObject("error") ?: JSONObject()
+                val meta=errorObject.optJSONObject("metadata")
+                    ?: json.optJSONObject("metadata") ?: JSONObject()
+                val source=meta.optString("limit_source",json.optString("limit_source","")).take(100)
+                val providerCode=meta.optString("provider_error_code",json.optString("provider_error_code","")).take(100)
+                val errorType=errorObject.optString("error_type",json.optString("error_type","")).take(100)
+                val retryAfter=connection.getHeaderField("Retry-After")?.toIntOrNull()
+                    ?: meta.optInt("retry_after_seconds",-1)
+                val fromProvider=source.contains("upstream",true) ||
+                    source.contains("provider",true) ||
+                    providerCode.contains("model_rate_limit",true)
                 val error=when(status){
-                    401,403->"Az anonim AI-hozzáférést a szolgáltató elutasította ($status)."
-                    429->"Az ingyenes AI elérte a kéréskorlátot. Próbáld később."
-                    in 500..599->"A Kilo AI szervere jelenleg nem válaszol ($status)."
-                    else->"Kilo AI hálózati válasz: HTTP $status."
+                    401,403->"A Kilo AI nem fogadta el az anonim kérést ($status)."
+                    429 -> if(fromProvider)
+                        "Kilo HTTP 429: az ingyenes modell szolgáltatója átmenetileg korlátozza a kéréseket; ez nem bizonyítja a saját kvóta kimerülését."
+                    else
+                        "Kilo HTTP 429: a Kilo-kapu kéréskorlátot jelzett. A pontos forrás nem mindig azonosítható."
+                    in 500..599->"A Kilo AI szervere hibát jelzett ($status)."
+                    else->"Kilo AI HTTP $status."
                 }
-                result(false,error)
+                result(false,error).put("httpStatus",status)
+                    .put("limitSource",source.ifBlank{"nem ismert"})
+                    .put("providerCode",providerCode.ifBlank{"nem ismert"})
+                    .put("errorType",errorType.ifBlank{"nem ismert"})
+                    .put("retryAfterSeconds",retryAfter)
             }else{
                 val body=connection.inputStream.bufferedReader(Charsets.UTF_8).use{it.readText().take(75000)}
                 val response=JSONObject(body)
