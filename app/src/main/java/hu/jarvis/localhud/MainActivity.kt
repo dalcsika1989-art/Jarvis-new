@@ -7,6 +7,8 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import android.provider.Settings
 import android.speech.RecognizerIntent
+import android.speech.RecognitionListener
+import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
 import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
@@ -22,6 +24,9 @@ class MainActivity : Activity() {
     private val worker=Executors.newSingleThreadExecutor()
     private var tts:TextToSpeech?=null
     private var voiceReady=false
+    private var recognizer: SpeechRecognizer? = null
+    private var listening=false
+    private var voiceResultDelivered=false
     override fun onCreate(savedInstanceState:Bundle?) {
         super.onCreate(savedInstanceState)
         web=WebView(this)
@@ -55,6 +60,7 @@ class MainActivity : Activity() {
     }
     private fun js(script:String){runOnUiThread{if(!isDestroyed)web.evaluateJavascript(script,null)}}
     private fun voice(text:String,error:String=""){js("window.jarvisVoice("+JSONObject.quote(text)+","+JSONObject.quote(error)+")")}
+    private fun speechStatus(status:String){js("window.jarvisSpeechStatus("+JSONObject.quote(status)+")")}
     inner class NativeHud {
         @JavascriptInterface fun request(id:String,path:String,body:String,background:Boolean){
             if(id.length>32)return
@@ -73,6 +79,7 @@ class MainActivity : Activity() {
         @JavascriptInterface fun accessibility(){runOnUiThread{startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))}}
         @JavascriptInterface fun speak(text:String){runOnUiThread{if(voiceReady)tts?.speak(text.take(500),TextToSpeech.QUEUE_FLUSH,null,"jarvis")}}
         @JavascriptInterface fun stopVoice(){runOnUiThread{tts?.stop()}}
+        @JavascriptInterface fun stopListening(){runOnUiThread{stopVoiceCapture()}}
         @JavascriptInterface fun listen(){runOnUiThread{
             if(checkSelfPermission(Manifest.permission.RECORD_AUDIO)!=PackageManager.PERMISSION_GRANTED)
                 requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO),41)
@@ -80,27 +87,87 @@ class MainActivity : Activity() {
         }}
     }
     private fun startVoice(){
+        if (!SpeechRecognizer.isRecognitionAvailable(this)) {
+            speechStatus("A telefon beszédfelismerő szolgáltatása nem érhető el.")
+            voice("","A telefon beszédfelismerő szolgáltatása nem érhető el.")
+            return
+        }
+        stopVoiceCapture()
+        voiceResultDelivered=false
         try {
-            val intent=Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
-                .putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-                .putExtra(RecognizerIntent.EXTRA_LANGUAGE,"hu-HU")
-                .putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE,false)
-                .putExtra(RecognizerIntent.EXTRA_MAX_RESULTS,1)
-            startActivityForResult(intent,42)
-        } catch (_:Exception){voice("","Nincs elérhető Android beszédfelismerő. Ellenőrizd a Google beszédszolgáltatásokat.")}
+            val engine=SpeechRecognizer.createSpeechRecognizer(this)
+            recognizer=engine
+            engine.setRecognitionListener(object: RecognitionListener {
+                override fun onReadyForSpeech(params:Bundle?){speechStatus("Hallgatás...")}
+                override fun onBeginningOfSpeech(){speechStatus("Beszéd észlelve...")}
+                override fun onRmsChanged(rmsdB:Float){}
+                override fun onBufferReceived(buffer:ByteArray?){}
+                override fun onEndOfSpeech(){speechStatus("Feldolgozás...")}
+                override fun onError(error:Int){
+                    if (voiceResultDelivered) return
+                    voiceResultDelivered=true
+                    val message=when(error){
+                        SpeechRecognizer.ERROR_AUDIO -> "Hangrögzítési hiba."
+                        SpeechRecognizer.ERROR_CLIENT -> "A hangfelismerő kliens hibát jelzett."
+                        SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> "Hiányzik a mikrofonengedély."
+                        SpeechRecognizer.ERROR_NETWORK -> "Hálózati hiba a beszédfelismerésnél."
+                        SpeechRecognizer.ERROR_NETWORK_TIMEOUT -> "Hálózati időtúllépés."
+                        SpeechRecognizer.ERROR_NO_MATCH -> "Nem értettem a beszédet. Próbáld újra."
+                        SpeechRecognizer.ERROR_RECOGNIZER_BUSY -> "A beszédfelismerő foglalt."
+                        SpeechRecognizer.ERROR_SERVER -> "A beszédfelismerő szerver hibát jelzett."
+                        SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> "Nem érkezett beszéd."
+                        else -> "Beszédfelismerési hiba ($error)."
+                    }
+                    listening=false
+                    speechStatus(message)
+                    voice("",message)
+                    engine.destroy()
+                    if(recognizer===engine)recognizer=null
+                }
+                override fun onResults(results:Bundle?){
+                    if (voiceResultDelivered) return
+                    voiceResultDelivered=true
+                    val spoken=results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull()?.trim().orEmpty()
+                    listening=false
+                    speechStatus(if(spoken.isNotEmpty())"Felismert szöveg" else "Üres hangfelismerési eredmény")
+                    voice(spoken,if(spoken.isBlank())"Nem kaptam felismert szöveget." else "")
+                    engine.destroy()
+                    if(recognizer===engine)recognizer=null
+                }
+                override fun onPartialResults(partialResults:Bundle?){}
+                override fun onEvent(eventType:Int,params:Bundle?){}
+            })
+            val intent=Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE,"hu-HU")
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE,"hu-HU")
+                putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS,false)
+                putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE,false)
+                putExtra(RecognizerIntent.EXTRA_MAX_RESULTS,1)
+            }
+            listening=true
+            speechStatus("Mikrofon indítása...")
+            engine.startListening(intent)
+        }catch(e:Exception){
+            stopVoiceCapture()
+            voice("","A beszédfelismerő nem indítható: "+(e.message?:"ismeretlen hiba"))
+        }
+    }
+    private fun stopVoiceCapture(){
+        val engine=recognizer
+        recognizer=null
+        listening=false
+        voiceResultDelivered=true
+        try{engine?.cancel()}catch(_:Exception){}
+        try{engine?.destroy()}catch(_:Exception){}
+        speechStatus("Leállítva")
     }
     override fun onRequestPermissionsResult(requestCode:Int,permissions:Array<out String>,grantResults:IntArray){
         super.onRequestPermissionsResult(requestCode,permissions,grantResults)
         if(requestCode==41) { if(grantResults.firstOrNull()==PackageManager.PERMISSION_GRANTED)startVoice() else voice("","A mikrofonengedély nincs megadva.") }
     }
-    override fun onActivityResult(requestCode:Int,resultCode:Int,data:Intent?){
-        super.onActivityResult(requestCode,resultCode,data)
-        if(requestCode==42){
-            val text=data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.firstOrNull()
-            if(resultCode==RESULT_OK && !text.isNullOrBlank())voice(text) else voice("","A magyar beszédfelismerés nem érhető el. Ellenőrizd a Google beszédszolgáltatásokat és a mikrofonengedélyt.")
-        }
-    }
     override fun onDestroy(){
+        stopVoiceCapture()
         worker.shutdownNow()
         tts?.stop();tts?.shutdown()
         web.removeJavascriptInterface("NativeHud")
