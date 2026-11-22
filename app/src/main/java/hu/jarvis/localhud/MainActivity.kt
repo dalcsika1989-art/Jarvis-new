@@ -44,8 +44,8 @@ class MainActivity : Activity() {
             if(status==TextToSpeech.SUCCESS){
                 val engine=tts
                 if(engine!=null){
-                    engine.language=Locale.US
-                    engine.voices?.firstOrNull{it.locale.language=="en" && !it.isNetworkConnectionRequired}?.let{engine.voice=it}
+                    engine.language=Locale.forLanguageTag("hu-HU")
+                    engine.voices?.firstOrNull{it.locale.language=="hu" && !it.isNetworkConnectionRequired}?.let{engine.voice=it}
                     engine.setPitch(0.85f)
                     engine.setSpeechRate(1.02f)
                     voiceReady=true
