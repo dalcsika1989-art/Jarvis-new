@@ -1,7 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
  <uses-permission android:name="android.permission.INTERNET"/>
  <uses-permission android:name="android.permission.RECORD_AUDIO"/>
- <queries>
+ <queries><package android:name="com.openai.chatgpt"/>
   <intent><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent>
   <intent><action android:name="android.speech.action.RECOGNIZE_SPEECH"/></intent>
   <intent><action android:name="android.intent.action.TTS_SERVICE"/></intent>
