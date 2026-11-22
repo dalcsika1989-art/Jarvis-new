@@ -62,3 +62,11 @@ A Nemesis nem örökli automatikusan a JARVIS API-kulcsát vagy Android kisegít
 A helyi JARVIS-HU hang megmarad; a külön Gemini Charon TTS letiltva.
 """,encoding="utf-8")
 print("Kilo controller patch complete")
+
+edit("MainActivity.java",[
+("a feladathoz szükséges képernyőszöveget a Gemini kapja meg.","a feladathoz szükséges képernyőszöveget a Kilo AI szolgáltató kapja meg, külön jóváhagyás után."),
+("Gemini: saját API-kulcs szükséges; díjak és limitek a fiókod szerint.","Kilo AI: saját Kilo API-kulcs szükséges; az elérhető modellek korlátai a Kilo fiók szerint változhatnak."),
+("A választható felhőhang Charon férfihangot kér a Gemini TTS-től: a felolvasandó szöveget a Google dolgozza fel, a díjak a fiókod szerint. Hiba esetén helyi hangra vált.","Ebben a változatban a magyar hangot helyben a JARVIS-HU motor készíti, külön Gemini hang-API nélkül."),
+('cloud.setText("Magyar férfi AI-hang: Gemini Charon (internet és TTS-kvóta kell)");','cloud.setText("Külső Gemini hang kikapcsolva");cloud.setVisibility(android.view.View.GONE);'),
+('kiloKey.setHint("Kilo API-kulcs (külön a Gemini-kulcstól)");','kiloKey.setHint("Kilo API-kulcs");')
+])
