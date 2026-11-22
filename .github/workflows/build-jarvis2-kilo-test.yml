@@ -38,7 +38,7 @@ jobs:
       - name: Apply isolated controller modifications
         run: |
           python3 .github/scripts/patch_kilo_controller.py jarvis2-input/JARVIS-2.0
-          grep -q 'package="hu.jarvis.kilocontrol"' jarvis2-input/JARVIS-2.0/AndroidManifest.xml
+          grep -q 'package="hu.jarvis.kilocontrol2"' jarvis2-input/JARVIS-2.0/AndroidManifest.xml
       - name: Build test APK
         run: |
           cd jarvis2-input/JARVIS-2.0
