@@ -1,0 +1,45 @@
+name: Build JARVIS 2.0 Kilo TEST APK
+on:
+  workflow_dispatch:
+    inputs:
+      source_release:
+        description: Release tag containing the sanitized JARVIS 2.0 ZIP asset
+        required: true
+        default: jarvis2-kilo-build-input
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Download exact user-supplied test source
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_TAG: ${{ inputs.source_release }}
+        run: |
+          mkdir -p jarvis2-input
+          gh release download "$SOURCE_TAG" --repo "$GITHUB_REPOSITORY" --pattern 'JARVIS-2.0-Kilo-CLOUD-APK-EPITO.zip' --dir jarvis2-input
+          test -s jarvis2-input/JARVIS-2.0-Kilo-CLOUD-APK-EPITO.zip
+      - name: Unpack source and check production key is absent
+        run: |
+          unzip -q jarvis2-input/JARVIS-2.0-Kilo-CLOUD-APK-EPITO.zip -d jarvis2-input
+          test ! -e jarvis2-input/JARVIS-2.0/signing.keystore
+          grep -q 'package="hu.jarvis.kilotest"' jarvis2-input/JARVIS-2.0/AndroidManifest.xml
+      - name: Build isolated Kilo test APK
+        run: |
+          cd jarvis2-input/JARVIS-2.0
+          bash BUILD_KILO_APK.sh
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: JARVIS-2.0-KILO-TEST-APK
+          path: jarvis2-input/JARVIS-2.0/dist/JARVIS-2.0-KILO-TEST.apk
+          if-no-files-found: error
+          retention-days: 7
