@@ -1,14 +1,20 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hu">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>JARVIS HUD — Standalone Local Edition (No API Key)</title>
 <style>
 :root{--bg:#02080e;--panel:#061421;--panel-2:#091d30;--cyan:#00f3ff;--cyan-dim:rgba(0,243,255,.25);--text:#d9f8ff;--muted:#7aa7b8;--ok:#2ef29b;--warn:#ffbe3b;--err:#ff4d6d}
 *{box-sizing:border-box;margin:0;padding:0}body{background:radial-gradient(circle at top,#071e30 0%,var(--bg) 68%);color:var(--text);font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;min-height:100vh;display:flex;flex-direction:column;padding:16px;gap:14px}header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;background:var(--panel);border:1px solid var(--cyan-dim);border-radius:10px;padding:12px 16px}.brand{display:flex;align-items:center;gap:12px}.reactor{width:34px;height:34px;border-radius:50%;border:2px solid var(--cyan);box-shadow:0 0 14px var(--cyan-dim),inset 0 0 10px var(--cyan-dim);display:grid;place-items:center;font-weight:700;color:var(--cyan);font-size:13px}h1{font-size:15px;letter-spacing:1.5px;color:var(--cyan)}.subtitle{font-size:11px;color:var(--muted)}.badges{display:flex;flex-wrap:wrap;gap:8px;font-size:11px}.badge{padding:5px 10px;border-radius:999px;border:1px solid var(--cyan-dim);background:var(--panel-2);color:var(--cyan)}.badge.ok{border-color:rgba(46,242,155,.45);color:var(--ok)}.badge.warn{border-color:rgba(255,190,59,.45);color:var(--warn)}main{display:grid;grid-template-columns:1.15fr 1fr;gap:14px;flex:1}@media(max-width:820px){main{grid-template-columns:1fr}}.card{background:var(--panel);border:1px solid var(--cyan-dim);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:12px;min-width:0}.card-title{font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--cyan);border-bottom:1px solid var(--cyan-dim);padding-bottom:8px}.controls{display:flex;flex-wrap:wrap;gap:8px}button,input{font-family:inherit;font-size:13px;border-radius:6px;border:1px solid var(--cyan-dim);padding:9px 12px;color:var(--text);background:var(--panel-2)}button{cursor:pointer;color:var(--cyan);transition:background .15s ease,transform .08s ease}button:hover{background:rgba(0,243,255,.14)}button:active{transform:scale(.98)}button.primary{background:rgba(0,243,255,.18);border-color:var(--cyan);font-weight:600}.cmd-row{display:flex;gap:8px}.cmd-row input{flex:1;outline:none;min-width:0}.cmd-row input:focus{border-color:var(--cyan)}.quick-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}.log-box{background:#020910;border:1px solid var(--cyan-dim);border-radius:8px;padding:10px;height:260px;overflow-y:auto;font-size:12px;line-height:1.5;white-space:pre-wrap;word-break:break-word}.hint{font-size:11px;color:var(--muted);line-height:1.45}.nodes-box{background:#020910;border:1px solid var(--cyan-dim);border-radius:8px;padding:10px;max-height:180px;overflow-y:auto;font-size:11px;color:var(--muted);white-space:pre-wrap;overflow-wrap:anywhere}
 .old-reactor{position:relative;aspect-ratio:1;max-width:400px;width:100%;margin:0 auto;display:grid;place-items:center;flex-shrink:0}.old-reactor canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}.old-core-text{z-index:1;text-align:center;pointer-events:none;font:10px ui-monospace,monospace;letter-spacing:2px;color:#7bddec}.old-core-text strong{display:block;font:300 clamp(20px,6vw,32px) system-ui,sans-serif;letter-spacing:8px;margin:5px 0 8px 8px;color:#d5f7ff}#oldReactorState{margin-top:12px;font:11px ui-monospace,monospace;letter-spacing:1px;color:#ffc67b}.old-reactor-tag{position:absolute;bottom:4%;font:9px ui-monospace,monospace;letter-spacing:2px;color:#72a4b7}
+
+header .brand{min-width:0;flex:1 1 250px;align-items:center}header .brand>div:last-child{min-width:0}
+header .reactor{flex:0 0 34px;font-size:18px;overflow:hidden;white-space:nowrap}
+header h1{line-height:1.3;overflow-wrap:anywhere}header .subtitle{line-height:1.45;overflow-wrap:anywhere}
+header .badges{flex:1 1 100%;align-items:center}#jarvisAnswer{border-left:2px solid var(--cyan);background:#082332;padding:9px 12px;font-size:13px;line-height:1.5;white-space:normal;color:#d9f8ff}
+@media(max-width:600px){body{padding:12px;gap:12px}header{padding:12px}.old-reactor{max-width:min(88vw,400px)}.card{padding:12px}button{min-height:42px}}
 </style></head><body>
-<header><div class="brand"><div class="reactor">J.A.R.V.I.S</div><div><h1>JARVIS LOCAL HUD</h1><div class="subtitle">Zero API Keys • Browser Speech + Local Bridge (127.0.0.1:8080)</div></div></div><div class="badges"><span class="badge ok" id="apiBadge">API KEY: NONE REQUIRED</span><span class="badge warn" id="bridgeBadge">BRIDGE: CHECKING</span><span class="badge" id="micBadge">MIC: IDLE</span></div></header>
+<header><div class="brand"><div class="reactor" aria-label="JARVIS">J</div><div><h1>JARVIS LOCAL HUD</h1><div class="subtitle">Helyi telefonvezérlés • API-kulcs nélkül</div></div></div><div class="badges"><span class="badge ok" id="apiBadge">API KEY: NONE REQUIRED</span><span class="badge warn" id="bridgeBadge">BRIDGE: CHECKING</span><span class="badge" id="micBadge">MIC: IDLE</span></div></header>
 <section class="old-reactor" aria-label="Original JARVIS 2.0 reactor"><canvas id="oldReactorCanvas" aria-hidden="true"></canvas><div class="old-core-text"><div>NEURAL INTERFACE</div><strong>JARVIS</strong><div>AWAITING YOUR COMMAND</div><div id="oldReactorState" role="status">Készenlét</div></div><span class="old-reactor-tag">VOICE • MEMORY • CONTROL</span></section>
-<main><section class="card"><div class="card-title">Voice &amp; Command Console</div><div class="controls"><button class="primary" id="micBtn">START MIC</button><button id="ttsToggleBtn">VOICE REPLY: ON</button><button id="pingBtn">CHECK BRIDGE</button><button id="clearLogBtn">CLEAR LOG</button><button id="accessBtn">ACCESSIBILITY</button></div><div class="cmd-row"><input id="cmdInput" type="text" placeholder="Type command (e.g., home, back, scroll down, click settings, open chrome)..."><button class="primary" id="sendBtn">SEND</button></div><div class="quick-grid"><button data-cmd="home">HOME</button><button data-cmd="back">BACK</button><button data-cmd="recents">RECENTS</button><button data-cmd="scroll down">SCROLL DOWN</button><button data-cmd="scroll up">SCROLL UP</button><button data-cmd="tap center">TAP CENTER</button></div><p class="hint">Zero AI API keys. Enable ACCESSIBILITY in Android settings, return here, and CHECK BRIDGE. Target-app actions return to the previous screen. Use <code>open Chrome</code>, <code>click Settings</code>, <code>type hello</code> or <code>snapshot</code>. The local bridge uses 127.0.0.1:8080. Android speech services may need an installed language pack.</p></section><section class="card"><div class="card-title">Activity Log &amp; Screen Snapshot</div><div class="log-box" id="logBox"></div><div class="card-title">Latest Accessibility Nodes (Local Bridge)</div><div class="nodes-box" id="nodesBox">No bridge snapshot received yet.</div></section></main>
+<main><section class="card"><div class="card-title">Voice &amp; Command Console</div><div class="controls"><button class="primary" id="micBtn">MIKROFON</button><button id="ttsToggleBtn">HANGVÁLASZ: BE</button><button id="pingBtn">KAPCSOLAT TESZT</button><button id="clearLogBtn">NAPLÓ TÖRLÉSE</button><button id="accessBtn">KISEGÍTŐ LEHETŐSÉGEK</button></div><div class="cmd-row"><input id="cmdInput" type="text" placeholder="Pl.: jó reggelt, nyisd meg a Chrome-ot"><button class="primary" id="sendBtn">KÜLDÉS</button></div><div id="jarvisAnswer" role="status" aria-live="polite">JARVIS készen áll a magyar parancsokra.</div><div class="quick-grid"><button data-cmd="home">HOME</button><button data-cmd="back">BACK</button><button data-cmd="recents">RECENTS</button><button data-cmd="scroll down">SCROLL DOWN</button><button data-cmd="scroll up">SCROLL UP</button><button data-cmd="tap center">TAP CENTER</button></div><p class="hint">API-kulcs nélküli helyi parancsvezérlés, nem beszélgetős AI. A KISEGÍTŐ LEHETŐSÉGEK menüben engedélyezd a JARVIS Local Bridge szolgáltatást. Példa: <code>nyisd meg a Chrome-ot</code>, <code>görgess le</code>, <code>vissza</code>. A beszédfelismeréshez Android beszédszolgáltatás szükséges.</p></section><section class="card"><div class="card-title">Activity Log &amp; Screen Snapshot</div><div class="log-box" id="logBox"></div><div class="card-title">Latest Accessibility Nodes (Local Bridge)</div><div class="nodes-box" id="nodesBox">No bridge snapshot received yet.</div></section></main>
 <script>
 const BRIDGE_BASE='http://127.0.0.1:8080';
 const $=id=>document.getElementById(id);
@@ -16,21 +22,67 @@ const native=window.NativeHud;
 let voiceReplyEnabled=true,isListening=false,recognition=null,seq=0,busy=false;
 const pending=new Map();
 function logLine(s){const el=$('logBox');el.textContent=(el.textContent+'['+new Date().toLocaleTimeString()+'] '+s+'\n').slice(-30000);el.scrollTop=el.scrollHeight;}
-function speak(s){if(!voiceReplyEnabled)return;if(native){native.speak(s);return;}if(window.speechSynthesis){const u=new SpeechSynthesisUtterance(s);u.rate=1.02;speechSynthesis.cancel();speechSynthesis.speak(u);}}
+function speak(s){if(!voiceReplyEnabled)return;if(native){native.speak(s);return;}if(window.speechSynthesis){const u=new SpeechSynthesisUtterance(s);u.lang='hu-HU';u.rate=1.02;speechSynthesis.cancel();speechSynthesis.speak(u);}}
 function badge(online){$('bridgeBadge').textContent=online?'BRIDGE: ONLINE':'BRIDGE: OFFLINE';$('bridgeBadge').className='badge '+(online?'ok':'warn');}
-function mic(on){isListening=on;$('micBtn').textContent=on?'STOP MIC':'START MIC';$('micBadge').textContent=on?'MIC: LISTENING':'MIC: IDLE';$('micBadge').className=on?'badge ok':'badge';}
+function mic(on){isListening=on;$('micBtn').textContent=on?'MIKROFON LEÁLLÍTÁSA':'MIKROFON';$('micBadge').textContent=on?'MIKROFON: HALLGAT':'MIKROFON: KÉSZ';$('micBadge').className=on?'badge ok':'badge';}
 window.jarvisReply=(id,data)=>{const p=pending.get(id);if(p){pending.delete(id);p(data);}};
 window.jarvisVoice=(text,error)=>{mic(false);if(error){logLine(error);return;}if(text){$('cmdInput').value=text;handle(text);}};
 function request(path,obj,background=false){if(native)return new Promise(resolve=>{const id=String(++seq);pending.set(id,resolve);native.request(id,path,obj?JSON.stringify(obj):'',background);setTimeout(()=>{if(pending.delete(id))resolve({ok:false,error:'Bridge response timed out.'});},9000);});return fetch(BRIDGE_BASE+path,{method:obj?'POST':'GET',headers:obj?{'Content-Type':'application/json'}:{},body:obj?JSON.stringify(obj):undefined,signal:AbortSignal.timeout(6500)}).then(r=>r.json()).catch(()=>({ok:false,error:'Local Android bridge unavailable.'}));}
-function parse(raw){const t=raw.trim(),l=t.toLowerCase(),a=(action,params={})=>({action,params});if(['home','go home','főképernyő'].includes(l))return a('home');if(['back','go back','vissza'].includes(l))return a('back');if(['recents','recent apps'].includes(l))return a('recents');if(['scroll down','görgess le'].includes(l))return a('scroll_down');if(['scroll up','görgess fel'].includes(l))return a('scroll_up');if(l==='tap center')return a('tap');if(l==='snapshot')return a('snapshot');for(const [prefix,action,key] of [['click ','click_text','text'],['type ','type_text','text'],['open ','open_app','name'],['nyisd meg ','open_app','name']])if(l.startsWith(prefix)&&t.slice(prefix.length).trim())return a(action,{[key]:t.slice(prefix.length).trim()});return null;}
-async function check(){if(busy)return;const r=await request('/bridge/state',null);badge(!!r.ok);if(r.ok){$('nodesBox').textContent=JSON.stringify(r.state||{},null,2);logLine('Local bridge reachable at 127.0.0.1:8080.');}else logLine(r.error||'Enable Accessibility, then check again.');}
-async function handle(raw){if(!raw.trim()||busy)return;const cmd=parse(raw);logLine('User: '+raw);if(!cmd){logLine('Unsupported local command.');speak('Unsupported command.');return;}const target=['click_text','type_text','tap','scroll_down','scroll_up','snapshot'].includes(cmd.action);if(['click_text','type_text','tap'].includes(cmd.action)&&!confirm('Execute '+cmd.action+' on the previous app? Confirm only if the target is safe.'))return;busy=true;try{const r=await request('/bridge/command',cmd,target);badge(r.connected===true||r.ok===true);if(r.state)$('nodesBox').textContent=JSON.stringify(r.state,null,2);logLine('['+cmd.action+'] '+(r.ok?'Completed':(r.error||'Not completed')));speak(r.ok?'Command completed.':(r.error||'Command failed.'));}finally{busy=false;}}
+
+function normalizeHu(s){return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[.,!?;:]/g,' ').replace(/\s+/g,' ').trim();}
+function parse(raw){
+  const original=raw.trim();
+  const q=normalizeHu(original).replace(/^(he?j\s+)?jarvis\s*/,'').trim();
+  const a=(action,params={})=>({action,params});
+  const say=reply=>({reply});
+  if(/^(jo reggelt|jo napot|jo estet|szia|szervusz|hello|hali)(\s|$)/.test(q)){
+    return say(q.includes('hogy vagy')||q.includes('hogy vagy ma')?
+      'Jó reggelt! Köszönöm, a helyi rendszer működik. Miben segíthetek?':
+      'Üdvözlöm! JARVIS készen áll. Kérhet alkalmazásindítást, görgetést vagy navigációt.');
+  }
+  if(/^(hogy vagy|mi ujsag|hogy mukodsz)/.test(q))return say('A helyi vezérlés elérhető, az API-kulcs nélküli működés aktív. Mit tegyek?');
+  if(/^(ki vagy|mi a neved|mutatkozz be)/.test(q))return say('JARVIS vagyok, a telefon helyi vezérlőasszisztense. Nem használok felhős AI modellt.');
+  if(/(mennyi az ido|pontos ido|hany ora van)/.test(q))return say('A pontos idő '+new Date().toLocaleTimeString('hu-HU',{hour:'2-digit',minute:'2-digit'})+'.');
+  if(/^(koszonom|koszi|kossz|rendben|okes)/.test(q))return say('Rendben. Készen állok.');
+  if(/^(mit tudsz|segitseg|help|parancsok|miben tudsz segiteni)/.test(q))return say('Próbálja ezeket: nyisd meg a Chrome-ot, főképernyő, vissza, görgess le, alkalmazásváltó, pillanatkép.');
+  if(['home','go home','fokepernyo','kezdokepernyo','menj haza','lepes a fokepernyore'].includes(q))return a('home');
+  if(['back','go back','vissza','lepj vissza','visszalepes'].includes(q))return a('back');
+  if(['recents','recent apps','alkalmazasvalto','legutobbi alkalmazasok','megnyitott alkalmazasok'].includes(q))return a('recents');
+  if(/^(scroll down|gorgess le|gorges le|gorgess lefele|gorgess lefel[eé]|lefele gorgess)$/.test(q))return a('scroll_down');
+  if(/^(scroll up|gorgess fel|gorges fel|gorgess felfele|felfele gorgess)$/.test(q))return a('scroll_up');
+  if(['tap center','kattints kozepre','nyomj kozepre'].includes(q))return a('tap');
+  if(['snapshot','pillanatkep','kepernyoelemek','olvasd fel a kepernyot'].includes(q))return a('snapshot');
+  const openPrefix=/^(open|start|nyisd meg|inditsd el|indits|nyisd ki|nyisd el)\s+/;
+  if(openPrefix.test(q)){
+    const rest=q.replace(openPrefix,'').replace(/^(az|a)\s+/,'').trim();
+    const known=[['kleinanzeigen','Kleinanzeigen'],['messenger','Messenger'],['whatsapp','WhatsApp'],['instagram','Instagram'],['facebook','Facebook'],['gmail','Gmail'],['chrome','Chrome'],['krom','Chrome'],['youtube','YouTube'],['spotify','Spotify'],['maps','Maps']];
+    for(const [needle,name] of known)if(rest.includes(needle))return a('open_app',{name});
+    const name=rest.replace(/\s+(alkalmazast|alkalmazas|programot|program)$/,'').replace(/[- ](ot|et|at|t)$/,'').trim();
+    if(name)return a('open_app',{name});
+  }
+  const typePrefix=/^(type|ird be|gepelj be|ird azt hogy)\s+/;
+  if(typePrefix.test(q))return a('type_text',{text:original.replace(/^(?:jarvis[, ]+)?(?:type|írd be|gépelj be|írd azt hogy)\s+/i,'')});
+  const clickPrefix=/^(click|tap|kattints|nyomd meg)\s+/;
+  if(clickPrefix.test(q)){
+    const target=original.replace(/^(?:jarvis[, ]+)?(?:click|tap|kattints|nyomd meg)\s+/i,'').replace(/^(a|az)\s+/i,'').trim();
+    if(target)return a('click_text',{text:target});
+  }
+  return null;
+}
+function showNodes(state){
+  const el=$('nodesBox');
+  if(state && state.package==='hu.jarvis.localhud' && Array.isArray(state.nodes) && !state.nodes.length){el.textContent='A JARVIS saját képernyője aktív. Másik alkalmazás elemei csak akkor jelennek meg, ha az az alkalmazás az előtérben van.';return;}
+  el.textContent=JSON.stringify(state||{},null,2);
+}
+function answer(text){$('jarvisAnswer').textContent=text;logLine('JARVIS: '+text);speak(text);}
+async function check(){if(busy)return;const r=await request('/bridge/state',null);badge(!!r.ok);if(r.ok){showNodes(r.state);logLine('JARVIS vezérlőmotor aktív.');}else logLine(r.error||'Enable Accessibility, then check again.');}
+async function handle(raw){if(!raw.trim()||busy)return;const cmd=parse(raw);logLine('User: '+raw);if(!cmd){answer('Ezt még nem tudom értelmezni helyi parancsként. Mondhatja például: nyisd meg a Chrome-ot, vissza vagy görgess le.');return;}if(cmd.reply){answer(cmd.reply);return;}const target=['click_text','type_text','tap','scroll_down','scroll_up','snapshot'].includes(cmd.action);if(['click_text','type_text','tap'].includes(cmd.action)&&!confirm('Execute '+cmd.action+' on the previous app? Confirm only if the target is safe.'))return;busy=true;try{const r=await request('/bridge/command',cmd,target);badge(r.connected===true||r.ok===true);if(r.state)showNodes(r.state);logLine('['+cmd.action+'] '+(r.ok?'Completed':(r.error||'Not completed')));answer(r.ok?'A művelet végrehajtva.':('A művelet nem sikerült: '+(r.error||'ismeretlen hiba')));}finally{busy=false;}}
 $('micBtn').onclick=()=>{if(native){if(!isListening){mic(true);native.listen();}return;}if(!recognition)return;try{if(isListening)recognition.stop();else recognition.start();}catch(e){logLine(e.message);}};
-$('ttsToggleBtn').onclick=()=>{voiceReplyEnabled=!voiceReplyEnabled;$('ttsToggleBtn').textContent='VOICE REPLY: '+(voiceReplyEnabled?'ON':'OFF');if(!voiceReplyEnabled){if(native)native.stopVoice();else if(window.speechSynthesis)speechSynthesis.cancel();}};
+$('ttsToggleBtn').onclick=()=>{voiceReplyEnabled=!voiceReplyEnabled;$('ttsToggleBtn').textContent='HANGVÁLASZ: '+(voiceReplyEnabled?'BE':'KI');if(!voiceReplyEnabled){if(native)native.stopVoice();else if(window.speechSynthesis)speechSynthesis.cancel();}};
 $('accessBtn').onclick=()=>native?native.accessibility():logLine('Accessibility requires the Android APK.');
 $('sendBtn').onclick=()=>{const v=$('cmdInput').value;$('cmdInput').value='';handle(v);};$('cmdInput').onkeydown=e=>{if(e.key==='Enter')$('sendBtn').click();};document.querySelectorAll('[data-cmd]').forEach(b=>b.onclick=()=>handle(b.dataset.cmd));$('pingBtn').onclick=check;$('clearLogBtn').onclick=()=>$('logBox').textContent='';
-if(!native){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(SR){recognition=new SR();recognition.lang='en-US';recognition.onstart=()=>mic(true);recognition.onend=()=>mic(false);recognition.onerror=e=>logLine(e.error);recognition.onresult=e=>window.jarvisVoice(e.results[0][0].transcript,'');}else{$('micBtn').disabled=true;$('micBadge').textContent='MIC: UNSUPPORTED';}}
-logLine('JARVIS Local HUD initialized (no API key required).');check();
+if(!native){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(SR){recognition=new SR();recognition.lang='hu-HU';recognition.onstart=()=>mic(true);recognition.onend=()=>mic(false);recognition.onerror=e=>logLine(e.error);recognition.onresult=e=>window.jarvisVoice(e.results[0][0].transcript,'');}else{$('micBtn').disabled=true;$('micBadge').textContent='MIC: UNSUPPORTED';}}
+logLine('JARVIS helyi vezérlés inicializálva – API-kulcs nem szükséges.');check();
 
 // Original JARVIS 2.0 assets/index.html reactor renderer, isolated from LOCAL HUD controller.
 (()=>{
