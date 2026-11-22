@@ -1,5 +1,7 @@
 name: Build JARVIS 2.0 Kilo TEST APK
 on:
+  release:
+    types: [published]
   workflow_dispatch:
     inputs:
       source_release:
@@ -8,6 +10,7 @@ on:
         default: jarvis2-kilo-build-input
 jobs:
   build:
+    if: github.event_name == 'workflow_dispatch' || github.event.release.tag_name == 'jarvis2-kilo-build-input'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -22,7 +25,7 @@ jobs:
       - name: Download exact user-supplied test source
         env:
           GH_TOKEN: ${{ github.token }}
-          SOURCE_TAG: ${{ inputs.source_release }}
+          SOURCE_TAG: ${{ github.event_name == 'release' && github.event.release.tag_name || inputs.source_release }}
         run: |
           mkdir -p jarvis2-input
           gh release download "$SOURCE_TAG" --repo "$GITHUB_REPOSITORY" --pattern 'JARVIS-2.0-Kilo-CLOUD-APK-EPITO.zip' --dir jarvis2-input
