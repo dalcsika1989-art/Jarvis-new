@@ -16,6 +16,9 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.webkit.WebResourceRequest
 import org.json.JSONObject
+import org.json.JSONArray
+import java.net.URL
+import java.net.HttpURLConnection
 import java.util.Locale
 import java.util.concurrent.Executors
 
@@ -77,7 +80,17 @@ class MainActivity : Activity() {
             }
         }
         @JavascriptInterface fun accessibility(){runOnUiThread{startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))}}
-        @JavascriptInterface fun speak(text:String){runOnUiThread{if(voiceReady)tts?.speak(text.take(500),TextToSpeech.QUEUE_FLUSH,null,"jarvis")}}
+        @JavascriptInterface fun speak(text:String){runOnUiThread{if(voiceReady)tts?.speak(text.take(1600),TextToSpeech.QUEUE_FLUSH,null,"jarvis")}}
+        @JavascriptInterface fun aiChat(id:String, messagesJson:String){
+            if(id.length !in 1..32 || !id.all { it.isDigit() } || messagesJson.length>22000){
+                js("window.jarvisAiReply("+JSONObject.quote(id)+","+result(false,"Érvénytelen AI-kérés.")+")")
+                return
+            }
+            worker.execute{
+                val reply=askKiloFree(messagesJson)
+                js("window.jarvisAiReply("+JSONObject.quote(id)+","+reply.toString()+")")
+            }
+        }
         @JavascriptInterface fun stopVoice(){runOnUiThread{tts?.stop()}}
         @JavascriptInterface fun stopListening(){runOnUiThread{stopVoiceCapture()}}
         @JavascriptInterface fun listen(){runOnUiThread{
@@ -86,6 +99,77 @@ class MainActivity : Activity() {
             else startVoice()
         }}
     }
+
+    // Online AI: anonymous/free Kilo Gateway. Only explicit chat text/history leaves the device.
+    // Accessibility nodes, device state and local application actions are never included.
+    private fun askKiloFree(messagesJson:String): JSONObject {
+        var conn:HttpURLConnection?=null
+        return try{
+            val incoming=JSONArray(messagesJson)
+            if(incoming.length() !in 1..9)return result(false,"Üres vagy túl hosszú beszélgetés.")
+            val messages=JSONArray()
+            messages.put(JSONObject().put("role","system").put("content",
+                "Te J.A.R.V.I.S. vagy, egy magyarul természetesen beszélgető, tárgyilagos Android-asszisztens. " +
+                "Válaszolj magyarul, világosan, több mondatban is, ha indokolt. " +
+                "Nem vagy azonos a ChatGPT-vel. Nincs automatikus hozzáférésed a telefonhoz, az alkalmazásokhoz vagy élő adatokhoz. " +
+                "Csak a felhasználó itt elküldött beszélgetését látod. " +
+                "Ne állítsd, hogy műveletet végrehajtottál, ha arra nem kaptál ellenőrzött visszajelzést. " +
+                "Ne kérj jelszót vagy privát adatot. A válaszaid hangosan felolvasásra is alkalmasak legyenek."
+            ))
+            for(i in 0 until incoming.length()){
+                val item=incoming.optJSONObject(i) ?: return result(false,"Hibás üzenet.")
+                val role=item.optString("role")
+                val content=item.optString("content").trim()
+                if(role !in setOf("user","assistant") || content.isEmpty() || content.length>2500)
+                    return result(false,"Nem megfelelő üzenetadat.")
+                messages.put(JSONObject().put("role",role).put("content",content))
+            }
+            if(incoming.getJSONObject(incoming.length()-1).optString("role")!="user")
+                return result(false,"Hiányzik a felhasználói kérdés.")
+            val payload=JSONObject().put("model","kilo-auto/free")
+                .put("messages",messages).put("max_tokens",450)
+            conn=(URL("https://api.kilo.ai/api/gateway/chat/completions").openConnection() as HttpURLConnection)
+            val connection=conn
+            connection.requestMethod="POST"
+            connection.connectTimeout=12000
+            connection.readTimeout=26000
+            connection.instanceFollowRedirects=false
+            connection.doOutput=true
+            connection.setRequestProperty("Content-Type","application/json; charset=utf-8")
+            connection.setRequestProperty("Accept","application/json")
+            val bytes=payload.toString().toByteArray(Charsets.UTF_8)
+            connection.setFixedLengthStreamingMode(bytes.size)
+            connection.outputStream.use{it.write(bytes)}
+            val status=connection.responseCode
+            if(status !in 200..299){
+                val error=when(status){
+                    401,403->"Az anonim AI-hozzáférést a szolgáltató elutasította ($status)."
+                    429->"Az ingyenes AI elérte a kéréskorlátot. Próbáld később."
+                    in 500..599->"A Kilo AI szervere jelenleg nem válaszol ($status)."
+                    else->"Kilo AI hálózati válasz: HTTP $status."
+                }
+                result(false,error)
+            }else{
+                val body=connection.inputStream.bufferedReader(Charsets.UTF_8).use{it.readText().take(75000)}
+                val response=JSONObject(body)
+                val content=response.optJSONArray("choices")?.optJSONObject(0)?.optJSONObject("message")?.opt("content")
+                val answer=when(content){
+                    is String->content.trim()
+                    is JSONArray->(0 until content.length()).joinToString(" ") { j ->
+                        content.optJSONObject(j)?.optString("text") ?: ""
+                    }.trim()
+                    else->""
+                }
+                if(answer.isBlank()) result(false,"A szolgáltatótól üres AI-válasz érkezett.")
+                else result(true).put("reply",answer.take(6000))
+            }
+        }catch(e:java.net.SocketTimeoutException){
+            result(false,"A Kilo AI túllépte az időkorlátot. Ellenőrizd az internetkapcsolatot.")
+        }catch(e:Exception){
+            result(false,"A Kilo AI kapcsolat nem sikerült. Ellenőrizd az internetkapcsolatot. ("+e.javaClass.simpleName+")")
+        }finally{conn?.disconnect()}
+    }
+
     private fun startVoice(){
         if (!SpeechRecognizer.isRecognitionAvailable(this)) {
             speechStatus("A telefon beszédfelismerő szolgáltatása nem érhető el.")
