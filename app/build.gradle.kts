@@ -6,11 +6,11 @@ android {
   namespace = "hu.jarvis.localhud"
   compileSdk = 35
   defaultConfig {
-    applicationId = "hu.jarvis.localhud"
+    applicationId = "hu.jarvis.reactor.online"
     minSdk = 26
     targetSdk = 34
     versionCode = 1
-    versionName = "1.0-local"
+    versionName = "1.1-online-handoff"
   }
   compileOptions {
     sourceCompatibility = JavaVersion.VERSION_17
