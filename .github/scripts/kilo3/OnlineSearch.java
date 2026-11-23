@@ -16,9 +16,16 @@ import java.util.Locale;
  * Results are untrusted source data and must be verified/cited by the model.
  */
 final class OnlineSearch {
+  /** Questions about ability are measured, not answered by a model guessing it is offline. */
+  static boolean isCapabilityQuestion(String text){
+    String n=AgentRules.norm(text==null?"":text);
+    boolean network=n.contains("internet")||n.contains("online")||n.contains("neten")||n.contains("netrol");
+    boolean asking=n.contains("tudsz")||n.contains("tudtok")||n.contains("kepes")||n.contains("mukodik")||n.contains("van-e")||n.contains("van internet");
+    return network&&asking&&(n.contains("keres")||n.contains("internet")||n.contains("online"));
+  }
   static boolean shouldSearch(String text) {
     String n=AgentRules.norm(text==null?"":text);
-    return n.matches(".*(keress ra|keress az interneten|keress online|online kereses|interneten keress|nezz utana|nezz utana a neten|friss hir|hirek|hireket|legujabb|aktualis|mostani|mai hirek|mai ujdonsag|ujdonsagok|mi tortent ma|mennyibe kerul most|mennyibe kerul jelenleg|most mennyi|online informacio).*");
+    return n.matches(".*(keress ra|keress az interneten|keress online|online kereses|interneten keress|interneten keres|neten keress|neten keres|keress a neten|keress a weben|google kereses|nezz utana|friss hir|hirek|hireket|mi ujsag|legujabb|aktualis|mostani|mai ujdonsag|ujdonsagok|mi tortent ma|mennyibe kerul most|mennyibe kerul jelenleg|most mennyi|online informacio).*");
   }
   static String cleanQuery(String t) {
     String s=(t==null?"":t.trim());
