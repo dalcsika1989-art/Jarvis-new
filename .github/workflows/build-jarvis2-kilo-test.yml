@@ -1,7 +1,7 @@
-name: Build JARVIS KILO 3 Online & Control
+name: Build JARVIS KILO 3.1 Online Fix
 on:
   push:
-    branches: [jarvis-kilo3-online-control]
+    branches: [jarvis-kilo31-searchfix]
     paths:
       - '.github/workflows/build-jarvis2-kilo-test.yml'
   workflow_dispatch:
@@ -40,7 +40,8 @@ jobs:
           python3 .github/scripts/patch_kilo_controller.py jarvis2-input/JARVIS-2.0
           python3 .github/scripts/patch_kilo3.py jarvis2-input/JARVIS-2.0
           cp .github/scripts/kilo3/OnlineSearch.java .github/scripts/kilo3/ApprovalReceiver.java jarvis2-input/JARVIS-2.0/src/hu/jarvis/app/
-          grep -q 'package="hu.jarvis.kilo3"' jarvis2-input/JARVIS-2.0/AndroidManifest.xml
+          python3 .github/scripts/patch_kilo31.py jarvis2-input/JARVIS-2.0
+          grep -q 'package="hu.jarvis.kilo31"' jarvis2-input/JARVIS-2.0/AndroidManifest.xml
       - name: Build test APK
         run: |
           cd jarvis2-input/JARVIS-2.0
@@ -48,7 +49,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: JARVIS-KILO3-ONLINE-CONTROL-APK
+          name: JARVIS-KILO-3-1-INTERNET-FIX-APK
           path: jarvis2-input/JARVIS-2.0/dist/JARVIS-2.0-KILO-TEST.apk
           if-no-files-found: error
           retention-days: 7
