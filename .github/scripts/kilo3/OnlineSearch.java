@@ -20,7 +20,7 @@ final class OnlineSearch {
   static boolean isCapabilityQuestion(String text){
     String n=AgentRules.norm(text==null?"":text);
     boolean network=n.contains("internet")||n.contains("online")||n.contains("neten")||n.contains("netrol");
-    boolean asking=n.contains("tudsz")||n.contains("tudtok")||n.contains("kepes")||n.contains("mukodik")||n.contains("van-e")||n.contains("van internet");
+    boolean asking=n.contains("tudsz")||n.contains("tudtok")||n.contains("kepes")||n.contains("mukodik")||n.contains("van-e")||n.contains("van internet")||n.contains("csatlakoz")||n.contains("ellenorizd")||n.contains("probald ujra");
     return network&&asking&&(n.contains("keres")||n.contains("internet")||n.contains("online"));
   }
   /** Search intent is detected automatically, even when user does not say "keress az interneten". */
