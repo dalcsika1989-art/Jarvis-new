@@ -43,4 +43,15 @@ for p in java.glob("*.java"):
     s=p.read_text(encoding="utf-8")
     if "hu.jarvis.kilo3" in s:
         p.write_text(s.replace("hu.jarvis.kilo3","hu.jarvis.kilo31"),encoding="utf-8")
-print("JARVIS KILO 3.1: network capability probe and Hungarian online intent routing patched.")
+ui=root/"assets/index.html"
+original=ui.read_text(encoding="utf-8")
+for old,new in [
+ ("JARVIS / 2.0 • HU","JARVIS KILO / 3.1 • HU"),
+ ("HELYI PARANCSOK • AI BEÁLLÍTHATÓ","HELYI HANG • ONLINE KERESŐMODUL"),
+ ("AI-KULCS BEÁLLÍTVA • HELYI PARANCSOK AKTÍVAK","KILO AI-KULCS MENTVE • ONLINE KERESŐMODUL"),
+ ("HELYI PARANCSOK • AI-KULCS NINCS","KILO KULCS HIÁNYZIK • HELYI HANG")
+]:
+    if old not in original:raise RuntimeError("UI element not found: "+old)
+    original=original.replace(old,new)
+ui.write_text(original,encoding="utf-8")
+print("JARVIS KILO 3.1: network capability probe, online intent and HUD status patched.")
