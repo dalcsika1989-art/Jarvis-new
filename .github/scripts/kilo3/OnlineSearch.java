@@ -23,9 +23,19 @@ final class OnlineSearch {
     boolean asking=n.contains("tudsz")||n.contains("tudtok")||n.contains("kepes")||n.contains("mukodik")||n.contains("van-e")||n.contains("van internet");
     return network&&asking&&(n.contains("keres")||n.contains("internet")||n.contains("online"));
   }
+  /** Search intent is detected automatically, even when user does not say "keress az interneten". */
   static boolean shouldSearch(String text) {
     String n=AgentRules.norm(text==null?"":text);
-    return n.matches(".*(keress ra|keress az interneten|keress online|online kereses|interneten keress|interneten keres|neten keress|neten keres|keress a neten|keress a weben|google kereses|nezz utana|friss hir|hirek|hireket|mi ujsag|legujabb|aktualis|mostani|mai ujdonsag|ujdonsagok|mi tortent ma|mennyibe kerul most|mennyibe kerul jelenleg|most mennyi|online informacio).*");
+    if(n.isEmpty())return false;
+    // Explicit Android actions must stay with the accessibility agent, not get hijacked by web search.
+    if(n.matches(".*(nyisd meg|kattints|gorgess|szivezd|kedvencnek|tedd a kedvencek|foglalj|vasarolj|kuldd el|uzenetet kuldj|torold|telepitsd).*"))return false;
+    boolean explicit=n.matches(".*(keress ra|keress az interneten|keress online|online kereses|interneten keress|interneten keres|neten keress|neten keres|keress a neten|keress a weben|google kereses|nezz utana|friss hir|hirek|hireket|mi ujsag|legujabb|aktualis|mostani|mai ujdonsag|ujdonsagok|mi tortent ma|mennyibe kerul most|mennyibe kerul jelenleg|most mennyi|online informacio).*");
+    boolean transport=n.matches(".*(vonat|s-bahn|menetrend|indulas|erkezes|kesik|keses|atutas|atszallas|busz|s2 ).*") &&
+      n.matches(".*(mikor|hany|most|ma |mai|indul|erkez|kovetkezo|keress|nezz|van |kesik|keses|jarat).*");
+    boolean weather=n.matches(".*(idojaras|homerseklet|hany fok|eso lesz|esik e|idojarast).*");
+    boolean deals=n.matches(".*(kleinanzeigen|hasznalt ar|hirdetesek|arajanlat|elado|legolcsobb).*") &&
+      n.matches(".*(keress|nezz|nezd|talalj|mennyi|milyen|most|mai|ar).*");
+    return explicit||transport||weather||deals;
   }
   static String cleanQuery(String t) {
     String s=(t==null?"":t.trim());
