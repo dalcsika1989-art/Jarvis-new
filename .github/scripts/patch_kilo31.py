@@ -68,4 +68,10 @@ one(main,'void askAi(String text){',
 '''void askAi(String text){
  if(OnlineSearch.shouldSearch(text))prefs.edit().putString("lastInternetSearch",text).apply();''')
 
-print("JARVIS KILO 3.1: network capability probe, online intent and HUD status patched.")
+
+# A generic RSS item is not a verified real-time railway departure or shop price.
+one(main,'if(webLookup){event("state","INTERNET • Élő keresés");',
+'''if(webLookup){event("state","INTERNET • Élő keresés");
+ system+="\\nAz internetes keresési találat önmagában NEM igazolja a valós idejű menetrendet, késést, aktuális árat vagy nyitvatartást. Valós idejű adatot csak egyértelmű, friss, hivatalos forrásból adj meg. Ha ilyen nem áll rendelkezésre, mondd ki, hogy a pontos indulás vagy ár nem ellenőrizhető, és add meg a hivatalos forrás nevét: RMV vagy DB Navigator. Ne találj ki adatot.";''')
+
+print("JARVIS KILO 3.2: automatic search routing, retry memory and source safety patched.")
