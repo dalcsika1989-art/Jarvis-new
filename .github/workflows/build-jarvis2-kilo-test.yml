@@ -1,7 +1,7 @@
-name: Build JARVIS KILO 3.2 Unified Search
+name: Build JARVIS KILO 3.3 Text Input Fix
 on:
   push:
-    branches: [jarvis-kilo32-unified-search]
+    branches: [jarvis-kilo33-textinput-fix]
     paths:
       - '.github/workflows/build-jarvis2-kilo-test.yml'
   workflow_dispatch:
@@ -42,7 +42,9 @@ jobs:
           cp .github/scripts/kilo3/OnlineSearch.java .github/scripts/kilo3/ApprovalReceiver.java jarvis2-input/JARVIS-2.0/src/hu/jarvis/app/
           python3 .github/scripts/patch_kilo31.py jarvis2-input/JARVIS-2.0
           python3 .github/scripts/patch_kilo32.py jarvis2-input/JARVIS-2.0
-          grep -q 'package="hu.jarvis.kilo32"' jarvis2-input/JARVIS-2.0/AndroidManifest.xml
+          python3 .github/scripts/patch_kilo33.py jarvis2-input/JARVIS-2.0
+          cp .github/scripts/kilo3/TextInputAssist.java jarvis2-input/JARVIS-2.0/src/hu/jarvis/app/
+          grep -q 'package="hu.jarvis.kilo33"' jarvis2-input/JARVIS-2.0/AndroidManifest.xml
       - name: Build test APK
         run: |
           cd jarvis2-input/JARVIS-2.0
@@ -50,7 +52,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: JARVIS-KILO-3-2-UNIFIED-APK
+          name: JARVIS-KILO-3-3-TEXT-INPUT-APK
           path: jarvis2-input/JARVIS-2.0/dist/JARVIS-2.0-KILO-TEST.apk
           if-no-files-found: error
           retention-days: 7
