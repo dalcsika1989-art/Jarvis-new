@@ -51,6 +51,22 @@ one(service,
     'return new JSONObject().put("package",screenPackage).put("windowId",root.getWindowId()).put("version",++version).put("elements",arr).put("passwordScreen",hasPassword(root));',
     'JSONObject snap=new JSONObject().put("package",screenPackage).put("windowId",root.getWindowId()).put("version",++version).put("elements",arr).put("passwordScreen",hasPassword(root));mostRecentTaskScreen=snap;return snap;')
 one(service,
+    'void openPlan(){', '''String editableDraft(){
+      JSONObject snap=mostRecentTaskScreen;
+      if(snap==null)return "";
+      String goal=getSharedPreferences("jarvis",0).getString("planGoal","");
+      String expected=AutoOperationsPolicy.userMessage(goal);
+      if(expected.isEmpty())return "";
+      JSONArray elements=snap.optJSONArray("elements");
+      if(elements==null)return "";
+      for(int i=0;i<elements.length();i++){
+        JSONObject el=elements.optJSONObject(i);
+        if(el!=null&&el.optBoolean("editable",false)&&AutoOperationsPolicy.n(expected).equals(AutoOperationsPolicy.n(el.optString("text",""))))return expected;
+      }
+      return "";
+    }
+    void openPlan(){''')
+one(service,
     '''      if(runner!=null&&runner.running){
         String goal=getSharedPreferences("jarvis",0).getString("planGoal","");
         return SearchActionPolicy.needsApproval(goal,a.optString("action"),label,a.optString("text",""),a.optBoolean("confirm",false));
@@ -61,7 +77,7 @@ one(service,
           JSONObject current=mostRecentTaskScreen;
           String screenText=current==null?"":current.toString();
           String pkg=current==null?"":current.optString("package","");
-          return AutoOperationsPolicy.needsApproval(goal,a.optString("action"),label,a.optString("text",""),a.optBoolean("confirm",false),pkg,screenText);
+          return AutoOperationsPolicy.needsApproval(goal,a.optString("action"),label,a.optString("text",""),a.optBoolean("confirm",false),pkg,screenText,editableDraft());
         }
         return SearchActionPolicy.needsApproval(goal,a.optString("action"),label,a.optString("text",""),a.optBoolean("confirm",false));
       }''')
@@ -83,7 +99,7 @@ one(runner,
     'boolean scopedRisk=SearchActionPolicy.needsApproval(goal,kind,label,action.optString("text",""),action.optBoolean("confirm",false));',
     '''boolean scopedRisk=automatic?
       AutoOperationsPolicy.needsApproval(goal,kind,label,action.optString("text",""),action.optBoolean("confirm",false),
-        screen.optString("package",""),screen.toString()):
+        screen.optString("package",""),screen.toString(),service.editableDraft()):
       SearchActionPolicy.needsApproval(goal,kind,label,action.optString("text",""),action.optBoolean("confirm",false));''')
 one(runner,
     'if(ApprovalPolicy.valid(service.getSharedPreferences("jarvis",0).getInt("approvalMode",ApprovalPolicy.SENSITIVE))==ApprovalPolicy.AUTO&&!scopedRisk){approved=true;break;}',
