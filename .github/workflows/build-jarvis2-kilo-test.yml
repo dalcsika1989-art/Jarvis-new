@@ -1,4 +1,4 @@
-name: Build JARVIS KILO 3.5 Automatic Operations
+name: Build JARVIS KILO 3.5 Automatic Operations v2
 on:
   push:
     branches: [jarvis-kilo35-auto-operations]
