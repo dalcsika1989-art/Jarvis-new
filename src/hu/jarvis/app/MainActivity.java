@@ -11,6 +11,11 @@ import hu.jarvis.local.OfflineBrain;
 import hu.jarvis.local.ConversationMemory;
 import hu.jarvis.local.HungarianVoice;
 import hu.jarvis.local.OfflineSpeech;
+import hu.jarvis.ai.MultiModelAgent;
+import hu.jarvis.ai.SecureApiKeys;
+import android.text.InputType;
+import android.view.View;
+import android.widget.AdapterView;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -78,6 +83,61 @@ public final class MainActivity extends Activity {
     });
    }).show());
 
+  TextView aiHeading=new TextView(this);aiHeading.setText("AI MODELLVÁLASZTÓ  •  HELYI / FELHŐ");
+  aiHeading.setTextColor(0xff83efff);aiHeading.setTextSize(18);root.addView(aiHeading);
+  Spinner modelPicker=new Spinner(this);
+  ArrayAdapter<String> modelAdapter=new ArrayAdapter<String>(this,android.R.layout.simple_spinner_item,MultiModelAgent.LABELS);
+  modelAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+  modelPicker.setAdapter(modelAdapter);root.addView(modelPicker);
+  android.content.SharedPreferences aiPreferences=getSharedPreferences("jarvis_ai_model",MODE_PRIVATE);
+  int savedModel=aiPreferences.getInt("model_index",0);
+  modelPicker.setSelection(savedModel>=0&&savedModel<MultiModelAgent.LABELS.length?savedModel:0);
+  TextView keyStatus=new TextView(this);keyStatus.setTextColor(0xff6ae5ec);root.addView(keyStatus);
+  EditText apiKeyInput=new EditText(this);apiKeyInput.setSingleLine(true);
+  apiKeyInput.setHint("API-kulcs – csak a kiválasztott szolgáltatóhoz");
+  apiKeyInput.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_PASSWORD);
+  apiKeyInput.setTextColor(Color.WHITE);root.addView(apiKeyInput);
+  Button saveKey=new Button(this);saveKey.setText("API-KULCS TITKOSÍTOTT MENTÉSE");root.addView(saveKey);
+  Button deleteKey=new Button(this);deleteKey.setText("AZ AKTUÁLIS API-KULCS TÖRLÉSE");root.addView(deleteKey);
+  TextView privacyNote=new TextView(this);privacyNote.setTextColor(0xff9ad6dd);
+  privacyNote.setText("Offline AI: kulcs és internet nélkül. Felhős AI: a kérdés a kiválasztott szolgáltatóhoz kerül; a használat kvótába vagy pénzbe kerülhet. Nincs automatikus szolgáltatóváltás.");
+  root.addView(privacyNote);
+  Runnable refreshKeyState=()->{
+   String provider=MultiModelAgent.provider(modelPicker.getSelectedItemPosition());
+   boolean offline=MultiModelAgent.isLocal(modelPicker.getSelectedItemPosition());
+   int visibility=offline?View.GONE:View.VISIBLE;
+   apiKeyInput.setVisibility(visibility);saveKey.setVisibility(visibility);deleteKey.setVisibility(visibility);
+   if(offline){keyStatus.setText("Helyi GGUF – nincs szükség API-kulcsra.");return;}
+   try{keyStatus.setText(provider.toUpperCase()+" API-kulcs: "+(SecureApiKeys.load(this,provider).isEmpty()?"HIÁNYZIK":"MENTVE, TITKOSÍTVA"));}
+   catch(Exception e){keyStatus.setText("API-kulcs titkosított tárhelye nem érhető el: "+e.getClass().getSimpleName());}
+  };
+  modelPicker.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener(){
+   public void onItemSelected(AdapterView<?> parent,View view,int position,long id){
+    aiPreferences.edit().putInt("model_index",position).apply();
+    apiKeyInput.setText("");
+    refreshKeyState.run();
+    if(askButton!=null)askButton.setText(MultiModelAgent.isLocal(position)?"KÉRDEZÉS HELYBEN":"KÉRDEZÉS A KIVÁLASZTOTT AI-TÓL");
+   }
+   public void onNothingSelected(AdapterView<?> parent){}
+  });
+  saveKey.setOnClickListener(v->{
+   String provider=MultiModelAgent.provider(modelPicker.getSelectedItemPosition());
+   if("local".equals(provider))return;
+   if(apiKeyInput.getText().toString().trim().isEmpty()){Toast.makeText(this,"Írd be az API-kulcsot.",Toast.LENGTH_SHORT).show();return;}
+   try{
+    SecureApiKeys.save(this,provider,apiKeyInput.getText().toString());
+    apiKeyInput.setText("");refreshKeyState.run();
+    Toast.makeText(this,"A "+provider+" kulcsa titkosítva elmentve.",Toast.LENGTH_SHORT).show();
+   }catch(Exception e){Toast.makeText(this,"Mentési hiba: "+e.getClass().getSimpleName(),Toast.LENGTH_LONG).show();}
+  });
+  deleteKey.setOnClickListener(v->{
+   String provider=MultiModelAgent.provider(modelPicker.getSelectedItemPosition());
+   if("local".equals(provider))return;
+   SecureApiKeys.clear(this,provider);apiKeyInput.setText("");refreshKeyState.run();
+   Toast.makeText(this,"A "+provider+" kulcsa törölve.",Toast.LENGTH_SHORT).show();
+  });
+  refreshKeyState.run();
+
   EditText question=new EditText(this);question.setSingleLine(false);question.setHint("Írd ide a kérdésed...");question.setTextColor(Color.WHITE);question.setHintTextColor(0xffaaaaaa);root.addView(question);
   Button mic=new Button(this);mic.setText("MAGYAR OFFLINE MIKROFON");root.addView(mic);
   mic.setOnClickListener(v->{
@@ -102,6 +162,23 @@ public final class MainActivity extends Activity {
    if(ControlService.executeLocalCommand(q)){watchCommand();return;}
    if(ControlService.looksLikeLocalCommand(q)&&!ControlService.active()){
     status.setText("A telefonvezérléshez engedélyezze a JARVIS hozzáférési szolgáltatást az Android Kisegítő lehetőségek menüjében.");return;
+   }
+   int selectedModel=modelPicker.getSelectedItemPosition();
+   if(!MultiModelAgent.isLocal(selectedModel)){
+    String provider=MultiModelAgent.provider(selectedModel),apiKey;
+    try{apiKey=SecureApiKeys.load(this,provider);}
+    catch(Exception e){status.setText("A titkosított API-kulcs nem olvasható: "+e.getClass().getSimpleName());return;}
+    if(apiKey.isEmpty()){status.setText("Nincs mentett "+provider+" API-kulcs. A modellválasztó alatt add meg.");return;}
+    status.setText("JARVIS kapcsolódik: "+MultiModelAgent.LABELS[selectedModel]+"...");
+    reactor.setActive(true);ask.setEnabled(false);
+    MultiModelAgent.ask(this,selectedModel,apiKey,q,reply->{
+     if(isFinishing()||isDestroyed())return;
+     reactor.setActive(false);ask.setEnabled(true);
+     status.setText(reply);
+     ConversationMemory.append(this,q,reply);
+     if(voice.isReady()&&!reply.startsWith("AI-kapcsolati hiba"))voice.say(reply);
+    });
+    return;
    }
    File model=new File(new File(JarvisHome.initialize(this),"models"),"model.gguf");
    if(!model.isFile()){status.setText("Előbb telepíts egy GGUF modellt.");return;}
