@@ -1,7 +1,7 @@
-name: Build JARVIS KILO 3.4 Auto Continue
+name: Build JARVIS KILO 3.5 Automatic Operations
 on:
   push:
-    branches: [jarvis-kilo34-autocontinue]
+    branches: [jarvis-kilo35-auto-operations]
     paths:
       - '.github/workflows/build-jarvis2-kilo-test.yml'
   workflow_dispatch:
@@ -44,8 +44,9 @@ jobs:
           python3 .github/scripts/patch_kilo32.py jarvis2-input/JARVIS-2.0
           python3 .github/scripts/patch_kilo33.py jarvis2-input/JARVIS-2.0
           python3 .github/scripts/patch_kilo34.py jarvis2-input/JARVIS-2.0
-          cp .github/scripts/kilo3/TextInputAssist.java .github/scripts/kilo3/SearchActionPolicy.java .github/scripts/kilo3/SearchConstraints.java jarvis2-input/JARVIS-2.0/src/hu/jarvis/app/
-          grep -q 'package="hu.jarvis.kilo34"' jarvis2-input/JARVIS-2.0/AndroidManifest.xml
+          python3 .github/scripts/patch_kilo35.py jarvis2-input/JARVIS-2.0
+          cp .github/scripts/kilo3/TextInputAssist.java .github/scripts/kilo3/SearchActionPolicy.java .github/scripts/kilo3/SearchConstraints.java .github/scripts/kilo3/AutoOperationsPolicy.java jarvis2-input/JARVIS-2.0/src/hu/jarvis/app/
+          grep -q 'package="hu.jarvis.kilo35"' jarvis2-input/JARVIS-2.0/AndroidManifest.xml
       - name: Test marketplace safety and exact radius requirements
         run: |
           mkdir -p "$RUNNER_TEMP/kilo34-tests"
@@ -55,6 +56,14 @@ jobs:
             jarvis2-input/JARVIS-2.0/src/hu/jarvis/app/SearchConstraints.java \
             .github/scripts/kilo3/Kilo34PolicyTest.java
           java -cp "$RUNNER_TEMP/kilo34-tests" hu.jarvis.app.Kilo34PolicyTest
+      - name: Test automatic navigation and exact message authorization
+        run: |
+          mkdir -p "$RUNNER_TEMP/kilo35-tests"
+          javac -encoding UTF-8 -d "$RUNNER_TEMP/kilo35-tests" \
+            jarvis2-input/JARVIS-2.0/src/hu/jarvis/app/AgentRules.java \
+            jarvis2-input/JARVIS-2.0/src/hu/jarvis/app/AutoOperationsPolicy.java \
+            .github/scripts/kilo3/Kilo35PolicyTest.java
+          java -cp "$RUNNER_TEMP/kilo35-tests" hu.jarvis.app.Kilo35PolicyTest
       - name: Build test APK
         run: |
           cd jarvis2-input/JARVIS-2.0
@@ -62,7 +71,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: JARVIS-KILO-3-4-AUTO-CONTINUE-APK
+          name: JARVIS-KILO-3-5-AUTOMATIKUS-MUVELETEK-APK
           path: jarvis2-input/JARVIS-2.0/dist/JARVIS-2.0-KILO-TEST.apk
           if-no-files-found: error
           retention-days: 7
