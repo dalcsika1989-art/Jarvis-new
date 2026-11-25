@@ -16,7 +16,7 @@ final class AutoOperationsPolicy {
 
   static boolean hazardousLabel(String label){
     String x=n(label);
-    return has(x,"(?iu)(?:^|\\W)(?:kaufen|buy|purchase|bestellen|checkout|order|bezahlen|payment|pay|fizet|vasarol|rendeles|transfer|uberweisen|utalas|bank|delete|remove|loschen|torles|torol|deinstall|uninstall|reset|format|install|telepit|permission|berechtigung|engedely|allow|grant|zulassen|accept|zustimmen|agree|cookies|consent|anmelden|login|password|jelszo|passwort|pin|captcha|hivas|call|anrufen|publish|veroffentlichen|posten)(?:$|\\W)");
+    return has(x,"(?iu)(?:^|\\W)(?:kaufen|buy|purchase|bestellen|checkout|order|bezahlen|payment|pay|fizet|vasarol|rendeles|transfer|uberweisen|utalas|bank|delete|remove|loschen|torles|torol|deinstall|uninstall|reset|format|install|telepit|permission|berechtigung|engedely|allow|grant|zulassen|akzeptieren|akzeptier|accept|zustimmen|agree|cookies|consent|anmelden|login|password|jelszo|passwort|pin|captcha|hivas|call|anrufen|publish|veroffentlichen|posten)(?:$|\\W)");
   }
 
   static boolean sendButton(String label){
