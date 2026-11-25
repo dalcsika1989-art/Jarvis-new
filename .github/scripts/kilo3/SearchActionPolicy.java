@@ -31,7 +31,10 @@ final class SearchActionPolicy {
     if(type.equals("long_press"))return false;
 
     // Never bypass consent for explicit risky labels or user input.
-    if(AgentRules.needsConfirm(type,l,t,false))return false;
+    boolean safeSearchSubmit=type.equals("submit")&&(l.contains("such")||l.contains("keres")||l.contains("search")||l.contains("finden"));
+    boolean riskyLabel=l.matches(".*\\b(akzeptieren|consent|cookies|zustimmen|accept|agree|anmelden|login|registrieren|kaufen|bestellen|bezahlen|senden|nachricht|nachrichten|melden|delete|loschen|entfernen|pay|buy|order|konto)\\b.*");
+    if(riskyLabel)return false;
+    if(AgentRules.needsConfirm(type,l,t,false)&&!safeSearchSubmit)return false;
 
     if(type.equals("tap"))return true;
     if(type.equals("type"))return !l.isEmpty()&&
@@ -48,6 +51,8 @@ final class SearchActionPolicy {
 
   static boolean needsApproval(String goal,String action,String label,String text,boolean aiRequest){
     // Real action risk always overrides the model's confidence.
+    boolean safe=safeNavigation(goal,action,label,text);
+    if(safe)return false;
     boolean risky=AgentRules.needsConfirm(action,label,text,false);
     if(risky)return true;
     // A model may over-classify a benign step as risky; the local
