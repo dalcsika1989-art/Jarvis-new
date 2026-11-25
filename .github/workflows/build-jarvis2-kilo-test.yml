@@ -1,7 +1,7 @@
-name: Build JARVIS KILO 3.3 Text Input Fix
+name: Build JARVIS KILO 3.4 Auto Continue
 on:
   push:
-    branches: [jarvis-kilo33-textinput-fix]
+    branches: [jarvis-kilo34-autocontinue]
     paths:
       - '.github/workflows/build-jarvis2-kilo-test.yml'
   workflow_dispatch:
@@ -43,8 +43,18 @@ jobs:
           python3 .github/scripts/patch_kilo31.py jarvis2-input/JARVIS-2.0
           python3 .github/scripts/patch_kilo32.py jarvis2-input/JARVIS-2.0
           python3 .github/scripts/patch_kilo33.py jarvis2-input/JARVIS-2.0
-          cp .github/scripts/kilo3/TextInputAssist.java jarvis2-input/JARVIS-2.0/src/hu/jarvis/app/
-          grep -q 'package="hu.jarvis.kilo33"' jarvis2-input/JARVIS-2.0/AndroidManifest.xml
+          python3 .github/scripts/patch_kilo34.py jarvis2-input/JARVIS-2.0
+          cp .github/scripts/kilo3/TextInputAssist.java .github/scripts/kilo3/SearchActionPolicy.java .github/scripts/kilo3/SearchConstraints.java jarvis2-input/JARVIS-2.0/src/hu/jarvis/app/
+          grep -q 'package="hu.jarvis.kilo34"' jarvis2-input/JARVIS-2.0/AndroidManifest.xml
+      - name: Test marketplace safety and exact radius requirements
+        run: |
+          mkdir -p "$RUNNER_TEMP/kilo34-tests"
+          javac -encoding UTF-8 -d "$RUNNER_TEMP/kilo34-tests" \
+            jarvis2-input/JARVIS-2.0/src/hu/jarvis/app/AgentRules.java \
+            jarvis2-input/JARVIS-2.0/src/hu/jarvis/app/SearchActionPolicy.java \
+            jarvis2-input/JARVIS-2.0/src/hu/jarvis/app/SearchConstraints.java \
+            .github/scripts/kilo3/Kilo34PolicyTest.java
+          java -cp "$RUNNER_TEMP/kilo34-tests" hu.jarvis.app.Kilo34PolicyTest
       - name: Build test APK
         run: |
           cd jarvis2-input/JARVIS-2.0
@@ -52,7 +62,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: JARVIS-KILO-3-3-TEXT-INPUT-APK
+          name: JARVIS-KILO-3-4-AUTO-CONTINUE-APK
           path: jarvis2-input/JARVIS-2.0/dist/JARVIS-2.0-KILO-TEST.apk
           if-no-files-found: error
           retention-days: 7
