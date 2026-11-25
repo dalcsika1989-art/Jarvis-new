@@ -54,16 +54,16 @@ final class AutoOperationsPolicy {
   }
 
   /** For a message, UI must visibly show BOTH the named recipient and exact body. */
-  static boolean provenSend(String goal,String screenData){
+  static boolean provenSend(String goal,String screenData,String editableDraft){
     if(!userRequestedSend(goal)||screenData==null)return false;
     String screen=n(screenData);
     String target=userRecipient(goal);
     String message=n(userMessage(goal));
-    return screen.contains(target)&&screen.contains(message);
+    return screen.contains(target)&&message.equals(n(editableDraft));
   }
 
   static boolean needsApproval(String goal,String action,String label,String input,
-        boolean modelConfirm,String screenPackage,String currentScreenText){
+        boolean modelConfirm,String screenPackage,String currentScreenText,String editableDraft){
     String a=action==null?"":action;
     if(!AgentRules.knownAction(a))return true;
     if(a.equals("done")||a.equals("ask")||a.equals("wait"))return false;
@@ -73,7 +73,7 @@ final class AutoOperationsPolicy {
     if(sending){
       // Only an explicitly requested, fully specified message can be sent
       // without another prompt. This is intentionally stricter than generic AUTO.
-      return !(a.equals("tap")||a.equals("submit"))||!provenSend(goal,currentScreenText);
+      return !(a.equals("tap")||a.equals("submit"))||!provenSend(goal,currentScreenText,editableDraft);
     }
     if(hazardousLabel(label))return true;
     if(a.equals("launch")||a.equals("scroll")||a.equals("back")||a.equals("home")||a.equals("recents"))return false;
