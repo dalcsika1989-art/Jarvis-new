@@ -67,6 +67,9 @@ one(service,
     }
     void openPlan(){''')
 one(service,
+    'if(mode==ApprovalPolicy.EACH)return true;',
+    'if(mode==ApprovalPolicy.EACH&&!getSharedPreferences("jarvis",0).getBoolean("automaticOperations",false))return true;')
+one(service,
     '''      if(runner!=null&&runner.running){
         String goal=getSharedPreferences("jarvis",0).getString("planGoal","");
         return SearchActionPolicy.needsApproval(goal,a.optString("action"),label,a.optString("text",""),a.optBoolean("confirm",false));
