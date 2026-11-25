@@ -40,8 +40,8 @@ one(activity,
    });
  }''')
 one(activity,
-    'approvalInfo.setText("Küldéshez, vásárláshoz, törléshez és engedélyadáshoz mindig külön jóváhagyás kell.");',
-    'approvalInfo.setText("A főképernyőn külön AUTOMATIKUS MŰVELETEK gomb van. Bekapcsolva a rutinfeladat önállóan folytatódik, és a pontosan megadott címzettnek szánt, ellenőrizhető üzenetet is elküldheti. Vásárlás, fizetés, törlés, engedélyadás továbbra is megerősítést kér.");')
+    'Küldéshez, vásárláshoz, törléshez és engedélyadáshoz mindig külön jóváhagyás kell.',
+    'A főképernyőn külön AUTOMATIKUS MŰVELETEK gomb van. Bekapcsolva a rutinfeladat önállóan folytatódik, és a pontosan megadott címzettnek szánt, ellenőrizhető üzenetet is elküldheti. Vásárlás, fizetés, törlés, engedélyadás továbbra is megerősítést kér.')
 
 service=java/"ControlService.java"
 one(service,
