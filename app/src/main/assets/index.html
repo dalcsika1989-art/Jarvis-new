@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="hu"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#06121e"/>
+<title>JARVIS HUD V11 · 10 Modules</title>
+<style>
+:root{--bg:#020812;--surface:#081c2d;--line:#17445a;--cyan:#00e5ff;--text:#d9f7fd;--muted:#8ba8ba;--green:#49efb1;--amber:#ffc86d;--red:#ff587f}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% 6%,#14354e 0%,#061322 40%,#02070e 100%);color:var(--text);font:14px system-ui,Arial,sans-serif;min-height:100vh}header{padding:15px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line)}header b{font-size:19px;letter-spacing:3px;color:var(--cyan);text-shadow:0 0 14px #00e5ff99}main{max-width:850px;margin:auto;padding:10px 12px 105px}.nav{display:flex;overflow-x:auto;gap:6px;padding:8px 0 14px;scrollbar-width:none}.nav button{flex-shrink:0;padding:10px 12px}.nav button.active{background:#09526c;border-color:var(--cyan)}
+button,select,input,textarea{font:inherit;border:1px solid var(--line);border-radius:11px;background:#0a2638;color:var(--text);padding:12px}button{cursor:pointer;touch-action:manipulation}button.primary{background:#0b4a63;border-color:var(--cyan)}button.warn{border-color:var(--amber)}button.danger{border-color:var(--red)}input,textarea,select{max-width:100%;width:100%}input[type=range]{padding:4px}button:disabled{opacity:.5}section{display:none}section.active{display:block}.card{border:1px solid var(--line);background:linear-gradient(135deg,#103148bb,#071522ed);border-radius:17px;padding:15px;margin-bottom:12px;box-shadow:0 12px 25px #0004}h2{color:var(--cyan);font-size:15px;letter-spacing:1.4px;margin:0 0 12px}p{line-height:1.48}.muted,small{color:var(--muted)}.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.row>*{flex:1 1 100px}.stack{display:grid;gap:10px}.tag{display:inline-flex;padding:5px 10px;border:1px solid var(--line);border-radius:30px;font-size:11px;color:var(--cyan)}.entry{border-top:1px solid var(--line);padding:10px 0;white-space:pre-wrap;overflow-wrap:anywhere}.entry:last-child{border-bottom:1px solid var(--line)}.bubble{padding:11px;border:1px solid var(--line);background:#123146;border-radius:12px;margin:8px 0;white-space:pre-wrap;overflow-wrap:anywhere}.bubble.user{margin-left:12%;border-color:#267b94;background:#123e51}.panelStatus{border:1px solid var(--line);border-radius:12px;padding:13px;margin-top:12px}.panelStatus.good{border-color:var(--green)}.panelStatus.warn{border-color:var(--amber)}.panelStatus.fail{border-color:var(--red)}.reactorWrap{position:relative;display:grid;place-items:center;min-height:285px}.reactor{position:relative;width:236px;height:236px;border:7px solid var(--cyan);border-radius:50%;box-shadow:0 0 26px #00e5ff70,inset 0 0 25px #00e5ff60;display:grid;place-items:center;animation:spin 10s linear infinite}.reactor:before{content:"";position:absolute;inset:19px;border:5px dashed #00bdeb;border-radius:50%;animation:spin 7s linear infinite reverse}.reactor:after{content:"";position:absolute;inset:47px;border:12px solid #a1faff;border-radius:50%;filter:drop-shadow(0 0 15px #00e5ff)}.reactorCore{font-size:68px;color:white;text-shadow:0 0 25px cyan;z-index:2}.reactor.listen{animation:beat .9s ease-in-out infinite}.reactor.think{animation:spin 1.3s linear infinite}.reactor.speak{animation:beat .5s ease-in-out infinite}.reactor.error{border-color:var(--red);box-shadow:0 0 28px #ff587f80}@keyframes spin{to{transform:rotate(360deg)}}@keyframes beat{50%{transform:scale(1.07);filter:brightness(1.5)}}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.chat{max-height:340px;overflow:auto}.warning{padding:12px;border:1px solid var(--amber);border-radius:12px;color:#ffe0ab;background:#4a30192b}.pill{display:inline-block;border:1px solid var(--line);border-radius:22px;padding:5px 9px}.progress{height:8px;border-radius:8px;background:#113146;overflow:hidden}.progress div{height:100%;background:var(--cyan);width:0;transition:width .3s}.globalRow{display:block;border:1px solid var(--line);background:#092335a8;border-radius:13px;margin:10px 0;padding:13px}.globalRow b{display:block;white-space:normal;letter-spacing:.3px;margin-bottom:6px}.globalRow p{margin:4px 0 10px;color:var(--muted);font-size:13px;line-height:1.45}.globalRow .row{display:flex;align-items:center;flex-wrap:wrap;gap:7px}.globalRow .tag{font-size:11px}.globalRow button{padding:10px;font-size:12px;flex:0 1 auto;min-width:120px}footer{position:fixed;bottom:0;left:0;right:0;padding:10px 12px calc(env(safe-area-inset-bottom) + 10px);background:#061520ed;border-top:1px solid var(--line);display:flex;gap:8px;backdrop-filter:blur(8px)}footer input{flex:1;width:auto}footer button{flex:0 0 auto}
+</style></head><body>
+<header><div><b>JARVIS · HUD V11</b><div class="muted" style="font-size:10px;letter-spacing:2px">GLOBAL AGENT / 10 MODULES</div></div><div class="tag" id="topStatus">STANDBY</div></header>
+<main><nav class="nav" id="nav">
+<button data-pane="core" class="active">CORE</button><button data-pane="ai">AI AGY</button><button data-pane="voice">VOICE</button><button data-pane="phone">AUTOPILOT</button><button data-pane="memory">MEMORY</button><button data-pane="mission">MISSION</button><button data-pane="garmin">GARMIN</button><button data-pane="diag">DIAG</button><button data-pane="research">RESEARCH</button><button data-pane="overlay">HUD</button><button data-pane="global">GLOBAL TEST</button><button data-pane="settings">SETTINGS</button>
+</nav>
+<section id="core" class="active"><div class="card"><div class="row" style="justify-content:space-between"><span class="tag">ARC REACTOR · MK X</span><span class="tag" id="coreState">READY</span></div><div class="reactorWrap"><div class="reactor" id="reactor"><div class="reactorCore">△</div></div></div><div class="row"><button class="primary" id="listen">MIKROFON</button><button id="testSpeak">HANG TESZT</button><button class="danger" id="stop">STOP</button></div><div class="panelStatus" id="status">A JARVIS kész a feladatokra.</div><p class="muted">Felismerés: <span id="transcript">—</span></p></div><div class="card"><h2>COMMAND LINE / QUICK ACTIONS</h2><div class="grid"><button data-cmd="Nyisd meg a Chrome-ot">CHROME</button><button data-cmd="Nyisd meg a YouTube-ot">YOUTUBE</button><button data-pane="mission">MISSION CONTROL</button><button data-pane="global">GLOBAL TEST</button></div></div></section>
+<section id="ai"><div class="card"><h2>1 · NEURAL AI CORE</h2><p class="muted">OpenAI / Gemini / helyi parancsértelmezés. Internetes AI a saját API-kulcsoddal működik. A kulcs az Android Keystore-ban titkosítva tárolódik.</p><div class="row"><select id="provider"><option value="offline">Offline</option><option value="gemini">Gemini</option><option value="openai">ChatGPT / OpenAI</option></select><input id="model" value="gemini-3.8-flash" aria-label="Modell neve"/></div><div class="row"><button id="refreshModels">ELÉRHETŐ MODELLEK</button><select id="modelList" aria-label="Lekérdezett modellek"><option value="">Modelllista még nincs betöltve</option></select></div><div id="modelStatus" class="muted"></div><div id="chat" class="chat"></div><div class="row"><input id="aiPrompt" placeholder="Beszélj JARVIS-szal..."/><button class="primary" id="ask">KÜLDÉS</button></div><button id="clearChat">ELŐZMÉNYEK TÖRLÉSE</button></div></section>
+<section id="voice"><div class="card"><h2>2 · LIVE VOICE</h2><div class="row"><button class="primary" id="listen2">MAGYAR BESZÉDFELISMERÉS</button><button id="voiceDemo">JARVIS BESZÉL</button><button id="wakeToggle">ÉBRESZTŐSZÓ BE</button></div><p id="wakeInfo" class="muted">Ébresztőszó mód: KIKAPCSOLVA. Csak nyitott alkalmazásban működik, nem állandó háttérfigyelés.</p><label for="pitch">Férfihang mélysége (TTS hangminőség a telefon motorjától függ)</label><input type="range" id="pitch" min="0.55" max="1.3" step="0.05" value="0.7"/><button id="voiceStop">BESZÉD LEÁLLÍTÁSA</button><p class="warning">Folyamatos háttérbeli „Jarvis” ébresztőszó még nincs: az Android háttérmikrofon-korlátozásai miatt külön, engedélyköteles hotword szolgáltatás kell.</p></div></section>
+<section id="phone"><div class="card"><h2>3 · ANDROID AUTOPILOT</h2><p>Engedélyezd a JARVIS szolgáltatást az Android Kisegítő lehetőségekben. A műveletek előnézet és jóváhagyás után történnek.</p><div class="row"><button id="accessSetup">ACCESSIBILITY BEÁLLÍTÁS</button><button id="appPermissions">ANDROID ALKALMAZÁSENGEDÉLYEK</button><span id="accessStatus" class="tag">ELLENŐRZÉS...</span></div><div class="grid" style="margin-top:10px"><button data-cmd="Főképernyő">HOME</button><button data-cmd="Vissza">BACK</button><button data-cmd="Görgess le">SCROLL DOWN</button><button data-cmd="Görgess fel">SCROLL UP</button><button data-cmd="Olvasd a képernyőt">KÉPERNYŐ SZÖVEGE</button><button id="screenCapture">KÉPERNYŐKÉP TESZT</button><button data-cmd="Nyisd meg a Messengert">MESSENGER</button></div><div id="screenStatus" class="muted"></div><img id="screenPreview" alt="JARVIS saját képernyőkép előnézet" style="display:none;width:100%;max-width:500px;border:1px solid var(--line);border-radius:12px;margin:12px 0"/><p class="warning">Android 13–15 esetén a kisegítő lehetőségekhez a rendszer külön „Korlátozott beállítások engedélyezése” jóváhagyást kérhet az alkalmazás adatlapján. Csak megbízható alkalmazásnál engedélyezd.</p><p class="muted">Minta: „Nyisd meg a YouTube-ot, aztán görgess le”; „Kattints: Keresés”; „Írd be: teszt”. A kattintás nem garantált minden alkalmazásban.</p></div></section>
+<section id="memory"><div class="card"><h2>4 · INTELLIGENS MEMÓRIA</h2><input id="memoryInput" placeholder="Mit jegyezzek meg?"/><button id="addMemory" class="primary">MEMÓRIA MENTÉSE</button><input id="memorySearch" placeholder="Keresés a mentett emlékekben"/><label style="display:block;margin:10px 0"><input type="checkbox" id="memoryAI" style="width:auto"/> Kifejezetten engedélyezem, hogy az utolsó 8 emléket az AI-kérések kontextusaként továbbítsa a kiválasztott szolgáltatónak.</label><div id="memoryList"></div></div><div class="card"><h2>FELADATOK</h2><input id="taskInput" placeholder="Új feladat"/><button id="addTask" class="primary">FELADAT MENTÉSE</button><div id="taskList"></div></div></section>
+<section id="mission"><div class="card"><h2>6 · MISSION CONTROL</h2><p>Összetett utasítások lépésekre bontva, ellenőrzéssel. A külső üzenetküldéshez, törléshez vagy vásárláshoz külön jóváhagyás szükséges.</p><textarea id="missionInput" rows="3" placeholder="Nyisd meg a Chrome-ot, aztán görgess le"></textarea><button class="primary" id="plan">HELYI TERV</button><button id="aiPlan">AI TERV (JÓVÁHAGYÁSSAL)</button><div id="missionSteps"></div><div class="progress"><div id="missionProgress"></div></div><div class="row" style="margin-top:10px"><button class="primary" id="runMission" disabled>TERV JÓVÁHAGYÁSA</button><button class="danger" id="cancelMission">LEÁLLÍTÁS</button></div><div id="missionLog" class="muted"></div></div></section>
+<section id="garmin"><div class="card"><h2>7 · GARMIN / ANDROID ALERT</h2><p>Android-értesítés küldése. A Garmin Instinct órára továbbítás a Garmin Connect alkalmazás értesítéstükrözésétől függ, közvetlen Garmin API nincs.</p><div class="row"><button id="notifyPermission">ÉRTESÍTÉSI ENGEDÉLY</button><button class="primary" id="notifyTest">TESZTÜZENET KÜLDÉSE</button></div></div></section>
+<section id="diag"><div class="card"><h2>8 · DEVICE DIAGNOSTICS</h2><button class="primary" id="diagRefresh">TELEMETRIA FRISSÍTÉSE</button><div id="diagnostics"></div></div></section>
+<section id="research"><div class="card"><h2>9 · RESEARCH AGENT</h2><input id="researchInput" placeholder="Például: Xiaomi roller használt árak"/><label>Gemini keresési modell</label><input id="researchModel" value="gemini-3.5-flash" placeholder="gemini-3.5-flash"/><p class="muted">Az elérhető modelleket az AI AGY panelen, API-kulcs megadása után lehet lekérdezni.</p><div class="row"><button class="primary" id="webSearch">WEBKERESÉS CHROME-BAN</button><button id="researchAI">GEMINI ÉLŐ KUTATÁS</button></div><p class="muted">A Gemini Grounding with Google Search külön API-hozzáféréssel friss forrásokat keres. A hivatkozások a találatok rendelkezésre állásától függnek, a funkció API-díjat vonhat maga után.</p><div id="researchResults" class="entry"></div></div></section>
+<section id="overlay"><div class="card"><h2>10 · LEBEGŐ HUD</h2><p>Az ARC gyorsikon más alkalmazások felett jelenhet meg. Érintésre JARVIS nyílik, az ikon húzással mozgatható.</p><div class="row"><button class="primary" id="overlayStart">HUD AKTIVÁLÁSA</button><button class="danger" id="overlayStop">HUD LEÁLLÍTÁSA</button></div><p class="muted">Android „Más alkalmazások feletti megjelenítés” engedély szükséges.</p></div></section>
+<section id="global"><div class="card"><h2>GLOBAL TEST · 10 MODUL · JAVÍTÓKÖZPONT</h2><p class="muted">A vizsgálat megkülönbözteti a hiányzó engedélyt, az elkészült alapfunkciót és a ténylegesen kipróbált modult. A rendszerengedélyeket csak te adhatod meg.</p><button class="primary" id="runGlobal">ÁLLAPOT FRISSÍTÉSE</button><div id="globalSummary" class="panelStatus"></div><div id="globalResults"></div></div></section>
+<section id="settings"><div class="card"><h2>SECURE API SETTINGS</h2><label>OpenAI API-kulcs</label><input id="openaiKey" type="password" autocomplete="off" placeholder="OpenAI API key"/><button id="saveOpenAI">OPENAI KULCS MENTÉS</button><button id="getOpenAIKey">OPENAI API-KULCS OLDAL</button><label>Gemini API-kulcs</label><input id="geminiKey" type="password" autocomplete="off" placeholder="Gemini API key"/><button id="saveGemini">GEMINI KULCS MENTÉS</button><button id="getGeminiKey">GEMINI API-KULCS OLDAL</button><p class="warning">Az API-hozzáférés külön szolgáltatói fióktól és kvótától függ. Az alkalmazás nem tartalmaz beépített ingyenes AI API-t. A kulcsot nem írjuk ki képernyőre vagy naplóba.</p><h2>MENTÉS ÉS HELYREÁLLÍTÁS</h2><p class="muted">Teszt-APK frissítéskor az Android az eltérő debug aláírás miatt eltávolítást kérhet. Mentéskor a memóriád, feladataid és chatelőzményeid megosztását te választod ki. API-kulcsok nem kerülnek a mentésbe.</p><button id="backupExport">MENTÉS MEGOSZTÁSA</button><textarea id="backupInput" rows="3" placeholder="Ide illeszd be a korábban kimentett JARVIS-adatokat (JSON)"></textarea><button id="backupImport">HELYI ADATOK VISSZAÁLLÍTÁSA</button><button class="danger" id="wipe">HELYI ADATOK TÖRLÉSE</button></div></section>
+</main><footer><input id="command" placeholder="Jarvis, nyisd meg..."/><button class="primary" id="submit">KÜLDÉS</button></footer>
+<script>
+"use strict";
+const $=x=>document.getElementById(x),native=()=>typeof window.JarvisNative!=="undefined";
+let verified=load("verified",{revision:11});if(verified.revision!==11)verified={revision:11};function markTest(name){verified[name]=true;save("verified",verified);if($("global").classList.contains("active"))renderGlobal()}
+
+let cfg=load("cfg",{provider:"offline",model:"gemini-3.5-flash",pitch:0.7}),mem=load("memory",[]),tasks=load("tasks",[]),chatHistory=load("chat",[]).slice(-12),mission=load("pendingMission",null),activeRequest=null,failures=0,state="READY",runId=0,nativeAgentActive=false,nativeAgentTimer=null;
+if(cfg.model==="gemini-3.8-flash"||cfg.model==="gpt-6-luna"){cfg.model=cfg.provider==="openai"?"gpt-4o-mini":"gemini-3.5-flash";save("cfg",cfg)}
+function load(k,d){try{return JSON.parse(localStorage.getItem("jarvis_10_"+k))||d}catch(e){return d}}
+function save(k,v){try{localStorage.setItem("jarvis_10_"+k,JSON.stringify(v));return true}catch(e){message("Tárolás nem elérhető");return false}}
+function message(s,kind){$("status").textContent=s;$("status").className="panelStatus "+(kind||"");$("missionLog").textContent=new Date().toLocaleTimeString("hu-HU")+" · "+s+"\n"+$("missionLog").textContent.slice(0,2500)}
+function setState(s){state=s;$("topStatus").textContent=s;$("coreState").textContent=s;$("reactor").className="reactor "+(s==="LISTEN"?"listen":s==="THINK"?"think":s==="SPEAK"?"speak":s==="ERROR"?"error":"")}
+function pane(id){document.querySelectorAll("section").forEach(e=>e.classList.toggle("active",e.id===id));document.querySelectorAll("[data-pane]").forEach(e=>e.classList.toggle("active",e.dataset.pane===id));if(id==="global")renderGlobal()}
+document.querySelectorAll("[data-pane]").forEach(b=>b.addEventListener("click",()=>pane(b.dataset.pane)));
+function say(s){if(native()){JarvisNative.speak(String(s),Number(cfg.pitch))}else if("speechSynthesis"in window){speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(String(s));u.lang="hu-HU";u.pitch=Number(cfg.pitch);speechSynthesis.speak(u)}}
+function listen(){setState("LISTEN");if(native())JarvisNative.listen();else message("A natív mikrofon csak APK-ban működik.","warn")}
+function stop(){if(native())JarvisNative.wakeMode(false);wakeActive=false;$("wakeToggle").textContent="ÉBRESZTŐSZÓ BE";runId++;activeRequest=null;if(nativeAgentActive&&native())JarvisNative.stopAgent();nativeAgentActive=false;if(nativeAgentTimer){clearInterval(nativeAgentTimer);nativeAgentTimer=null}mission=null;save("pendingMission",null);setState("READY");if(native()){JarvisNative.cancelAi();JarvisNative.stopSpeech()}else speechSynthesis?.cancel();message("Folyamat leállítva.");renderMission()}
+$("listen").onclick=listen;$("listen2").onclick=listen;$("stop").onclick=stop;$("voiceStop").onclick=()=>native()?JarvisNative.stopSpeech():speechSynthesis?.cancel();
+$("testSpeak").onclick=$("voiceDemo").onclick=()=>{setState("SPEAK");say("JARVIS rendszer online, Uram. Az Android funkciók készen állnak a tesztre.");setTimeout(()=>setState("READY"),3000)};
+let wakeActive=false;
+$("wakeToggle").onclick=()=>{if(!native()){message("Az ébresztőszó csak a natív APK-ban működik.","warn");return}wakeActive=!wakeActive;JarvisNative.wakeMode(wakeActive);$("wakeToggle").textContent=wakeActive?"ÉBRESZTŐSZÓ KI":"ÉBRESZTŐSZÓ BE";};
+window.jarvisWakeStatus=function(phase,detail){$("wakeInfo").textContent=detail||phase;if(phase==="off"||phase==="error"||phase==="permission"){wakeActive=false;$("wakeToggle").textContent="ÉBRESZTŐSZÓ BE"}};
+window.jarvisWakeCommand=function(command){markTest("voice");wakeActive=false;$("wakeToggle").textContent="ÉBRESZTŐSZÓ BE";processCommand(command)};
+$("pitch").value=cfg.pitch;$("pitch").oninput=e=>{cfg.pitch=Number(e.target.value);save("cfg",cfg)};
+window.jarvisVoiceResult=function(text,error){setState("READY");if(error){message(error,"warn");return}if(text&&text.trim())markTest("voice"); $("transcript").textContent=text;$("command").value=text;processCommand(text)};
+window.jarvisSpeechStatus=function(s){if(s==="started")setState("SPEAK");if(s==="stopped")setState("READY")};
+window.jarvisSystemMessage=function(text){message(text)};
+function itemList(holder,items,render){holder.replaceChildren();if(!items.length){holder.textContent="Nincs bejegyzés.";return}items.forEach((x,i)=>{let row=document.createElement("div");row.className="entry";let text=document.createElement("span");text.textContent=typeof x==="string"?x:x.text+(x.done?" ✓":"");row.append(text);if(render){let done=document.createElement("button");done.textContent=x.done?"VISSZA":"KÉSZ";done.onclick=()=>{x.done=!x.done;save("tasks",tasks);renderTasks()};row.append(done)}let del=document.createElement("button");del.textContent="TÖRLÉS";del.className="danger";del.onclick=()=>{if(!confirm("Biztosan törlöd?"))return;items.splice(i,1);save(render?"tasks":"memory",items);render?renderTasks():renderMemory()};row.append(del);holder.append(row)})}
+function renderMemory(){let q=$("memorySearch").value.toLowerCase();if(!q){itemList($("memoryList"),mem,false);return}let list=mem.filter(x=>x.toLowerCase().includes(q));$("memoryList").replaceChildren();list.forEach(x=>{let d=document.createElement("div");d.className="entry";d.textContent=x;$("memoryList").append(d)})}
+function renderTasks(){itemList($("taskList"),tasks,true)}
+$("memorySearch").oninput=renderMemory;
+$("addMemory").onclick=()=>{let s=$("memoryInput").value.trim();if(!s)return;mem.push(s);save("memory",mem);$("memoryInput").value="";renderMemory();message("Emlék mentve.")};
+$("addTask").onclick=()=>{let s=$("taskInput").value.trim();if(!s)return;tasks.push({text:s,done:false});save("tasks",tasks);$("taskInput").value="";renderTasks();message("Feladat mentve.")};
+renderMemory();renderTasks();$("memoryAI").checked=!!cfg.shareMemory;$("memoryAI").onchange=e=>{cfg.shareMemory=!!e.target.checked;save("cfg",cfg)};
+$("provider").value=cfg.provider;$("model").value=cfg.model;
+$("provider").onchange=e=>{cfg.provider=e.target.value;if(cfg.provider==="openai"&&cfg.model.startsWith("gemini"))cfg.model="gpt-4o-mini";if(cfg.provider==="gemini"&&!cfg.model.startsWith("gemini"))cfg.model="gemini-3.5-flash";$("model").value=cfg.model;save("cfg",cfg)};
+$("model").onchange=e=>{cfg.model=e.target.value.trim();save("cfg",cfg)};$("refreshModels").onclick=()=>{
+ if(!native()||cfg.provider==="offline"){$("modelStatus").textContent="Az online modellista az APK-ban, OpenAI/Gemini API-kulccsal működik.";return}
+ const request="models:"+String(++runId);$("modelStatus").textContent="Modellek lekérése...";JarvisNative.listModels(cfg.provider,request);
+};
+window.jarvisModelListResult=function(id,status,payload){
+ if(status!=="ok"){$("modelStatus").textContent="Modelllista hiba: "+payload;return}
+ let models;try{models=JSON.parse(payload)}catch(e){$("modelStatus").textContent="Érvénytelen modelllista.";return}
+ $("modelList").replaceChildren();
+ models.forEach(name=>{let o=document.createElement("option");o.textContent=name;o.value=name;$("modelList").append(o)});
+ if(models.includes(cfg.model))$("modelList").value=cfg.model;
+ $("modelStatus").textContent=models.length+" modell érhető el a fiókod API-ján keresztül. Válaszd ki a megfelelőt.";
+};
+$("modelList").onchange=e=>{if(!e.target.value)return;cfg.model=e.target.value;$("model").value=cfg.model;save("cfg",cfg);$("modelStatus").textContent="Kiválasztva: "+cfg.model};
+
+function chatBubble(role,text){const d=document.createElement("div");d.className="bubble "+role;d.textContent=text;$("chat").append(d);$("chat").scrollTop=$("chat").scrollHeight;return d}
+function renderChat(){$("chat").replaceChildren();chatHistory.forEach(m=>chatBubble(m.role,m.content))}renderChat();
+function offline(text){let s=text.toLowerCase();if(/^(szia|hello|jarvis)/.test(s))return"JARVIS készenlétben. Feladatokat, memóriát és Android műveleteket tudok kezelni az adott engedélyeken belül.";if(/segíts|help|mit tudsz/.test(s))return"Parancsok: nyisd meg a Chrome-ot; görgess le; kattints: Keresés; írd be: szöveg; jegyezd meg: információ; új feladat: teendő.";return"Offline értelmezés: "+text+". Részletes válaszhoz válassz Gemini vagy OpenAI motort és ments API-kulcsot."}
+function submitAI(q){if(!q.trim())return;pane("ai");let id=String(++runId);chatHistory.push({role:"user",content:q});chatHistory=chatHistory.slice(-12);save("chat",chatHistory);chatBubble("user",q);
+ let provider=cfg.provider;
+ if(provider==="offline"||!native()){let ans=offline(q);chatHistory.push({role:"assistant",content:ans});chatHistory=chatHistory.slice(-12);save("chat",chatHistory);chatBubble("assistant",ans);message("Offline válasz készült.","good");say(ans);return}
+ setState("THINK");activeRequest=id;message("AI-kérés folyamatban...");let outgoing=chatHistory.slice();if(cfg.shareMemory&&mem.length)outgoing.unshift({role:"user",content:"A felhasználó által megosztásra engedélyezett emlékek: "+mem.slice(-8).join("; ").slice(0,1200)});JarvisNative.askAi(provider,cfg.model,JSON.stringify(outgoing),id);
+}
+window.jarvisAiResult=function(id,result,text){if(id!==activeRequest)return;activeRequest=null;if(id.startsWith("plan:")){setState("READY");if(result==="ok")receiveAIPlan(text);else message("AI-tervezés hiba: "+text,"fail");return}setState(result==="ok"?"READY":"ERROR");let ans=result==="ok"?text:"AI-hiba: "+text+" — Ellenőrizd a modellt, API-kulcsot és kvótát.";chatHistory.push({role:"assistant",content:ans});chatHistory=chatHistory.slice(-12);save("chat",chatHistory);chatBubble("assistant",ans);message(result==="ok"?"AI válasz készült.":ans,result==="ok"?"good":"fail");if(result==="ok"){markTest("ai");say(text)}};
+$("ask").onclick=()=>{let q=$("aiPrompt").value.trim();$("aiPrompt").value="";submitAI(q)};
+$("aiPrompt").onkeydown=e=>{if(e.key==="Enter")$("ask").click()};
+$("clearChat").onclick=()=>{if(confirm("Beszélgetési előzmények törlése?")){chatHistory=[];save("chat",chatHistory);renderChat()}};
+$("saveOpenAI").onclick=()=>saveKey("openai","openaiKey");$("saveGemini").onclick=()=>saveKey("gemini","geminiKey");
+function saveKey(provider,id){if(!native()){message("Az API-kulcs mentése csak az APK-ban támogatott.","warn");return}let k=$(id).value.trim();if(!k){message("Előbb add meg az API-kulcsot.","warn");return}JarvisNative.saveKey(provider,k);$(id).value=""}
+$("backupExport").onclick=()=>{
+ const exported={format:"JARVIS-v11-backup",memory:mem,tasks,chat:chatHistory,cfg:{provider:cfg.provider,model:cfg.model,pitch:cfg.pitch,shareMemory:cfg.shareMemory||false}};
+ const data=JSON.stringify(exported,null,2);
+ if(native())JarvisNative.shareBackup(data);
+ else {$("backupInput").value=data;message("A mentés a szövegmezőben van. Másold biztonságos helyre.")}
+};
+$("backupImport").onclick=()=>{
+ try{
+  const raw=$("backupInput").value;
+  if(raw.length>250000)throw Error("Túl nagy mentés.");
+  const backup=JSON.parse(raw);
+  if(backup.format!=="JARVIS-v11-backup"&&!backup.memory)throw Error("Ismeretlen mentési formátum.");
+  if(!Array.isArray(backup.memory)||!Array.isArray(backup.tasks)||!Array.isArray(backup.chat))throw Error("Hiányzó adattömbök.");
+  if(backup.memory.length>1000||backup.tasks.length>1000||backup.chat.length>120)throw Error("Túl sok bejegyzés.");
+  const checkedMemory=backup.memory.map(x=>String(x).slice(0,1000));
+  const checkedTasks=backup.tasks.map(t=>({text:String(t.text||"").slice(0,1000),done:!!t.done})).filter(t=>t.text);
+  const checkedChat=backup.chat.filter(x=>x&&["user","assistant"].includes(x.role)).map(x=>({role:x.role,content:String(x.content||"").slice(0,2500)})).slice(-12);
+  if(!confirm("Felülírod a helyi memóriát, feladatokat és beszélgetéseket ezzel a mentéssel?"))return;
+  mem=checkedMemory;tasks=checkedTasks;chatHistory=checkedChat;
+  save("memory",mem);save("tasks",tasks);save("chat",chatHistory);
+  renderMemory();renderTasks();renderChat();
+  $("backupInput").value="";
+  message("A helyi mentés visszaállítva.","good");
+ }catch(e){message("Mentés visszaállítása sikertelen: "+e.message,"fail")}
+};
+$("wipe").onclick=()=>{if(!confirm("Minden helyi feladat, memória és beszélgetés törlése? Az API-kulcsok külön mentődnek."))return;mem=[];tasks=[];chatHistory=[];["memory","tasks","chat"].forEach(k=>save(k,[]));renderMemory();renderTasks();renderChat();message("Helyi adatok törölve.")};
+const apps={"chrome":"com.android.chrome","youtube":"com.google.android.youtube","messenger":"com.facebook.orca","whatsapp":"com.whatsapp","instagram":"com.instagram.android","galéria":"com.sec.android.gallery3d","gallery":"com.sec.android.gallery3d"};
+function parseSingle(text){
+ let q=text.trim().replace(/^jarvis[, ]*/i,""),l=q.toLowerCase(),m;
+ if(m=q.match(/^(?:jegyezd meg|emlékezz rá)\s*[:,-]?\s*(.+)$/i))return{type:"memory",arg:m[1],label:"Memória: "+m[1]};
+ if(m=q.match(/^(?:új feladat|feladat)\s*[:,-]?\s*(.+)$/i))return{type:"task",arg:m[1],label:"Feladat: "+m[1]};
+ if(/(?:nyisd meg|megnyitás)/i.test(l)){for(const name of Object.keys(apps))if(l.includes(name))return{type:"app",arg:apps[name],label:"Alkalmazás: "+name};}
+ if(/^(?:görgess le|scroll down)$/i.test(q))return{type:"scroll_down",arg:"",label:"Görgetés lefelé"};
+ if(/^(?:görgess fel|scroll up)$/i.test(q))return{type:"scroll_up",arg:"",label:"Görgetés felfelé"};
+ if(/^(?:vissza|back)$/i.test(q))return{type:"back",arg:"",label:"Vissza"};
+ if(/^(?:főképernyő|home)$/i.test(q))return{type:"home",arg:"",label:"Főképernyő"};
+ if(/^(?:olvasd a képernyőt|képernyő szövege)$/i.test(q))return{type:"read",arg:"",label:"Képernyő szövegének kiolvasása"};
+ if(m=q.match(/^(?:kattints(?: rá)?|nyomd meg)\s*[: ]+\s*(.+)$/i))return{type:"click",arg:m[1],label:"Kattintás: "+m[1]};
+ if(m=q.match(/^(?:írd be|gépelj)\s*[: ]+\s*(.+)$/i))return{type:"input",arg:m[1],label:"Beírás az aktív mezőbe"};
+ return null;
+}
+function createMission(text){const queries=text.split(/\s*(?:,?\s+aztán\s+|,?\s+majd\s+|;\s*)/i).map(x=>x.trim()).filter(Boolean);if(!queries.length)return;const steps=queries.map(parseSingle);if(steps.some(x=>!x)){message("Nem értem minden lépését. Adj meg egyszerű, külön parancsokat: "+queries.filter((q,i)=>!steps[i]).join("; "),"warn");return}mission={steps:steps,index:0,approved:false,cancelled:false,logs:[]};renderMission();pane("mission");message("A terv készen áll. Ellenőrizd és hagyd jóvá.","warn")}
+function renderMission(){let list=$("missionSteps");list.replaceChildren();if(!mission){list.textContent="Nincs aktív küldetés.";$("runMission").disabled=true;$("missionProgress").style.width="0%";return}mission.steps.forEach((s,i)=>{let row=document.createElement("div");row.className="entry";row.textContent=(i+1)+". "+s.label+"  "+(i<mission.index?"✓":i===mission.index?"◉":"○");list.append(row)});$("runMission").disabled=mission.approved;$("missionProgress").style.width=Math.round(mission.index/mission.steps.length*100)+"%"}
+$("plan").onclick=()=>createMission($("missionInput").value);
+$("aiPlan").onclick=()=>{
+ const task=$("missionInput").value.trim();
+ if(!task){message("Írj be egy feladatot előbb.","warn");return}
+ if(!native()||cfg.provider==="offline"){message("AI tervhez natív APK és beállított Gemini/OpenAI szükséges.","warn");return}
+ const id="plan:"+String(++runId);activeRequest=id;setState("THINK");message("AI műveleti terv készül...");
+ const rules='Csak egy JSON objektumot adj: {"steps":[{"type":"app|click|scroll_down|scroll_up|input|back|home|read","arg":"szöveg"}]}. Maximum 8 lépés. App esetén az arg kizárólag: com.android.chrome, com.google.android.youtube, com.facebook.orca, com.whatsapp, com.instagram.android, com.sec.android.gallery3d. Ne javasolj küldést, vásárlást, fizetést, törlést, ismeretlen appot vagy érzékeny lépést. A feladat: '+task;
+ JarvisNative.askAi(cfg.provider,cfg.model,JSON.stringify([{role:"user",content:rules}]),id);
+};
+function receiveAIPlan(text){
+ try{
+  let i=text.indexOf("{"),j=text.lastIndexOf("}");if(i<0||j<i)throw Error("Nem JSON választ adott");
+  let json=JSON.parse(text.slice(i,j+1)),steps=json.steps;if(!Array.isArray(steps)||!steps.length||steps.length>8)throw Error("Hibás lépésszám");
+  const valid=["app","click","scroll_down","scroll_up","input","back","home","read"],allowed=Object.values(apps);
+  const normalized=steps.map(s=>{
+   if(!s||!valid.includes(s.type)||typeof s.arg!=="string"||s.arg.length>400)throw Error("Ismeretlen lépés");
+   if(s.type==="app"&&!allowed.includes(s.arg))throw Error("Nem engedélyezett alkalmazás");
+   return {type:s.type,arg:s.arg,label:s.type+" "+s.arg};
+  });
+  mission={steps:normalized,index:0,approved:false,cancelled:false,logs:[]};renderMission();pane("mission");message("AI terv elkészült. Nézd át, csak jóváhagyás után indul.","warn");
+ }catch(e){setState("ERROR");message("AI terv hiba: "+e.message,"fail")}
+}
+
+$("runMission").onclick=()=>{
+ if(!mission)return;
+ mission.approved=true;message("Terv jóváhagyva; végrehajtás indul.");renderMission();
+ const nativeSteps=["app","click","scroll_down","scroll_up","input","back","home","read"];
+ if(native()&&mission.steps.every(s=>nativeSteps.includes(s.type))){
+  nativeAgentActive=true;save("pendingMission",mission);
+  JarvisNative.startAgent(JSON.stringify(mission.steps));setState("THINK");nativeAgentTimer=setInterval(pollNativeAgent,1300);
+  setTimeout(pollNativeAgent,500);
+ }else nextStep();
+};
+function pollNativeAgent(){
+ if(!native()||!nativeAgentActive)return;
+ let status;
+ try{status=JSON.parse(JarvisNative.agentStatus())}catch(e){message("A natív ügynök állapota nem olvasható.","warn");return}
+ if(!status||!mission)return;
+ if(typeof status.index==="number")mission.index=status.index;
+ renderMission();
+ if(status.phase==="running"||status.phase==="retry"){
+  setState("THINK");message("Natív ügynök: "+status.detail,status.phase==="retry"?"warn":"");
+  return;
+ }
+ if(status.phase==="idle")return;
+ nativeAgentActive=false;if(nativeAgentTimer){clearInterval(nativeAgentTimer);nativeAgentTimer=null}
+ save("pendingMission",null);
+ if(status.phase==="completed"){
+  markTest("mission");
+  setState("READY");message("Küldetés elkészült: "+status.total+" lépés.","good");
+ }else{
+  setState("ERROR");message("Küldetés megszakadt: "+status.detail,"fail");
+ }
+ mission=null;renderMission();
+}
+window.addEventListener("focus",pollNativeAgent);
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)pollNativeAgent()});
+
+$("cancelMission").onclick=stop;
+function nextStep(){
+ if(!mission||mission.cancelled)return;
+ if(mission.index>=mission.steps.length){message("Küldetés lezárva: "+mission.steps.length+" lépés végrehajtva.","good");setState("READY");if(native())JarvisNative.notifyStatus("JARVIS küldetés befejezve.");mission=null;renderMission();return}
+ let step=mission.steps[mission.index];let id=String(++runId);activeRequest=id;setState("THINK");renderMission();message("Művelet: "+step.label);
+ if(step.type==="memory"){mem.push(step.arg);save("memory",mem);renderMemory();finishStep(true,"Emlék mentve.");return}
+ if(step.type==="task"){tasks.push({text:step.arg,done:false});save("tasks",tasks);renderTasks();finishStep(true,"Feladat mentve.");return}
+ if(!native()){finishStep(false,"Csak APK-ban érhető el az Android-vezérlés.");return}
+ if(step.type==="click"&&/(küld|send|pay|fizet|vásár|delete|töröl|megerősít|buy|order)/i.test(step.arg)&&!confirm("Érzékeny művelet: "+step.label+". Külön jóváhagyod?")){finishStep(false,"Érzékeny művelet elutasítva.");return}
+ if(step.type==="input"&&step.arg.length>1200){finishStep(false,"Túl hosszú szöveg.");return}
+ if(step.type==="app"){JarvisNative.launchApp(step.arg,id);return}
+ JarvisNative.action(step.type,step.arg,id);
+}
+window.jarvisActionResult=function(id,result,detail){if(id==="selftest:access"){if(result==="ok")markTest("autopilot");message(result==="ok"?"Képernyőolvasás teszt sikeres: natív Accessibility működik.":"Accessibility teszt sikertelen: "+detail,result==="ok"?"good":"warn");return}if(id!==activeRequest)return;finishStep(result==="ok",detail)};
+function finishStep(success,detail){activeRequest=null;if(!mission)return;message(detail,success?"good":"fail");if(!success){setState("ERROR");failures++;if(failures>=5&&native()){JarvisNative.notifyStatus("JARVIS: legalább 5 sikertelen művelet.");failures=0}mission.approved=false;renderMission();return}failures=0;mission.index++;renderMission();setState("READY");setTimeout(nextStep,400)}
+function processCommand(text){let q=String(text||"").trim();if(!q)return;$("command").value="";$("transcript").textContent=q;
+ let parsed=parseSingle(q);
+ if(parsed||/aztán|majd|;/.test(q)){createMission(q);return}
+ submitAI(q);
+}
+$("submit").onclick=()=>processCommand($("command").value);
+$("command").onkeydown=e=>{if(e.key==="Enter")$("submit").click()};
+document.querySelectorAll("[data-cmd]").forEach(b=>b.onclick=()=>processCommand(b.dataset.cmd));
+$("screenCapture").onclick=()=>{
+ if(!native()){message("Képernyőképet csak Android APK készít.");return}
+ let id="screen:"+String(++runId);$("screenStatus").textContent="Képernyőkép rögzítése csak helyi előnézetre...";JarvisNative.screenshot(id);
+};
+window.jarvisScreenshotResult=function(id,result,payload){
+ if(result!=="ok"){$("screenStatus").textContent="Képernyőképhiba: "+payload;return}
+ $("screenPreview").src="data:image/jpeg;base64,"+payload;$("screenPreview").style.display="block";
+ $("screenStatus").textContent="Helyi képernyőkép elkészült. Nem kerül továbbításra AI-nak.";
+};
+$("accessSetup").onclick=()=>native()?JarvisNative.accessibilitySettings():message("Csak APK-ban érhető el.","warn");
+$("appPermissions").onclick=()=>native()?JarvisNative.appSettings():message("Csak APK-ban érhető el.","warn");
+$("getOpenAIKey").onclick=()=>native()?JarvisNative.openUrl("https://platform.openai.com/api-keys"):window.open("https://platform.openai.com/api-keys","_blank");
+$("getGeminiKey").onclick=()=>native()?JarvisNative.openUrl("https://aistudio.google.com/app/apikey"):window.open("https://aistudio.google.com/app/apikey","_blank");
+
+function refreshDiag(){let d={};if(native()){try{d=JSON.parse(JarvisNative.diagnostics())}catch(e){d={error:"Natív diagnosztikai hiba"}}}else d={environment:"Böngésző / HTML",native:false};$("diagnostics").replaceChildren();for(const [key,value] of Object.entries(d)){let row=document.createElement("div");row.className="entry";row.textContent=key+": "+value;$("diagnostics").append(row)}$("accessStatus").textContent=d.accessibility?"ENGEDÉLYEZVE":"NINCS ENGEDÉLY";return d}
+$("diagRefresh").onclick=refreshDiag;
+$("notifyPermission").onclick=()=>native()?JarvisNative.requestNotifications():message("Csak APK-ban érhető el.","warn");
+$("notifyTest").onclick=()=>native()?JarvisNative.notifyStatus("Globális JARVIS tesztértesítés a telefonon."):message("Csak APK-ban érhető el.","warn");
+$("overlayStart").onclick=()=>native()?JarvisNative.overlay(true):message("Csak APK-ban érhető el.","warn");
+$("overlayStop").onclick=()=>native()?JarvisNative.overlay(false):message("Csak APK-ban érhető el.","warn");
+$("webSearch").onclick=()=>{let q=$("researchInput").value.trim();if(!q)return;let url="https://www.google.com/search?q="+encodeURIComponent(q);if(native())JarvisNative.openUrl(url);else window.open(url,"_blank","noopener,noreferrer")};
+$("researchAI").onclick=()=>{let q=$("researchInput").value.trim();if(!q)return;if(!native()){message("Élő kutatáshoz Android APK és Gemini API-kulcs szükséges.","warn");return}let id="research:"+String(++runId);activeRequest=id;setState("THINK");$("researchResults").textContent="Google Search grounded elemzés folyamatban…";JarvisNative.research(q,$("researchModel").value.trim(),id)};
+window.jarvisResearchResult=function(id,status,payload){if(id!==activeRequest)return;activeRequest=null;setState(status==="ok"?"READY":"ERROR");let div=$("researchResults");div.replaceChildren();if(status!=="ok"){div.textContent="Kutatási API hiba: "+payload;message("Kutatás sikertelen.","fail");return}try{let r=JSON.parse(payload);let p=document.createElement("p");p.textContent=r.answer;div.append(p);let sources=Array.isArray(r.sources)?r.sources:[];if(!sources.length){let x=document.createElement("p");x.className="muted";x.textContent="Nem érkeztek ellenőrizhető hivatkozások. A választ ne tekintsd hitelesített élő kutatásnak.";div.append(x)}else sources.forEach(s=>{if(!String(s.url).startsWith("https://"))return;let a=document.createElement("a");a.textContent=s.title||s.url;a.href=s.url;a.target="_blank";a.rel="noopener noreferrer";a.style.display="block";a.style.color="#66eaff";div.append(a)});if(sources.length>0)markTest("research");message("Kutatás befejeződött. Források: "+sources.length,"good")}catch(e){div.textContent="Válaszfeldolgozási hiba: "+e.message}};
+
+function checkLocalStore(){
+ try{const k="jarvis_selftest_v11";localStorage.setItem(k,"ok");const ok=localStorage.getItem(k)==="ok";localStorage.removeItem(k);return ok}catch(e){return false}
+}
+function getDiagSafe(){
+ if(!native())return {accessibility:false,overlay:false,overlay_running:false,notifications:false,microphone:false,tts:false,battery:-1,speechRecognizer:false};
+ try{return JSON.parse(JarvisNative.diagnostics())}catch(e){return {error:"Natív diagnosztikai hiba: "+e.message}}
+}
+function renderGlobal(){
+ let d=getDiagSafe(),local=checkLocalStore();
+ const list=[
+ {id:"ai",title:"1. AI AGY",good:!!verified.ai && (d.openai_key||d.gemini_key),status:verified.ai?"Sikeres online AI-válasz volt":(d.openai_key||d.gemini_key)?"API-kulcs elmentve; próbahívás szükséges":"Online AI-kulcs hiányzik. Az offline mód használható.",action:(d.openai_key||d.gemini_key)?"AI KAPCSOLAT TESZT":"AI KULCS BEÁLLÍTÁS",run:()=>{if(!d.openai_key&&!d.gemini_key){pane("settings");return}if(cfg.provider==="offline"||(cfg.provider==="gemini"&&!d.gemini_key)||(cfg.provider==="openai"&&!d.openai_key)){cfg.provider=d.gemini_key?"gemini":"openai";cfg.model=cfg.provider==="gemini"?"gemini-3.5-flash":"gpt-4o-mini";$("provider").value=cfg.provider;$("model").value=cfg.model;save("cfg",cfg)}submitAI("JARVIS modulpróba: válaszolj magyarul egy rövid mondattal.")}},
+ {id:"voice",title:"2. LIVE VOICE",good:!!verified.voice && !!d.microphone,status:!d.microphone?"Mikrofonengedély szükséges":!d.speechRecognizer?"Beszédfelismerő nem érhető el":verified.voice?"Magyar felismerés működik (nem teljes duplex Live Voice)":"Beszédfelismerés gyakorlati tesztje szükséges",action:d.microphone?"MIKROFON TESZT":"MIKROFON ENGEDÉLY",run:()=>{if(!native())return;if(!d.microphone)JarvisNative.requestMicrophone();else listen()}},
+ {id:"access",title:"3. ANDROID AUTOPILOT",good:!!d.accessibility&&!!verified.autopilot,status:!d.accessibility?"Accessibility engedély hiányzik":verified.autopilot?"Képernyőolvasási művelet igazolva":"Engedély megvan, képernyőolvasási teszt kell",action:d.accessibility?"KÉPERNYŐ TESZT":"ACCESSIBILITY BEÁLLÍTÁS",run:()=>{if(!native())return;if(!d.accessibility)JarvisNative.accessibilitySettings();else JarvisNative.action("read","","selftest:access")}},
+ {id:"memory",title:"4. INTELLIGENS MEMÓRIA",good:local,status:local?"Helyi mentés és visszaolvasás sikeres":"Helyi adattárolás nem működik",action:"MEMÓRIA",run:()=>pane("memory")},
+ {id:"arc",title:"5. ARC REAKTOR",good:!!document.getElementById("reactor"),status:$("reactor")?"Animált HUD betöltve":"Reaktor nem található",action:"HUD TESZT",run:()=>{pane("core");setState("THINK");setTimeout(()=>setState("READY"),1200)}},
+ {id:"mission",title:"6. MISSION CONTROL",good:!!verified.mission,status:verified.mission?"Valódi küldetés sikeresen lezárult":"A tervező betöltve, natív küldetésteszt még szükséges",action:"KÜLDETÉS TESZT",run:()=>{pane("mission");$("missionInput").value="Nyisd meg a Chrome-ot";createMission($("missionInput").value)}},
+ {id:"garmin",title:"7. GARMIN ÉRTESÍTÉSEK",good:!!verified.watch&&!!d.notifications,status:!d.notifications?"Android értesítési engedély hiányzik":verified.watch?"Felhasználó visszaigazolta, hogy az órán megjelent":verified.phoneNotification?"Telefonos értesítés elküldve; Garmin ellenőrzése szükséges":"Android értesítés és Garmin Connect tükrözés tesztje kell",action:d.notifications?"TESZT ÉRTESÍTÉS":"ÉRTESÍTÉSI ENGEDÉLY",extra:d.notifications?{label:"LÁTTAM A GARMINON",run:()=>{if(confirm("Valóban megjelent a JARVIS értesítése a Garmin órádon?"))markTest("watch")}}:null,run:()=>{if(!native())return;if(d.notifications){JarvisNative.notifyStatus("JARVIS V11 Garmin tükrözési teszt")}else JarvisNative.requestNotifications()}},
+ {id:"diagnostics",title:"8. TELEFON DIAGNOSZTIKA",good:Number(d.battery)>=0&&Number(d.battery)<=100&&Number(d.availableRAM_MB)>0,status:(Number(d.battery)>=0&&Number(d.battery)<=100)?("Akkumulátor: "+d.battery+"% · Szabad RAM: "+d.availableRAM_MB+" MB"):"Natív telemetria nem érhető el",action:"RÉSZLETES DIAG",run:()=>{pane("diag");refreshDiag()}},
+ {id:"research",title:"9. RESEARCH AGENT",good:!!verified.research,status:!d.gemini_key?"Forrásos Google Search kutatáshoz Gemini API-kulcs szükséges":verified.research?"Valódi keresési válasz forráslinkekkel igazolva":"Google Search grounded kérés tesztje szükséges",action:"KUTATÁS TESZT",run:()=>{pane("research");if(!$("researchInput").value)$("researchInput").value="Hány éves a berlini Brandenburgi kapu? Ellenőrizd forrással."}},
+ {id:"overlay",title:"10. LEBEGŐ HUD",good:!!d.overlay_running,status:!d.overlay?"Más alkalmazások feletti megjelenítés engedélye hiányzik":d.overlay_running?"Natív lebegő ikon szolgáltatás fut":"Az engedély megvan; indítsd el a lebegő HUD-ot",action:d.overlay_running?"HUD BEÁLLÍTÁS":"HUD ENGEDÉLY / INDÍTÁS",run:()=>{pane("overlay");if(native()&&!d.overlay_running)JarvisNative.overlay(true)}}
+ ];
+ const root=$("globalResults");root.replaceChildren();
+ const ok=list.filter(x=>x.good).length;
+ $("globalSummary").textContent="Ellenőrzött alap / teszteredmény: "+ok+"/10 · A teljes JARVIS állapota csak sikeres készülékes tesztekkel igazolható.";
+ $("globalSummary").className="panelStatus "+(ok===10?"good":"warn");
+ list.forEach(x=>{
+  let panel=document.createElement("div");panel.className="globalRow";
+  let title=document.createElement("b");title.textContent=x.title;
+  let status=document.createElement("p");status.textContent=x.status;
+  let actions=document.createElement("div");actions.className="row";
+  let flag=document.createElement("span");flag.className="tag";flag.style.color=x.good?"#49efb1":"#ffc86d";flag.textContent=x.good?"ELLENŐRIZVE":"TEENDŐ";
+  let button=document.createElement("button");button.className="primary";button.textContent=x.action;button.addEventListener("click",()=>{x.run();setTimeout(renderGlobal,600)});
+  actions.append(flag,button);
+  if(x.extra){let other=document.createElement("button");other.textContent=x.extra.label;other.onclick=x.extra.run;actions.append(other)}
+  panel.append(title,status,actions);root.append(panel);
+ });
+}
+$("runGlobal").onclick=()=>{refreshDiag();renderGlobal();message("Modulállapotok frissítve. Koppints a szükséges javító- vagy tesztgombra.")};
+window.jarvisNotificationStatus=function(status,detail){
+ if(status==="ok")markTest("phoneNotification");
+ message(detail,status==="ok"?"good":"fail");refreshDiag();renderGlobal();
+};
+window.jarvisPermissionResult=function(field,result){
+ message((field==="microphone"?"Mikrofon":"Értesítések")+" engedély: "+(result==="granted"?"megadva":"elutasítva"),result==="granted"?"good":"warn");
+ refreshDiag();renderGlobal();
+};
+window.addEventListener("focus",()=>{if($("global").classList.contains("active")){refreshDiag();renderGlobal()}});
+document.addEventListener("visibilitychange",()=>{if(!document.hidden&&$("global").classList.contains("active")){refreshDiag();renderGlobal()}});
+
+if(native()&&mission&&mission.approved){try{let st=JSON.parse(JarvisNative.agentStatus());if(st.phase==="running"||st.phase==="retry"){nativeAgentActive=true;nativeAgentTimer=setInterval(pollNativeAgent,1300);pollNativeAgent()}else{mission=null;save("pendingMission",null)}}catch(e){}}renderMission();refreshDiag();renderGlobal();message(native()?"Natív Android híd betöltve.":"HTML előnézet. Natív Android híd nem elérhető.","good");
+</script></body></html>
